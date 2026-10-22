@@ -64,7 +64,7 @@ void main() {
     await tester.pumpWidget(StoneWalletApp(vault: WalletVault(store: store)));
     await tester.pump(const Duration(milliseconds: 100));
 
-    await tester.tap(find.text('设置'));
+    await tester.tap(find.byTooltip('设置'));
     await tester.pump();
 
     expect(find.text('网络与 RPC'), findsOneWidget);

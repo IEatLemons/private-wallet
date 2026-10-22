@@ -82,6 +82,30 @@ void main() {
       expect(await vault.loadSelectedNetworkId(), polygonMainnetNetwork.id);
     },
   );
+
+  test(
+    'batch private-key import validates, deduplicates, and persists',
+    () async {
+      final store = MemorySecretStore();
+      final vault = WalletVault(store: store);
+      const privateKey =
+          '4f3edf983ac636a65a842ce7c78d9aa706d3b113bce036f9d5a8e7e5d6b7a9c1';
+
+      final result = await vault.importPrivateKeyWallets(const [
+        WalletImportRow(chain: 'Ethereum', privateKey: privateKey),
+        WalletImportRow(chain: '1', privateKey: privateKey),
+        WalletImportRow(chain: 'unknown', privateKey: privateKey),
+        WalletImportRow(chain: 'Polygon', privateKey: 'not-a-key'),
+      ]);
+
+      expect(result.imported, hasLength(1));
+      expect(result.errors, hasLength(3));
+      expect(await vault.hasWallet(), isTrue);
+      final loaded = await vault.loadImportedWallets();
+      expect(loaded, hasLength(1));
+      expect(loaded.single.networkId, ethereumMainnetNetwork.id);
+    },
+  );
 }
 
 class MemorySecretStore implements SecretStore {
