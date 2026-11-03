@@ -6,13 +6,18 @@ class OnboardingPage extends StatelessWidget {
     required this.error,
     required this.onCreate,
     required this.onImport,
+    required this.onImportPrivateKey,
     required this.onBatchImport,
     required this.onToggleStyle,
     super.key,
   });
   final WalletTheme theme;
   final String? error;
-  final VoidCallback onCreate, onImport, onBatchImport, onToggleStyle;
+  final VoidCallback onCreate,
+      onImport,
+      onImportPrivateKey,
+      onBatchImport,
+      onToggleStyle;
 
   Widget _intro(bool mobile) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,6 +103,12 @@ class OnboardingPage extends StatelessWidget {
           onPressed: onImport,
           icon: const Icon(Icons.key_outlined, size: 18),
           label: const Text('导入助记词'),
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: onImportPrivateKey,
+          icon: const Icon(Icons.vpn_key_outlined, size: 18),
+          label: const Text('导入私钥'),
         ),
         const SizedBox(height: 12),
         OutlinedButton.icon(
@@ -294,6 +305,13 @@ class SettingsPage extends StatelessWidget {
     this.isPrivateKey = false,
     this.onEditNetwork,
     this.onAddNetwork,
+    this.onImportPrivateKey,
+    this.onManageWallets,
+    this.onCreateWallet,
+    this.onImportMnemonic,
+    this.walletCount = 0,
+    this.accountCount = 0,
+    this.derivationPath,
     this.networkErrors = const {},
     this.pendingNetworkIds = const {},
     super.key,
@@ -309,6 +327,10 @@ class SettingsPage extends StatelessWidget {
   final bool isPrivateKey;
   final Future<EvmNetwork?> Function(EvmNetwork?)? onEditNetwork;
   final VoidCallback? onAddNetwork;
+  final VoidCallback? onImportPrivateKey;
+  final VoidCallback? onManageWallets, onCreateWallet, onImportMnemonic;
+  final int walletCount, accountCount;
+  final String? derivationPath;
   final Map<int, String> networkErrors;
   final Set<int> pendingNetworkIds;
 
@@ -400,13 +422,21 @@ class SettingsPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   SelectableText(
-                    network.rpcUrl,
+                    network.rpcUrls.join('\n'),
                     style: TextStyle(
                       color: theme.muted,
                       fontSize: 13,
                       height: 1.5,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${network.rpcUrls.length} 个节点 · 失败自动切换',
+                    style: TextStyle(color: theme.muted, fontSize: 12),
+                  ),
+                  if (responsiveNetworkIds.contains(network.id) &&
+                      networkServices[network.id] != null)
+                    _info('当前可用节点', networkServices[network.id]!.activeRpcUrl),
                   const SizedBox(height: 8),
                   Text(
                     pendingNetworkIds.contains(network.id)
@@ -467,7 +497,7 @@ class SettingsPage extends StatelessWidget {
           _info('钱包地址', address),
           _info(
             isPrivateKey ? '账户来源' : '派生路径',
-            isPrivateKey ? '私钥导入' : evmDerivationPath,
+            isPrivateKey ? '私钥导入' : derivationPath ?? evmDerivationPath,
           ),
           Text(
             '助记词与私钥仅保存在本机安全存储中，请自行保管恢复凭证。',
@@ -477,16 +507,51 @@ class SettingsPage extends StatelessWidget {
       ),
     );
     final batch = _section(
-      '批量导入',
+      '钱包管理',
       Icons.upload_file_outlined,
       Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            '从 CSV / TSV 表格导入多个账户。\n表头需要包含「链」「私钥」两列。',
+            '$walletCount 个钱包 · $accountCount 个账户\n创建、导入更多钱包，或在助记词钱包下继续添加账户。',
             style: TextStyle(color: theme.muted, fontSize: 14, height: 1.6),
           ),
           const SizedBox(height: 16),
+          if (onManageWallets != null) ...[
+            OutlinedButton.icon(
+              onPressed: onManageWallets,
+              icon: const Icon(Icons.account_balance_wallet_outlined, size: 18),
+              label: const Text('管理钱包与账户'),
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (onCreateWallet != null) ...[
+            OutlinedButton.icon(
+              onPressed: onCreateWallet,
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('创建新钱包'),
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (onImportMnemonic != null) ...[
+            OutlinedButton.icon(
+              onPressed: onImportMnemonic,
+              icon: const Icon(Icons.key_outlined, size: 18),
+              label: const Text('导入助记词'),
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (onImportPrivateKey != null) ...[
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: onImportPrivateKey,
+                icon: const Icon(Icons.vpn_key_outlined, size: 18),
+                label: const Text('导入私钥'),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           Align(
             alignment: Alignment.centerLeft,
             child: OutlinedButton.icon(

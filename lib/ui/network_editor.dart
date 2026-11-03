@@ -24,7 +24,9 @@ class _NetworkEditorPanelState extends State<NetworkEditorPanel> {
     text: widget.network?.id.toString(),
   );
   late final symbol = TextEditingController(text: widget.network?.nativeSymbol);
-  late final rpc = TextEditingController(text: widget.network?.rpcUrl);
+  late final rpc = TextEditingController(
+    text: widget.network?.rpcUrls.join('\n'),
+  );
   late final explorer = TextEditingController(
     text: widget.network?.explorerUrl,
   );
@@ -49,12 +51,23 @@ class _NetworkEditorPanelState extends State<NetworkEditorPanel> {
       id: id,
       name: name.text.trim(),
       nativeSymbol: symbol.text.trim(),
-      rpcUrl: rpc.text.trim(),
+      rpcUrl: _rpcUrls.first,
+      fallbackRpcUrls: _rpcUrls.skip(1).toList(),
       explorerUrl: explorer.text.trim(),
       isTestnet: testnet,
     );
     network.validate();
     return network;
+  }
+
+  List<String> get _rpcUrls {
+    final urls = rpc.text
+        .split(RegExp(r'\s+'))
+        .where((url) => url.isNotEmpty)
+        .toSet()
+        .toList();
+    if (urls.isEmpty) throw const WalletInputException('请至少配置一个 RPC 地址。');
+    return urls;
   }
 
   Future<void> _check() async {
@@ -65,7 +78,7 @@ class _NetworkEditorPanelState extends State<NetworkEditorPanel> {
         error = null;
         checkStatus = null;
       });
-      await widget.onCheck(network).timeout(const Duration(seconds: 8));
+      await widget.onCheck(network);
       if (mounted) setState(() => checkStatus = 'RPC 可用，Chain ID 与网络配置一致。');
     } catch (e) {
       if (mounted) {
@@ -125,7 +138,7 @@ class _NetworkEditorPanelState extends State<NetworkEditorPanel> {
     child: WalletPanel(
       theme: widget.theme,
       title: widget.network == null ? '添加自定义 EVM 链' : '编辑网络与 RPC',
-      subtitle: '支持 EVM 兼容链。每条链可使用独立的 HTTP / HTTPS RPC 地址。',
+      subtitle: '每行填写一个 RPC 地址，按顺序尝试；失败后自动切换，后续优先使用可用节点。',
       canClose: !saving,
       footer: FilledButton(
         onPressed: saving || checking ? null : _save,
@@ -143,7 +156,43 @@ class _NetworkEditorPanelState extends State<NetworkEditorPanel> {
             type: TextInputType.number,
           ),
           _field('原生代币符号', symbol, hint: '例如：ETH'),
-          _field('RPC 地址', rpc, hint: 'https://…', type: TextInputType.url),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: TextField(
+              controller: rpc,
+              enabled: !saving && !checking,
+              minLines: 3,
+              maxLines: 6,
+              autocorrect: false,
+              enableSuggestions: false,
+              keyboardType: TextInputType.multiline,
+              onChanged: (_) => setState(() => checkStatus = null),
+              decoration: const InputDecoration(
+                labelText: 'RPC 地址',
+                hintText: 'https://第一个节点\nhttps://备用节点',
+                helperText: '每行一个；顺序即优先级，自动去重。',
+              ),
+            ),
+          ),
+          if (widget.network != null &&
+              supportedEvmNetworks.any((n) => n.id == widget.network!.id))
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: saving || checking
+                    ? null
+                    : () => setState(() {
+                        rpc.text = supportedEvmNetworks
+                            .firstWhere((n) => n.id == widget.network!.id)
+                            .rpcUrls
+                            .join('\n');
+                        checkStatus = null;
+                        error = null;
+                      }),
+                icon: const Icon(Icons.restore, size: 16),
+                label: const Text('恢复内置免费节点'),
+              ),
+            ),
           _field(
             '区块浏览器地址（可选）',
             explorer,

@@ -310,10 +310,12 @@ class RecoveryPhraseSheet extends StatefulWidget {
   const RecoveryPhraseSheet({
     required this.theme,
     required this.mnemonic,
+    this.allowCancel = false,
     super.key,
   });
   final WalletTheme theme;
   final String mnemonic;
+  final bool allowCancel;
   @override
   State<RecoveryPhraseSheet> createState() => _RecoveryPhraseSheetState();
 }
@@ -346,14 +348,14 @@ class _RecoveryPhraseSheetState extends State<RecoveryPhraseSheet> {
       setState(() => error = '助记词校验不正确，请重新核对第 2、6、10 个单词。');
       return;
     }
-    Navigator.pop(context, true);
+    closeWalletPanel(context, true);
   }
 
   @override
   Widget build(BuildContext context) => WalletPanel(
     theme: widget.theme,
     title: verifying ? '验证恢复助记词' : '记录恢复助记词',
-    canClose: false,
+    canClose: widget.allowCancel,
     expandBody: WalletLayout.of(context).mobile,
     footer: FilledButton(
       onPressed: _continue,
@@ -475,18 +477,165 @@ class _ImportWalletDialogState extends State<ImportWalletDialog> {
     title: '导入钱包',
     subtitle: '输入已有钱包的助记词，单词之间用空格分隔。',
     footer: FilledButton(
-      onPressed: () => Navigator.pop(context, controller.text),
+      onPressed: () => closeWalletPanel(context, controller.text),
       child: const Text('导入'),
     ),
     child: TextField(
       controller: controller,
-      autofocus: true,
+      // Let the mobile route settle before connecting the native keyboard.
+      // The user taps the field to enter or paste; desktop keeps autofocus.
+      autofocus: !WalletLayout.of(context).mobile,
       minLines: 4,
       maxLines: 6,
       autocorrect: false,
       enableSuggestions: false,
+      enableIMEPersonalizedLearning: false,
       style: TextStyle(color: widget.theme.text, fontSize: 14, height: 1.6),
       decoration: const InputDecoration(hintText: '请输入 12 或 24 个助记词单词'),
+    ),
+  );
+}
+
+class ImportPrivateKeyPanel extends StatefulWidget {
+  const ImportPrivateKeyPanel({
+    required this.theme,
+    required this.networks,
+    required this.onImport,
+    this.currentNetwork,
+    super.key,
+  });
+
+  final WalletTheme theme;
+  final List<EvmNetwork> networks;
+  final EvmNetwork? currentNetwork;
+  final Future<ImportedWallet> Function(String, EvmNetwork) onImport;
+
+  @override
+  State<ImportPrivateKeyPanel> createState() => _ImportPrivateKeyPanelState();
+}
+
+class _ImportPrivateKeyPanelState extends State<ImportPrivateKeyPanel> {
+  final controller = TextEditingController();
+  late EvmNetwork? network = widget.currentNetwork;
+  bool obscure = true;
+  bool importing = false;
+  String? error;
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (importing) return;
+    final selected = network;
+    if (selected == null) {
+      setState(() => error = '请选择导入后要查看的网络。');
+      return;
+    }
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      importing = true;
+      error = null;
+    });
+    try {
+      final imported = await widget.onImport(controller.text, selected);
+      controller.clear();
+      if (mounted) closeWalletPanel(context, imported);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          importing = false;
+          error = e is WalletInputException ? e.message : '私钥导入失败，请重试。';
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => PopScope(
+    canPop: !importing,
+    child: WalletPanel(
+      theme: widget.theme,
+      title: '导入私钥',
+      subtitle: '使用已有的 EVM 私钥恢复账户，无需助记词。',
+      canClose: !importing,
+      footer: FilledButton(
+        onPressed: importing ? null : _submit,
+        child: Text(importing ? '导入中…' : '导入并进入钱包'),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DropdownButtonFormField<int>(
+            initialValue: network?.id,
+            isExpanded: true,
+            decoration: const InputDecoration(labelText: '网络'),
+            hint: const Text('请选择网络'),
+            items: [
+              for (final n in widget.networks)
+                DropdownMenuItem(
+                  value: n.id,
+                  child: Text(
+                    '${n.name} · ${n.isTestnet ? '测试网' : '主网'}',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+            onChanged: importing
+                ? null
+                : (id) => setState(() {
+                    network = widget.networks.firstWhere((n) => n.id == id);
+                    error = null;
+                  }),
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            key: const ValueKey('private-key-input'),
+            controller: controller,
+            enabled: !importing,
+            obscureText: obscure,
+            autocorrect: false,
+            enableSuggestions: false,
+            enableIMEPersonalizedLearning: false,
+            keyboardType: TextInputType.visiblePassword,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _submit(),
+            decoration: InputDecoration(
+              labelText: '私钥',
+              hintText: '64 位十六进制，可带 0x 前缀',
+              suffixIcon: IconButton(
+                tooltip: obscure ? '显示私钥' : '隐藏私钥',
+                onPressed: importing
+                    ? null
+                    : () => setState(() => obscure = !obscure),
+                icon: Icon(
+                  obscure
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '私钥仅保存在本机系统安全存储中。导入成功后，将连接所选网络查询余额；私钥不会发送给 RPC。',
+            style: TextStyle(
+              color: widget.theme.muted,
+              fontSize: 13,
+              height: 1.6,
+            ),
+          ),
+          if (error != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              error!,
+              style: TextStyle(color: widget.theme.danger, fontSize: 13),
+            ),
+          ],
+        ],
+      ),
     ),
   );
 }
@@ -568,6 +717,7 @@ class _SendSheetState extends State<SendSheet> {
       amountController = TextEditingController();
   bool sending = false;
   String? error;
+  String? uncertainHash;
   @override
   void dispose() {
     recipientController.dispose();
@@ -576,6 +726,7 @@ class _SendSheetState extends State<SendSheet> {
   }
 
   Future<void> _submit() async {
+    if (sending || uncertainHash != null) return;
     FocusManager.instance.primaryFocus?.unfocus();
     try {
       final recipient = recipientController.text.trim(),
@@ -597,6 +748,7 @@ class _SendSheetState extends State<SendSheet> {
         setState(() {
           sending = false;
           error = e.toString();
+          if (e is RpcBroadcastException) uncertainHash = e.transactionHash;
         });
       }
     }
@@ -612,14 +764,14 @@ class _SendSheetState extends State<SendSheet> {
       subtitle:
           '${widget.network.name} · ${widget.network.isTestnet ? '测试网' : '主网'} · 在本机完成签名',
       footer: FilledButton(
-        onPressed: sending ? null : _submit,
+        onPressed: sending || uncertainHash != null ? null : _submit,
         child: sending
             ? const SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
-            : const Text('签名并广播'),
+            : Text(uncertainHash != null ? '请先确认交易状态' : '签名并广播'),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -658,6 +810,13 @@ class _SendSheetState extends State<SendSheet> {
             Text(
               error!,
               style: TextStyle(color: widget.theme.danger, fontSize: 13),
+            ),
+          ],
+          if (uncertainHash != null) ...[
+            const SizedBox(height: 12),
+            SelectableText(
+              '交易哈希：$uncertainHash',
+              style: TextStyle(color: widget.theme.text, fontSize: 13),
             ),
           ],
         ],

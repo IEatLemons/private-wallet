@@ -496,8 +496,8 @@ void stressTests() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('批量账户 1'), findsOneWidget);
-      await tester.tap(find.text('批量账户 1'));
+      expect(find.text('私钥账户 1'), findsOneWidget);
+      await tester.tap(find.text('私钥账户 1'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('主钱包'));
       await tester.pumpAndSettle();

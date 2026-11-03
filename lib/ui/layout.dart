@@ -62,9 +62,13 @@ Future<T?> showWalletPanel<T>({
   double width = 480,
   bool dismissible = true,
   bool mobileFullscreen = false,
-}) {
+}) async {
+  // Release any old text-input connection before attaching a new modal route.
+  FocusManager.instance.primaryFocus?.unfocus();
   final mobile = WalletLayout.of(context).mobile;
+  TransitionRoute<T>? panelRoute;
   Widget surface(BuildContext context) {
+    panelRoute ??= ModalRoute.of<T>(context);
     final media = MediaQuery.of(context);
     final fullscreen = mobileFullscreen && WalletLayout.of(context).mobile;
     if (fullscreen) {
@@ -86,7 +90,9 @@ Future<T?> showWalletPanel<T>({
     final content = ConstrainedBox(
       constraints: BoxConstraints(
         maxWidth: width,
-        maxHeight: available * (WalletLayout.of(context).mobile ? .92 : .85),
+        maxHeight:
+            available.clamp(0, double.infinity) *
+            (WalletLayout.of(context).mobile ? .92 : .85),
       ),
       child: builder(context),
     );
@@ -120,8 +126,9 @@ Future<T?> showWalletPanel<T>({
     );
   }
 
+  final T? result;
   if (mobile && !mobileFullscreen) {
-    return showModalBottomSheet<T>(
+    result = await showModalBottomSheet<T>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -131,12 +138,23 @@ Future<T?> showWalletPanel<T>({
       constraints: const BoxConstraints(maxWidth: double.infinity),
       builder: surface,
     );
+  } else {
+    result = await showDialog<T>(
+      context: context,
+      barrierDismissible: dismissible,
+      builder: surface,
+    );
   }
-  return showDialog<T>(
-    context: context,
-    barrierDismissible: dismissible,
-    builder: surface,
-  );
+  // Navigator.pop's result resolves before the exit animation. Wait until the
+  // old route and its text-input/selection overlays have actually been removed
+  // before callers replace the underlying page or open another panel.
+  await panelRoute?.completed;
+  return result;
+}
+
+void closeWalletPanel<T>(BuildContext context, [T? result]) {
+  FocusScope.of(context).unfocus();
+  Navigator.pop<T>(context, result);
 }
 
 /// Shared overlay structure: fixed title and actions, independently scrolling body.
@@ -162,7 +180,7 @@ class WalletPanel extends StatelessWidget {
   final bool expandBody;
 
   @override
-  Widget build(BuildContext context) => ColoredBox(
+  Widget build(BuildContext context) => Material(
     color: theme.surface,
     child: Column(
       mainAxisSize: expandBody ? MainAxisSize.max : MainAxisSize.min,
@@ -185,7 +203,7 @@ class WalletPanel extends StatelessWidget {
               if (canClose)
                 IconButton(
                   tooltip: '关闭',
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => closeWalletPanel(context),
                   icon: Icon(Icons.close, color: theme.muted),
                 ),
             ],

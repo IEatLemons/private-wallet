@@ -17,6 +17,7 @@ part 'ui/pages.dart';
 part 'ui/panels.dart';
 part 'ui/network_editor.dart';
 part 'ui/assets.dart';
+part 'ui/wallet_manager.dart';
 
 String shortAddress(String address) {
   if (address.length <= 12) return address;
@@ -214,8 +215,8 @@ class _WalletShellState extends State<WalletShell> {
   bool isLoadingWallet = true;
   bool isRefreshing = false;
   WalletAccount? account;
-  WalletAccount? mnemonicAccount;
-  List<ImportedWallet> importedWallets = const [];
+  WalletPortfolio portfolio = const WalletPortfolio(groups: []);
+  WalletEntry? get activeEntry => portfolio.selected;
   EvmNetwork? selectedNetwork;
   List<EvmNetwork> enabledNetworks = const [];
   List<EvmNetwork> allNetworks = List.of(supportedEvmNetworks);
@@ -325,8 +326,7 @@ class _WalletShellState extends State<WalletShell> {
 
   Future<void> _loadWallet() async {
     try {
-      final loaded = await vault.loadWallet();
-      final loadedImported = await vault.loadImportedWallets();
+      final loaded = await vault.loadPortfolio();
       allNetworks = await vault.loadNetworks();
       final selectedIds = await vault.loadSelectedNetworkIds();
       final currentId = await vault.loadSelectedNetworkId();
@@ -339,12 +339,9 @@ class _WalletShellState extends State<WalletShell> {
           (loadedNetworks.isEmpty ? null : loadedNetworks.first);
       if (!mounted) return;
       setState(() {
-        importedWallets = loadedImported;
-        mnemonicAccount = loaded;
-        account = loadedImported.isNotEmpty
-            ? loadedImported.first.account
-            : loaded;
-        if (loadedImported.isNotEmpty) walletName = '批量账户 1';
+        portfolio = loaded;
+        account = loaded.selected?.account;
+        walletName = loaded.selected?.displayName ?? '钱包';
         enabledNetworks = loadedNetworks;
         selectedNetwork = loadedNetwork;
         isLoadingWallet = false;
@@ -390,11 +387,9 @@ class _WalletShellState extends State<WalletShell> {
         BigInt? balance;
         String? failure;
         try {
-          balance =
-              (await entry.value
-                      .getNativeBalance(currentAccount)
-                      .timeout(const Duration(seconds: 12)))
-                  .getInWei;
+          balance = (await entry.value.getNativeBalance(
+            currentAccount,
+          )).getInWei;
         } catch (error) {
           failure = _connectionError(error);
         }
@@ -526,25 +521,21 @@ class _WalletShellState extends State<WalletShell> {
     try {
       final creation = await vault.prepareNewWallet();
       if (!mounted) return;
+      final allowCancel = portfolio.groups.isNotEmpty;
       final confirmed = await showWalletPanel<bool>(
         context: context,
         width: 640,
-        dismissible: false,
+        dismissible: allowCancel,
         mobileFullscreen: true,
-        builder: (context) =>
-            RecoveryPhraseSheet(theme: theme, mnemonic: creation.mnemonic),
+        builder: (context) => RecoveryPhraseSheet(
+          theme: theme,
+          mnemonic: creation.mnemonic,
+          allowCancel: allowCancel,
+        ),
       );
       if (confirmed != true) return;
-      final saved = await vault.saveRecoveryPhrase(creation.mnemonic);
-      if (!mounted) return;
-      setState(() {
-        account = saved;
-        mnemonicAccount = saved;
-        walletName = '主钱包';
-        isLoadingWallet = false;
-        walletError = null;
-      });
-      await _refreshBalance();
+      await vault.saveRecoveryPhrase(creation.mnemonic);
+      await _reloadPortfolio(goHome: true);
     } catch (error) {
       if (!mounted) return;
       _showMessage(error.toString());
@@ -558,20 +549,33 @@ class _WalletShellState extends State<WalletShell> {
     );
     if (mnemonic == null || mnemonic.trim().isEmpty) return;
     try {
-      final imported = await vault.importWallet(mnemonic);
-      if (!mounted) return;
-      setState(() {
-        account = imported;
-        mnemonicAccount = imported;
-        walletName = '主钱包';
-        isLoadingWallet = false;
-        balanceWei = null;
-        walletError = null;
-      });
-      await _refreshBalance();
+      await vault.importWallet(mnemonic);
+      await _reloadPortfolio(goHome: true);
     } catch (error) {
       if (!mounted) return;
       _showMessage(error.toString());
+    }
+  }
+
+  Future<void> _importPrivateKey() async {
+    final imported = await showWalletPanel<ImportedWallet>(
+      context: context,
+      builder: (context) => ImportPrivateKeyPanel(
+        theme: theme,
+        networks: allNetworks,
+        currentNetwork: selectedNetwork,
+        onImport: (privateKey, network) => vault.importPrivateKeyWallet(
+          privateKey: privateKey,
+          networkId: network.id,
+        ),
+      ),
+    );
+    if (!mounted || imported == null) return;
+    try {
+      await _reloadPortfolio(goHome: true, useAccountNetwork: true);
+      if (mounted) _showMessage('私钥账户已导入');
+    } catch (_) {
+      if (mounted) _showMessage('账户已保存，加载失败，请重新打开钱包。');
     }
   }
 
@@ -598,16 +602,9 @@ class _WalletShellState extends State<WalletShell> {
         return;
       }
       final result = await vault.importPrivateKeyWallets(rows);
-      final allImported = await vault.loadImportedWallets();
+      final loaded = await vault.loadPortfolio();
       if (!mounted) return;
-      setState(() {
-        importedWallets = allImported;
-        if (account == null && allImported.isNotEmpty) {
-          account = allImported.first.account;
-          walletName = '批量账户 1';
-        }
-        isLoadingWallet = false;
-      });
+      _applyPortfolio(loaded);
       final failures = result.errors.length;
       _showMessage(
         '成功导入 ${result.imported.length} 条${failures == 0 ? '' : '，$failures 条失败'}。',
@@ -741,7 +738,7 @@ class _WalletShellState extends State<WalletShell> {
         onCheck: (value) async {
           final service = _makeService(value);
           try {
-            await service.checkConnection().timeout(const Duration(seconds: 8));
+            await service.checkConnection();
           } finally {
             await service.dispose();
           }
@@ -878,52 +875,89 @@ class _WalletShellState extends State<WalletShell> {
     if (mounted) _showMessage('交易已广播：$txHash');
   }
 
-  void selectWallet() {
-    final options = <WalletOption>[
-      if (mnemonicAccount != null)
-        WalletOption(
-          name: '主钱包',
-          account: mnemonicAccount!,
-          selected: walletName == '主钱包',
-        ),
-      for (final entry in importedWallets.asMap().entries)
-        WalletOption(
-          name: '批量账户 ${entry.key + 1}',
-          account: entry.value.account,
-          network: _networkForId(entry.value.networkId),
-          selected: walletName == '批量账户 ${entry.key + 1}',
-        ),
-    ];
-    showWalletPanel<void>(
+  void _applyPortfolio(WalletPortfolio loaded, {bool goHome = false}) {
+    ++balanceRequest;
+    setState(() {
+      portfolio = loaded;
+      account = loaded.selected?.account;
+      walletName = loaded.selected?.displayName ?? '钱包';
+      if (goHome) selectedNav = 0;
+      isLoadingWallet = false;
+      balanceWei = null;
+      balancesByNetwork.clear();
+      responsiveNetworkIds.clear();
+      pendingNetworkIds.clear();
+      networkErrors.clear();
+      isRefreshing = false;
+      lastTxHash = null;
+      walletError = null;
+    });
+  }
+
+  Future<void> _reloadPortfolio({
+    bool goHome = false,
+    bool useAccountNetwork = false,
+  }) async {
+    final loaded = await vault.loadPortfolio();
+    if (!mounted) return;
+    _applyPortfolio(loaded, goHome: goHome);
+    final network = useAccountNetwork
+        ? _networkForId(loaded.selected?.preferredNetworkId)
+        : null;
+    if (network != null) {
+      await _selectNetworks(
+        {
+          for (final n in [...enabledNetworks, network]) n.id: n,
+        }.values.toList(),
+        current: network,
+        waitForBalance: false,
+      );
+    } else {
+      unawaited(_refreshBalance());
+    }
+  }
+
+  Future<void> _runWalletAction(WalletManagerAction action) async {
+    switch (action) {
+      case WalletManagerAction.create:
+        await _createWallet();
+      case WalletManagerAction.importMnemonic:
+        await _importWallet();
+      case WalletManagerAction.importPrivateKey:
+        await _importPrivateKey();
+      case WalletManagerAction.batchImport:
+        await _importBatchWallets();
+      case WalletManagerAction.importOptions:
+        final choice = await showWalletPanel<WalletManagerAction>(
+          context: context,
+          builder: (_) => WalletImportOptions(theme: theme),
+        );
+        if (mounted && choice != null) await _runWalletAction(choice);
+      case WalletManagerAction.selected:
+        break;
+    }
+  }
+
+  Future<void> selectWallet() async {
+    final result = await showWalletPanel<WalletManagerAction>(
       context: context,
-      width: 560,
-      builder: (panelContext) => WalletPicker(
-        theme: theme,
-        options: options,
-        onSelect: (option) {
-          Navigator.pop(panelContext);
-          setState(() {
-            walletName = option.name;
-            account = option.account;
-            balanceWei = null;
-            balancesByNetwork.clear();
-            responsiveNetworkIds.clear();
-            lastTxHash = null;
-            walletError = null;
-          });
-          final network = option.network;
-          if (network != null) {
-            final networks = {
-              for (final n in enabledNetworks) n.id: n,
-              network.id: network,
-            }.values.toList();
-            unawaited(_selectNetworks(networks, current: network));
-          } else {
-            unawaited(_refreshBalance());
-          }
-        },
-      ),
+      width: 640,
+      builder: (_) =>
+          WalletManagerPanel(theme: theme, initial: portfolio, vault: vault),
     );
+    if (!mounted) return;
+    try {
+      await _reloadPortfolio(
+        useAccountNetwork: result == WalletManagerAction.selected,
+      );
+      if (mounted && result != null) await _runWalletAction(result);
+    } catch (error) {
+      if (mounted) {
+        _showMessage(
+          error is WalletInputException ? error.message : '钱包操作失败，请重试。',
+        );
+      }
+    }
   }
 
   TextStyle textStyle(double size, FontWeight weight, {Color? color}) {
@@ -950,6 +984,7 @@ class _WalletShellState extends State<WalletShell> {
             error: walletError,
             onCreate: _createWallet,
             onImport: _importWallet,
+            onImportPrivateKey: _importPrivateKey,
             onBatchImport: _importBatchWallets,
             onToggleStyle: widget.onToggleStyle,
           ),
@@ -1026,9 +1061,16 @@ class _WalletShellState extends State<WalletShell> {
                   responsiveNetworkIds: responsiveNetworkIds,
                   onManageNetworks: _showNetworkSelector,
                   onBatchImport: _importBatchWallets,
+                  onImportPrivateKey: _importPrivateKey,
                   onRefresh: _refreshBalance,
                   onToggleStyle: widget.onToggleStyle,
-                  isPrivateKey: walletName != '主钱包',
+                  isPrivateKey: activeEntry?.kind == WalletKind.privateKey,
+                  derivationPath: activeEntry?.derivationPath,
+                  onManageWallets: selectWallet,
+                  walletCount: portfolio.groups.length,
+                  accountCount: portfolio.accounts.length,
+                  onCreateWallet: _createWallet,
+                  onImportMnemonic: _importWallet,
                   onEditNetwork: _editNetwork,
                   onAddNetwork: _addNetwork,
                   networkErrors: networkErrors,

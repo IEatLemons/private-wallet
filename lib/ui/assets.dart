@@ -196,7 +196,7 @@ class _AssetDetailsPanelState extends State<AssetDetailsPanel> {
         ),
         _info('网络', '${widget.network.name} · Chain ID ${widget.network.id}'),
         _info('钱包地址', widget.address),
-        _info('RPC 地址', widget.network.rpcUrl),
+        _info('RPC 地址', widget.network.rpcUrls.join('\n')),
         if (widget.network.explorerUrl.isNotEmpty) ...[
           _info('区块浏览器', widget.network.explorerUrl),
           TextButton.icon(

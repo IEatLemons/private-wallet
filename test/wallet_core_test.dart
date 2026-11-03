@@ -5,6 +5,70 @@ void main() {
   const knownMnemonic =
       'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
 
+  test(
+    'single private-key import persists without replacing the mnemonic',
+    () async {
+      final store = MemorySecretStore();
+      final vault = WalletVault(store: store);
+      await vault.importWallet(knownMnemonic);
+      final original = await vault.loadWallet();
+      final key = '1'.padLeft(64, '0');
+      final imported = await vault.importPrivateKeyWallet(
+        privateKey: ' 0X$key ',
+        networkId: ethereumSepoliaNetwork.id,
+      );
+      expect(
+        imported.account.checksumAddress,
+        '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf',
+      );
+      final reloaded = await WalletVault(store: store).loadImportedWallets();
+      expect(reloaded.single.networkId, ethereumSepoliaNetwork.id);
+      expect(reloaded.single.account.address, imported.account.address);
+      expect((await vault.loadWallet())!.address, original!.address);
+      expect(await vault.loadSelectedNetworkIds(), isEmpty);
+
+      final snapshot = Map.of(store.values);
+      await expectLater(
+        vault.importPrivateKeyWallet(
+          privateKey: key,
+          networkId: ethereumSepoliaNetwork.id,
+        ),
+        throwsA(isA<WalletInputException>()),
+      );
+      expect(store.values, snapshot);
+    },
+  );
+
+  test(
+    'invalid private keys and unknown networks never reach storage',
+    () async {
+      final store = MemorySecretStore();
+      final vault = WalletVault(store: store);
+      for (final key in [
+        '',
+        'abc',
+        'g' * 64,
+        '0' * 64,
+        'fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141',
+        'f' * 64,
+      ]) {
+        await expectLater(
+          vault.importPrivateKeyWallet(privateKey: key, networkId: 1),
+          throwsA(isA<WalletInputException>()),
+        );
+        expect(store.values, isEmpty);
+      }
+      await expectLater(
+        vault.importPrivateKeyWallet(
+          privateKey: '1'.padLeft(64, '0'),
+          networkId: 999999,
+        ),
+        throwsA(isA<WalletInputException>()),
+      );
+      expect(store.values, isEmpty);
+    },
+  );
+
   test('derives the standard Ethereum account at the documented path', () {
     final account = WalletAccount.fromMnemonic(knownMnemonic);
 

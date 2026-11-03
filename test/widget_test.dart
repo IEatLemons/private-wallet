@@ -14,6 +14,7 @@ void main() {
     expect(find.text('你的密钥，\n你的钱包。'), findsOneWidget);
     expect(find.text('创建新钱包'), findsOneWidget);
     expect(find.text('导入助记词'), findsOneWidget);
+    expect(find.text('导入私钥'), findsOneWidget);
     expect(find.text('自托管钱包'), findsOneWidget);
     expect(find.text('网络由你选择'), findsOneWidget);
   });
