@@ -1,0 +1,750 @@
+{
+  "@@locale": "zh_Hant",
+  "msgSyncing": "同步中…",
+  "msgRefreshAssets": "刷新資產",
+  "msgManageNetworks": "管理網路",
+  "msgStablecoins": "穩定幣",
+  "msgOtherCoins": "其他幣種",
+  "msgAddTokens": "添加幣種",
+  "msgSearchAssetsOrNetworks": "搜索資產或網路",
+  "msgNativeCoinsPayNetworkFeesUnsyncedBalancesAppear": "原生幣用於支付網路費用。未同步餘額顯示為 —。",
+  "msgTokensAreIdentifiedByNetworkAndContractMatching": "按網路與合約區分代幣；同名代幣不會自動合併。",
+  "msgNoMatchingAssets": "沒有匹配的資產。",
+  "msgAssetDetails": "{p0} 資產詳情",
+  "@msgAssetDetails": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSend": "發送",
+  "msgReceive": "接收",
+  "msgUseThisNetwork": "設為當前鏈",
+  "msgRefreshBalance": "刷新餘額",
+  "msgNetwork": "網路",
+  "msgWalletAddress": "錢包地址",
+  "msgRpcUrl": "RPC 地址",
+  "msgBlockExplorer": "區塊瀏覽器",
+  "msgExplorerLinkCopied": "瀏覽器鏈接已複製",
+  "msgCopyExplorerLink": "複製瀏覽器鏈接",
+  "msgSystemDefault": "跟隨系統",
+  "languageSimplifiedChinese": "簡體中文",
+  "languageTraditionalChinese": "繁體中文",
+  "msgLanguage": "語言",
+  "msgPreferencesCouldNotBeSavedPreviousSettingsMay": "偏好未能保存，重啓後可能恢復舊設置。",
+  "msgYourKeysYourWallet": "你的密鑰，\n你的錢包。",
+  "msgManageYourOnchainAssetsCreateAWalletOr": "輕鬆管理你的鏈上資產。\n創建錢包，或導入已有帳戶，即可開始。",
+  "msgSelfCustodyWallet": "自托管錢包",
+  "msgTransactionsAreSignedOnThisDeviceYouControl": "交易在本機簽名，密鑰由你掌握。",
+  "msgSecureDeviceStorage": "系統安全存儲",
+  "msgRecoveryCredentialsStayInThisDeviceSSecure": "恢復憑證保存在本機系統安全存儲中。",
+  "msgChooseYourNetworks": "網路由你選擇",
+  "msgRpcConnectionsStartOnlyAfterYouEnableA": "啓用網路後，才會連接對應的 RPC。",
+  "msgGetStartedWithStoneWallet": "開始使用 Stone Wallet",
+  "msgChooseHowToGetStarted": "選擇適合你的方式",
+  "msgCreateWallet": "創建新錢包",
+  "msgImportRecoveryPhrase": "導入助記詞",
+  "msgImportPrivateKey": "導入私鑰",
+  "msgImportPrivateKeyFile": "批量導入私鑰表格",
+  "msgCsvTsvColumnsChainPrivateKey": "CSV / TSV · 包含「鏈」「私鑰」兩列",
+  "msgKeepYourRecoveryPhraseAndPrivateKeysSafe": "請妥善保管助記詞與私鑰，它們是恢復錢包的憑證。",
+  "msgNetworksAndRpc": "網路與 RPC",
+  "msgNoNetworkSelectedEnableANetworkToQuery": "尚未選擇網路。啓用網路後才會查詢餘額。",
+  "msgTransactionNetwork": "當前操作鏈",
+  "msgTestnet": "測試網",
+  "msgMainnet": "主網",
+  "endpointCount": "{p0} 個節點 · 失敗自動切換",
+  "@endpointCount": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "msgActiveEndpoint": "當前可用節點",
+  "msgSyncingMore": "○ 同步中…",
+  "msgRpcConnected": "● RPC 已連接",
+  "msgNotSynced": "○ 尚未同步",
+  "msgEditRpc": "編輯 RPC",
+  "msgAddCustomNetwork": "添加自定義鏈",
+  "msgWalletSecurity": "錢包安全",
+  "msgAccountSource": "帳戶來源",
+  "msgDerivationPath": "派生路徑",
+  "msgPrivateKeyImport": "私鑰導入",
+  "msgRecoveryPhrasesAndPrivateKeysRemainInSecure": "助記詞與私鑰僅保存在本機安全存儲中，請自行保管恢復憑證。",
+  "msgWalletManagement": "錢包管理",
+  "walletAndAccountSummary": "{p0} 個錢包 · {p1} 個帳戶\n創建、導入更多錢包，或在助記詞錢包下繼續添加帳戶。",
+  "@walletAndAccountSummary": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      },
+      "p1": {
+        "type": "int"
+      }
+    }
+  },
+  "msgManageWalletsAndAccounts": "管理錢包與帳戶",
+  "msgChooseFileToImport": "選擇表格導入",
+  "msgBackup": "備份",
+  "msgIcloudGoogleDriveBackupNotConnected": "iCloud / Google Drive 雲備份（暫未接入）",
+  "msgKeepYourRecoveryCredentialsInASecureOffline": "請將恢復憑證妥善保存在離線安全位置。",
+  "msgOnchainAssets": "鏈上資產",
+  "msgViewAll": "查看全部",
+  "msgAssets": "資產",
+  "msgBalance": "餘額",
+  "msgStatus": "狀態",
+  "msgSynced": "已同步",
+  "msgNetworksQueried": "{p0}/{p1}\n鏈已查詢",
+  "@msgNetworksQueried": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "int"
+      }
+    }
+  },
+  "msgQueriedBalanceDistribution": "已查詢餘額分布",
+  "msgStablecoinOverview": "穩定幣總覽",
+  "msgRefreshStablecoins": "刷新穩定幣",
+  "msgCurrentAccount": "當前帳戶 · {p0}",
+  "@msgCurrentAccount": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgTrackedTotal": "已展示 {p0} 總量",
+  "@msgTrackedTotal": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgQueriedSubtotal": "已查詢合計",
+  "msgNetworksQueriedMore": "{p0}/{p1} 條鏈已查詢{p2}",
+  "@msgNetworksQueriedMore": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "int"
+      },
+      "p2": {
+        "type": "String"
+      }
+    }
+  },
+  "msgFullySynced": " · 已完整同步",
+  "msgCoverageIsIncomplete": " · 餘額可能尚未完整",
+  "msgIncludesTrackedUsdtBinancePegVersionsTokenQuantities": "含已展示的 USDT0 / Binance-Peg 版本；僅按代幣數量匯總，不是美元估值。",
+  "msgOnlyAddedCircleUsdcContractsAreCountedBy": "僅匯總已添加的 Circle USDC 合約，按代幣數量統計。",
+  "msgViewNetworkDistribution": "查看各鏈分布 →",
+  "msgByNetwork": "各鏈 {p0}",
+  "@msgByNetwork": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgEnableQueryNetworks": "啓用查詢網路",
+  "msgNoAddedYet": "尚未添加 {p0}",
+  "@msgNoAddedYet": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAddTokensToViewTheirNetworkDistribution": "添加幣種後即可查看跨鏈分布。",
+  "msgEnableStablecoinNetworks": "啓用穩定幣查詢網路",
+  "msgOfQueriedBalances": "佔已查詢餘額 {p0}%",
+  "@msgOfQueriedBalances": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgZeroBalance": "餘額為 0",
+  "msgAwaitingOnchainBalance": "等待鏈上餘額",
+  "msgCopyReceiveAddress": "複製收款地址",
+  "msgQuerying": "查詢中…",
+  "msgCurrentAccountReceiveAddress": "當前帳戶收款地址",
+  "msgTokenContractDecimals": "合約地址 · {p0} 位精度",
+  "@msgTokenContractDecimals": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "msgCheckTheNetworkAndContractBeforeReceivingToken": "請核對收款網路和合約。此處用於查看與收款，暫不提供代幣轉賬。",
+  "msgCannotReadThisTokenCheckTheNetworkContract": "無法讀取代幣，請檢查網路、合約與節點。",
+  "msgAddingATokenChangesItsDisplayOnlyIt": "添加僅改變資產展示，不會發起授權或交易。",
+  "msgCommonStablecoins": "常用穩定幣",
+  "msgAddedCustomTokens": "已添加的自定義代幣",
+  "msgHideToken": "隱藏代幣",
+  "msgAddCustomToken": "添加自定義代幣",
+  "msgTokenContractAddress": "代幣合約地址",
+  "msgProcessing": "處理中…",
+  "msgReadTokenInfo": "讀取代幣信息",
+  "msgDecimals": "{p0} · {p1} 位精度",
+  "@msgDecimals": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "int"
+      }
+    }
+  },
+  "msgCustomTokensWithMatchingTickersAreNotAutomatically": "自定義同名代幣不會自動計入 USDT / USDC 匯總。",
+  "msgMatchesAPresetContractItWillBeIncluded": "已匹配預置合約，將計入 {p0} 匯總。",
+  "@msgMatchesAPresetContractItWillBeIncluded": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAdded": "已添加",
+  "msgConfirmAddition": "確認添加",
+  "msgSwitchTheme": "切換主題",
+  "msgClose": "關閉",
+  "msgSelectWallet": "選擇錢包",
+  "msgRecoveryPhraseWallet": "助記詞錢包",
+  "msgSwap": "兌換",
+  "msgMakeSureTheReceivingNetworkMatchesTheNetwork": "請確認接收資產的網路與你選擇的網路一致。",
+  "msgEnableMultipleNetworksToViewBalancesOnlySelected": "可同時啓用多條鏈查看餘額。只有點擊保存後，選中的網路才會訪問 RPC。",
+  "msgDisconnectAllNetworks": "斷開所有網路",
+  "msgSaveNetworkSelection": "保存網路選擇",
+  "msgTapANetworkNameToUseItFor": "點擊網路名稱可切換當前鏈；勾選框用於同時啓用多條鏈。",
+  "msgUseForTransactions": "設為當前操作鏈",
+  "msgRecoveryPhraseVerificationFailedCheckWordsAnd": "助記詞校驗不正確，請重新核對第 2、6、10 個單詞。",
+  "msgVerifyRecoveryPhrase": "驗證恢復助記詞",
+  "msgWriteDownRecoveryPhrase": "記錄恢復助記詞",
+  "msgVerifyAndOpenWallet": "驗證並進入錢包",
+  "msgIWroteItDownVerify": "我已記錄，繼續驗證",
+  "msgWrittenVerify": "記錄  ✓     →     ② 驗證",
+  "msgWriteDownVerify": "① 記錄     →     ② 驗證",
+  "msgEnterTheRequestedWordsToFinishCreatingYour": "請輸入指定位置的單詞，驗證後完成創建。",
+  "msgWriteDownTheseWordsInOrderAndKeep": "請按順序記錄以下單詞，保存在離線安全位置。",
+  "msgWord": "第 {p0} 個單詞",
+  "@msgWord": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgDoNotScreenshotCopyOrSendYourRecovery": "不要截圖、複製或發送助記詞。校驗在本機完成。",
+  "msgImportWallet": "導入錢包",
+  "msgEnterYourExistingRecoveryPhraseSeparatingWordsWith": "輸入已有錢包的助記詞，單詞之間用空格分隔。",
+  "msgImport": "導入",
+  "msgEnterYourOrWordRecoveryPhrase": "請輸入 12 或 24 個助記詞單詞",
+  "msgChooseANetworkToViewAfterImporting": "請選擇導入後要查看的網路。",
+  "msgPrivateKeyImportFailedPleaseTryAgain": "私鑰導入失敗，請重試。",
+  "msgRestoreAnAccountWithAnEvmTronHexadecimal": "使用已有的 EVM / TRON 十六進制私鑰恢復帳戶，無需助記詞。",
+  "msgImporting": "導入中…",
+  "msgImportAndOpenWallet": "導入並進入錢包",
+  "msgSelectANetwork": "請選擇網路",
+  "msgPrivateKey": "私鑰",
+  "msgHexadecimalCharactersOptionallyPrefixedWithX": "64 位十六進制，可帶 0x 前綴",
+  "msgShowPrivateKey": "顯示私鑰",
+  "msgHidePrivateKey": "隱藏私鑰",
+  "msgPrivateKeysStayInSecureDeviceStorageAfter": "私鑰僅保存在本機系統安全存儲中。導入成功後，將連接所選網路查詢餘額；私鑰不會發送給 RPC。",
+  "msgImportResults": "導入結果",
+  "msgDone": "知道了",
+  "msgImportedSkippedOrFailed": "成功 {p0} 條 · 跳過或失敗 {p1} 條",
+  "@msgImportedSkippedOrFailed": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "msgRow": "第 {p0} 條：{p1}",
+  "@msgRow": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAmountMustBeGreaterThanZero": "金額必須大於 0。",
+  "msgAmountExceedsTheAvailableBalance": "金額超過當前餘額。",
+  "msgSendMore": "發送 {p0}",
+  "@msgSendMore": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSignedOnThisDevice": "{p0} · {p1} · 在本機完成簽名",
+  "@msgSignedOnThisDevice": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "msgCheckTheTransactionStatusFirst": "請先確認交易狀態",
+  "msgSignAndBroadcast": "簽名並廣播",
+  "msgRecipientAddress": "收款地址",
+  "msgAmount": "金額（{p0}）",
+  "@msgAmount": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAvailable": "可用餘額：{p0} {p1} · {p2}",
+  "@msgAvailable": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      },
+      "p2": {
+        "type": "String"
+      }
+    }
+  },
+  "msgInsufficientBandwidthConsumesTrxAnUnactivatedRecipientMay": "帶寬不足時消耗 TRX，接收方未激活可能另收費用",
+  "msgGasFeesAreChargedSeparately": "Gas 費另行扣除",
+  "msgTransactionHash": "交易哈希：{p0}",
+  "@msgTransactionHash": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSettings": "設置",
+  "msgYourKeysStayWithYouTransactionsAreSigned": "密鑰由你掌握\n簽名在本機完成",
+  "msgHome": "首頁",
+  "msgChooseNetwork": "選擇網路",
+  "msgChainIdMustBeAValidPositiveInteger": "Chain ID 必須是有效的正整數。",
+  "msgThisChainIdAlreadyExistsEditItsRpc": "該 Chain ID 已存在，請編輯現有網路的 RPC。",
+  "msgConfigureAtLeastOneRpcUrl": "請至少配置一個 RPC 地址。",
+  "msgTronHttpApiIsAvailableTheMainnetGenesis": "TRON HTTP API 可用，已驗證主網創世區塊。",
+  "msgRpcIsAvailableAndItsChainIdMatches": "RPC 可用，Chain ID 與網路配置一致。",
+  "msgConnectionCheckFailedCheckTheRpcUrlNetwork": "檢測失敗，請檢查 RPC 地址、網路或訪問憑證。",
+  "msgCouldNotSaveNetworkSettingsPleaseTryAgain": "網路配置保存失敗，請重試。",
+  "msgAddCustomEvmNetwork": "添加自定義 EVM 鏈",
+  "msgEditNetworkAndRpc": "編輯網路與 RPC",
+  "msgEnterOneRpcUrlPerLineInPriority": "每行填寫一個 RPC 地址，按順序嘗試；失敗後自動切換，後續優先使用可用節點。",
+  "msgSaving": "保存中…",
+  "msgSaveNetworkSettings": "保存網路配置",
+  "msgNetworkName": "網路名稱",
+  "msgForExampleBase": "例如：Base",
+  "msgForExample": "例如：8453",
+  "msgNativeCurrencySymbol": "原生代幣符號",
+  "msgForExampleEth": "例如：ETH",
+  "msgHttpsPrimaryEndpointHttpsBackupEndpoint": "https://第一個節點\nhttps://備用節點",
+  "msgOneUrlPerLineOrderSetsPriorityDuplicates": "每行一個；順序即優先級，自動去重。",
+  "msgRestoreBuiltInFreeEndpoints": "恢復內置免費節點",
+  "msgBlockExplorerUrlOptional": "區塊瀏覽器地址（可選）",
+  "msgChecking": "檢測中…",
+  "msgCheckRpcConnection": "檢測 RPC 連接",
+  "msgOperationFailedPleaseTryAgain": "操作失敗，請重試。",
+  "msgRenameAccount": "重命名帳戶",
+  "msgRenameWallet": "重命名錢包",
+  "walletAccountCount": "{p0} · {p1} 個帳戶",
+  "@walletAccountCount": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "int"
+      }
+    }
+  },
+  "msgPrivateKeyWallet": "私鑰錢包",
+  "msgCopyAccountAddress": "複製帳戶地址",
+  "msgAddAccount": "添加帳戶",
+  "walletAndAccountCount": "{p0} 個錢包 · {p1} 個帳戶",
+  "@walletAndAccountCount": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      },
+      "p1": {
+        "type": "int"
+      }
+    }
+  },
+  "msgARecoveryPhraseWalletCanHaveMultipleAccounts": "一個助記詞錢包可添加多個帳戶；新的助記詞或私鑰會保存為獨立錢包。",
+  "msgSearchWalletsAccountsOrAddresses": "搜索錢包、帳戶或地址",
+  "msgNoMatchingWalletsOrAccounts": "沒有匹配的錢包或帳戶",
+  "msgExistingWalletsAreKeptYouCanSwitchAt": "已有的錢包會保留，可隨時切換。",
+  "msgRestoreAWalletAndAddDerivedAccounts": "恢復錢包，並繼續添加派生帳戶",
+  "msgImportOneEvmTronAccount": "導入已有的單個 EVM / TRON 帳戶",
+  "msgImportMultipleAccountsFromCsvTsv": "從 CSV / TSV 導入多個帳戶",
+  "msgNamesMustContainCharacters": "名稱需要包含 1 至 64 個字符。",
+  "msgSaveName": "保存名稱",
+  "msgName": "名稱",
+  "msgCustomToken": "自定義代幣",
+  "msgInvalidTokenInformationReadTheContractAgain": "代幣信息無效，請重新讀取合約。",
+  "msgTokenSymbolContainsInvalidCharacters": "代幣符號包含無效字符。",
+  "msgTheTokenContractReturnedAnInvalidValue": "代幣合約返回值無效。",
+  "msgInvalidTokenSymbol": "代幣符號無效。",
+  "msgOnlyTokensWithDecimalsAreSupported": "僅支持 0–36 位精度的代幣。",
+  "msgCannotReadTheTokenSymbol": "無法讀取代幣符號。",
+  "msgInvalidTokenSymbolEncoding": "代幣符號編碼無效。",
+  "msgInvalidTokenSymbolLength": "代幣符號長度無效。",
+  "msgCannotReadTheSavedTokenListExistingRecords": "本機代幣列表無法讀取，未覆蓋原有記錄。",
+  "msgThisTokenHasAlreadyBeenAddedOnThis": "該鏈上的代幣已添加。",
+  "msgNetworkDisabled": "未啓用網路",
+  "msgQueryingMore": "查詢中",
+  "msgQueryFailed": "查詢失敗",
+  "msgTronMainnetIdentifierDoesNotMatchTheProtocol": "TRON 主網標識與協議不匹配。",
+  "msgEnterTheNetworkNameAndNativeCurrencySymbol": "請填寫網路名稱和原生代幣符號。",
+  "msgEnterAValidHttpHttpsUrl": "請輸入有效的 HTTP / HTTPS 地址。",
+  "msgCannotAccessKeychainQuitRebuildAndRunThe": "無法訪問系統鑰匙串（-34018）。請退出應用並重新編譯運行；熱重載無法更新原生簽名權限。",
+  "msgCannotAccessSecureDeviceStorageCheckThatKeychain": "無法訪問本機安全存儲，請檢查系統鑰匙串是否已解鎖及訪問是否被允許。",
+  "msgCannotReadSavedNetworkSettingsCheckTheStored": "本機網路配置無法讀取，請檢查保存的數據。",
+  "msgAccountIndexIsOutOfRange": "帳戶序號超出有效範圍。",
+  "msgInvalidRecoveryPhraseCheckTheWordsAndTheir": "助記詞無效，請檢查單詞和順序。",
+  "msgCannotDeriveTheEvmPrivateKey": "無法派生 EVM 私鑰。",
+  "msgInvalidPrivateKeyEnterHexadecimalCharacters": "私鑰無效，應為 64 位十六進制字符串。",
+  "msgPrivateKeyValueIsOutOfRange": "私鑰無效，數值超出有效範圍。",
+  "msgInvalidPrivateKeyCannotCreateAnAccount": "私鑰無效，無法創建帳戶。",
+  "msgBinance": "幣安",
+  "msgTron": "波場",
+  "msgRpcNetworkMismatchExpectedReceived": "RPC 鏈不匹配：預期 {p0}，實際 {p1}。",
+  "@msgRpcNetworkMismatchExpectedReceived": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAllRpcEndpointsAreUnavailableTryAgainLater": "全部 {p0} 個 RPC 節點均不可用，請稍後重試或編輯節點列表。",
+  "@msgAllRpcEndpointsAreUnavailableTryAgainLater": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "msgTheTokenAndNetworkDoNotMatch": "代幣與網路不匹配。",
+  "msgTheRpcReturnedADifferentTransactionHash": "RPC 返回的交易哈希不匹配。",
+  "msgBroadcastStatusIsUncertainCheckTheTransactionHash": "無法確認交易是否已廣播。請先按交易哈希查詢確認狀態，避免再次發起轉賬。",
+  "msgEnterAValidAmountWithAtMostDecimal": "請輸入有效金額，最多支持 {p0} 位小數。",
+  "@msgEnterAValidAmountWithAtMostDecimal": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "msgMainWallet": "主錢包",
+  "msgNoNetworkSelected": "未選擇網路",
+  "msgChooseANetworkToView": "請先選擇要查看的鏈",
+  "msgRpcNotConnected": "未連接 RPC",
+  "msgNativeAsset": "原生資產",
+  "msgConnectionFailed": "連接失敗",
+  "msgAwaitingSync": "待同步",
+  "msgWallet": "錢包",
+  "msgRpcRequestTimedOutCheckTheUrlOr": "RPC 請求超時，請檢查地址或更換節點。",
+  "msgRpcRequestFailedCheckTheNetworkEndpointOr": "RPC 請求失敗，請檢查網路、節點地址或訪問憑證。",
+  "msgCouldNotConnectToEditRpcSettingsOr": "{p0} 連接失敗，可在設置中修改 RPC 或重試。",
+  "@msgCouldNotConnectToEditRpcSettingsOr": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgTheAccountHasChangedReopenThisAsset": "帳戶已切換，請重新打開資產。",
+  "msgCouldNotSaveNetworkSelectionPleaseTryAgain": "網路選擇保存失敗，請重試。",
+  "msgPrivateKeyAccountImported": "私鑰帳戶已導入",
+  "msgTheAccountWasSavedButCouldNotBe": "帳戶已保存，加載失敗，請重新打開錢包。",
+  "msgCannotReadThisFile": "無法讀取表格文件。",
+  "msgNoImportableRowsTheHeaderMustContainChain": "表格沒有可導入的數據。首行為：鏈,私鑰",
+  "importedRowSummary": "成功導入 {p0} 條{p1}。",
+  "@importedRowSummary": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "msgFailed": "，{p0} 條失敗",
+  "@msgFailed": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgChain": "鏈",
+  "msgSelectedConnectingToRpc": "已選擇 {p0}，正在連接 RPC…",
+  "@msgSelectedConnectingToRpc": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgNetworkSettingsSaved": "{p0} 網路配置已保存",
+  "@msgNetworkSettingsSaved": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSwapsAreNotConnectedNoOrderOrSignature": "兌換功能尚未接入，沒有創建訂單或簽名。",
+  "msgUnavailable": "暫不可用",
+  "msgAddressCopied": "地址已複製",
+  "msgSelectANetworkBeforeSending": "發送前請先選擇網路。",
+  "msgTransactionBroadcast": "交易已廣播：{p0}",
+  "@msgTransactionBroadcast": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgWalletOperationFailedPleaseTryAgain": "錢包操作失敗，請重試。",
+  "msgMostRecentlyBroadcastTransaction": "最近廣播的交易",
+  "msgEnterAValidTronAddressStartingWithT": "請輸入有效的 TRON 地址（T 開頭，含正確校驗碼）。",
+  "msgTheTronEndpointReturnedAnErrorTryAnother": "TRON 節點返回錯誤，請更換節點或稍後重試。",
+  "msgTronNetworkMismatchAMainnetEndpointIsRequired": "TRON 節點網路不匹配：需要 TRON 主網。",
+  "msgAllTronEndpointsAreUnavailableTryAgainLater": "全部 {p0} 個 TRON 節點均不可用，請稍後重試或編輯節點列表。",
+  "@msgAllTronEndpointsAreUnavailableTryAgainLater": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "msgTrcQueryFailedCheckTheContractAndEndpoint": "TRC20 合約查詢失敗，請檢查合約和節點。",
+  "msgTheTronEndpointReturnedADifferentAccountS": "TRON 節點返回了不同帳戶的餘額。",
+  "msgTheTronEndpointReturnedAnInvalidBalance": "TRON 節點返回的餘額無效。",
+  "msgTrxAmountIsOutOfRange": "TRX 金額超出有效範圍。",
+  "msgTronReferenceBlockIsInvalidOrStaleCheck": "TRON 參考區塊無效或已過期，請檢查本機時間和節點。",
+  "msgTheTronEndpointDidNotConfirmTheBroadcast": "TRON 節點未確認交易廣播。",
+  "msgCannotReadTheWalletBookCheckSecureStorage": "本機錢包簿無法讀取，請檢查安全存儲。",
+  "msgAccount": "帳戶 1",
+  "msgPrivateKeyAccount": "私鑰帳戶 {p0}",
+  "@msgPrivateKeyAccount": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSavedPrivateKeyAccountDataIsCorrupted": "本機保存的私鑰帳戶數據已損壞。",
+  "msgWalletMore": "錢包 {p0}",
+  "@msgWalletMore": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgUnsupportedNetwork": "不支持的鏈。",
+  "msgDuplicateEntrySkipped": "重復記錄，已跳過。",
+  "msgOnlyRecoveryPhraseWalletsCanDeriveAdditionalAccounts": "只有助記詞錢包可以派生新帳戶。",
+  "msgAccountMore": "帳戶 {p0}",
+  "@msgAccountMore": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAccountNotFound": "找不到此帳戶。",
+  "msgWalletNotFound": "找不到此錢包。",
+  "msgUnexpectedErrorPleaseTryAgain": "未知錯誤，請稍後重試。",
+  "msgSelfCustodyEvmTron": "自托管 · EVM / TRON",
+  "portfolioOverview": "地址總覽",
+  "portfolioByCoin": "按幣種",
+  "portfolioReferenceValue": "參考資產估值",
+  "portfolioValuedSubtotal": "已估值合計",
+  "portfolioAllAddresses": "全部關聯地址",
+  "portfolioAllNetworks": "全部啟用網路",
+  "portfolioAllAssets": "全部資產",
+  "portfolioSimple": "簡潔",
+  "portfolioDetailed": "詳細",
+  "portfolioDisplaySettings": "資產顯示",
+  "portfolioDisplayMode": "顯示模式",
+  "portfolioInitialCount": "首屏幣種數量",
+  "portfolioAll": "全部",
+  "portfolioSort": "資產排序",
+  "portfolioSortValue": "估值由高至低",
+  "portfolioStableFirst": "穩定幣優先",
+  "portfolioSortName": "名稱",
+  "portfolioHideZero": "隱藏已確認的零餘額",
+  "portfolioShowSpam": "顯示索引服務標記的疑似垃圾資產",
+  "portfolioExpand": "展開全部（{p0}）",
+  "@portfolioExpand": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioCollapse": "收起",
+  "portfolioSelectCoin": "選擇幣種",
+  "portfolioSearch": "搜尋幣種、合約或網路",
+  "portfolioChainCount": "{p0} 條鏈",
+  "@portfolioChainCount": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "portfolioCoinCount": "{p0} 個幣種",
+  "@portfolioCoinCount": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "portfolioInformation": "估值與查詢詳情",
+  "portfolioValueExplanation": "按 USDT 市價估算，1 USDT≈1 USD；僅包含已啟用網路下已新增和已發現的資產。",
+  "portfolioVersionExplanation": "USDT0、Binance-Peg 版本使用 USDT 參考價；同名符號不會自動歸併或匹配行情。",
+  "portfolioCoverage": "{p0}/{p1} 項持倉已查詢 · {p2} 項未定價",
+  "@portfolioCoverage": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      },
+      "p2": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioPartial": "部分結果",
+  "portfolioStalePrices": "行情已過期，使用近期快取",
+  "portfolioNoPrice": "暫無參考價格",
+  "portfolioNoAssets": "沒有符合條件的資產",
+  "portfolioShowZero": "查看零餘額資產",
+  "portfolioRefresh": "重新整理餘額與行情",
+  "portfolioSourceRpc": "餘額來自 RPC",
+  "portfolioSourceIndexer": "索引服務發現",
+  "portfolioPriceSource": "行情：Binance 公開 USDT 交易對",
+  "portfolioUpdated": "行情時間：{p0}",
+  "@portfolioUpdated": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioTestnetExcluded": "測試網資產不計入估值。",
+  "discoveryServices": "資產索引服務",
+  "discoveryConfigure": "設定自動發現",
+  "discoveryNotConfigured": "自動發現未設定",
+  "discoveryQuerying": "正在發現資產…",
+  "discoveryPartial": "資產發現尚未完成",
+  "discoveryUnavailable": "自動發現暫不可用",
+  "discoveryLoadMore": "繼續載入資產",
+  "discoveryConfigureProvider": "設定 {p0}",
+  "@discoveryConfigureProvider": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "discoveryGetKey": "取得 API Key",
+  "discoveryDocs": "官方文件",
+  "discoveryPlans": "方案與額度",
+  "discoveryApiKey": "服務 API Key",
+  "discoveryKeyHint": "填入自己的服務金鑰，並非錢包私鑰",
+  "discoveryKeyRequired": "請填寫服務 API Key。",
+  "discoveryPrivacy": "啟用後，所選服務商會收到對應網路的關聯公開地址。服務金鑰保存在本機安全儲存中。",
+  "discoveryAssignments": "選擇網路（將取代該網路的現有索引服務）",
+  "discoveryChooseNetwork": "請至少選擇一個受支援的已啟用網路。",
+  "discoveryTest": "測試連線",
+  "discoveryConnected": "連線成功，金鑰與回應有效。",
+  "discoverySaveEnable": "儲存並啟用",
+  "discoveryEnabled": "已啟用",
+  "discoveryDisabled": "已停用",
+  "discoveryDisable": "停用",
+  "discoveryDelete": "刪除設定",
+  "discoveryEdit": "設定",
+  "discoveryUnauthorized": "服務金鑰無效或權限不足，請檢查金鑰和方案權限。",
+  "discoveryLimited": "索引服務額度不足或觸發限流，請稍後重試。",
+  "discoveryResponseInvalid": "索引服務回傳了無效的資產資料。",
+  "discoveryRequestFailed": "索引服務連線失敗，已關注資產仍可查看。",
+  "discoverySettingsUnreadable": "無法讀取索引服務設定，原記錄已保留。",
+  "discoverySaveFailed": "索引服務設定儲存失敗，請重試。",
+  "discoveryUnsupported": "本應用尚未接入該服務在此網路的資產發現。",
+  "discoveryWatch": "加入關注",
+  "discoveryWatched": "已加入關注資產",
+  "discoveryMoralisGuide": "註冊 Moralis → 取得 Web3 API Key → 選擇 Ethereum、Polygon 或 BNB Chain。額度以方案頁為準。",
+  "discoveryAlchemyGuide": "建立 Alchemy App → 啟用 Ethereum 或 Polygon → 複製 API Key。本應用使用 Token API。",
+  "discoveryTronGridGuide": "登入 TronGrid → 建立 API Key → 啟用 TRON 主網。本應用發現 TRC20 持倉。",
+  "discoveryLinkCopied": "瀏覽器未能開啟，連結已複製。",
+  "discoveryNoEnabledNetworks": "請先啟用一個受支援網路，再設定自動發現。",
+  "portfolioAddressDetails": "關聯地址",
+  "portfolioBalanceStatus": "餘額狀態",
+  "portfolioSpam": "疑似垃圾資產",
+  "portfolioNoCoin": "目前篩選下沒有幣種",
+  "discoveryNotConfiguredShort": "未設定",
+  "settingsSearch": "搜尋設定",
+  "settingsSearchHint": "語言、顯示模式、RPC…",
+  "settingsQuickLinks": "常用設定",
+  "settingsCategories": "全部設定",
+  "settingsWallets": "錢包與帳戶",
+  "settingsWalletsHint": "管理、建立與匯入",
+  "settingsAssetsHint": "顯示偏好與關注幣種",
+  "settingsData": "網路與資料",
+  "settingsDataHint": "網路 RPC 與資產索引服務",
+  "settingsSecurity": "安全與備份",
+  "settingsSecurityHint": "帳戶安全資訊與備份說明",
+  "settingsGeneral": "一般",
+  "settingsGeneralHint": "語言與外觀主題",
+  "settingsAppearance": "外觀主題",
+  "settingsLight": "淺色",
+  "settingsDark": "深色",
+  "settingsWatchedTokens": "關注幣種管理",
+  "settingsNoResults": "找不到相關設定",
+  "settingsClearSearch": "清除搜尋",
+  "settingsUnavailable": "暫未接入",
+  "settingsNetworkDisabled": "未啟用",
+  "settingsNetworkEnabled": "已啟用",
+  "settingsNetworkState": "啟用網路",
+  "settingsBackupHint": "請妥善離線保管復原憑證。雲端備份暫未接入。",
+  "settingsMatchedOption": "已定位此設定"
+}

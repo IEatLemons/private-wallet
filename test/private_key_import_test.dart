@@ -1,3 +1,4 @@
+import 'asset_test_helpers.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -44,7 +45,7 @@ void main() {
       expect(find.byType(ImportPrivateKeyPanel), findsNothing);
       expect(find.text('私钥账户 1'), findsOneWidget);
       expect(
-        find.text(
+        find.textContaining(
           shortAddress(WalletAccount.fromPrivateKey(testKey).checksumAddress),
         ),
         findsOneWidget,
@@ -61,7 +62,7 @@ void main() {
       await start(tester, WalletVault(store: store), rpc, size: size);
       expect(find.text('私钥账户 1'), findsOneWidget);
       expect(
-        find.text(
+        find.textContaining(
           shortAddress(WalletAccount.fromPrivateKey(testKey).checksumAddress),
         ),
         findsOneWidget,
@@ -104,7 +105,9 @@ void main() {
       final vault = WalletVault(store: store);
       final rpc = RpcFixture();
       await start(tester, vault, rpc);
-      await tap(tester, find.byTooltip('设置'));
+      await tap(tester, find.byKey(const ValueKey('open-settings')));
+      await settingsEntryTap(tester, 'wallets');
+      await settingsEntryTap(tester, 'import-wallet');
       await openImport(tester);
       await chooseNetwork(tester, 'Ethereum · 主网');
       await tester.enterText(keyInput, testKey);
@@ -122,7 +125,7 @@ void main() {
       await tap(tester, find.text('私钥账户 2'));
       await tap(tester, find.text('主钱包'));
       expect(
-        find.text(
+        find.textContaining(
           shortAddress(WalletAccount.fromMnemonic(mnemonic).checksumAddress),
         ),
         findsOneWidget,

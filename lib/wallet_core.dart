@@ -3,18 +3,49 @@ import 'dart:convert';
 import 'dart:math' show Random;
 import 'dart:typed_data';
 
+import 'message_codes.dart';
+export 'message_codes.dart';
+
 import 'package:bip32/bip32.dart';
 import 'package:bip39/bip39.dart' as bip39;
+import 'package:bs58check/bs58check.dart' as base58;
+import 'package:crypto/crypto.dart' as hashes;
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:web3dart/web3dart.dart';
 import 'package:web3dart/crypto.dart' show bytesToHex, keccak256;
+import 'package:web3dart/crypto.dart' as ec;
 import 'package:web3dart/json_rpc.dart' show RPCError;
 
 part 'wallet_book.dart';
+part 'tron.dart';
+part 'tokens.dart';
 
 const evmDerivationPath = "m/44'/60'/0'/0/0";
+
+enum NetworkProtocol { evm, tron }
+
+const bnbSmartChainNetwork = EvmNetwork(
+  id: 56,
+  name: 'BNB Smart Chain',
+  nativeSymbol: 'BNB',
+  rpcUrl: 'https://bsc-dataseed.bnbchain.org',
+  fallbackRpcUrls: ['https://bsc-rpc.publicnode.com'],
+  explorerUrl: 'https://bscscan.com',
+  isTestnet: false,
+);
+
+const tronMainnetNetwork = EvmNetwork(
+  id: 728126428,
+  name: 'TRON',
+  nativeSymbol: 'TRX',
+  rpcUrl: 'https://api.trongrid.io',
+  fallbackRpcUrls: ['https://tron-rpc.publicnode.com'],
+  explorerUrl: 'https://tronscan.org',
+  isTestnet: false,
+  protocol: NetworkProtocol.tron,
+);
 
 const ethereumMainnetNetwork = EvmNetwork(
   id: 1,
@@ -56,11 +87,22 @@ const polygonAmoyNetwork = EvmNetwork(
   isTestnet: true,
 );
 
-const supportedEvmNetworks = <EvmNetwork>[
+const supportedNetworks = <EvmNetwork>[
   ethereumMainnetNetwork,
   ethereumSepoliaNetwork,
   polygonMainnetNetwork,
   polygonAmoyNetwork,
+  bnbSmartChainNetwork,
+  tronMainnetNetwork,
+];
+
+// Kept for callers of the original EVM-only API. New code uses supportedNetworks.
+const supportedEvmNetworks = [
+  ethereumMainnetNetwork,
+  ethereumSepoliaNetwork,
+  polygonMainnetNetwork,
+  polygonAmoyNetwork,
+  bnbSmartChainNetwork,
 ];
 
 class EvmNetwork {
@@ -72,9 +114,26 @@ class EvmNetwork {
     required this.explorerUrl,
     required this.isTestnet,
     this.fallbackRpcUrls = const [],
+    this.protocol = NetworkProtocol.evm,
   });
 
   final int id;
+  final NetworkProtocol protocol;
+  bool get isTron => protocol == NetworkProtocol.tron;
+  int get nativeDecimals => isTron ? 6 : 18;
+  String get identifierLabel => isTron ? 'TRON · HTTP API' : 'Chain ID $id';
+  String get addressHint => isTron ? 'T…' : '0x…';
+  BigInt parseAmount(String value) => parseNativeAmount(value, nativeDecimals);
+  String formatAmount(BigInt value) =>
+      formatNativeAmount(value, nativeDecimals);
+  void validateAddress(String value) {
+    if (isTron) {
+      decodeTronAddress(value);
+    } else {
+      EthereumAddress.fromHex(value, enforceEip55: false);
+    }
+  }
+
   final String name;
   final String nativeSymbol;
   final String rpcUrl;
@@ -102,14 +161,25 @@ class EvmNetwork {
         : fallbackRpcUrls,
     explorerUrl: explorerUrl ?? this.explorerUrl,
     isTestnet: isTestnet ?? this.isTestnet,
+    protocol: protocol,
   );
 
   void validate() {
+    if ((isTron && (id != tronMainnetNetwork.id || isTestnet)) ||
+        (!isTron && id == tronMainnetNetwork.id)) {
+      throw const WalletInputException(
+        MessageCode.msgTronMainnetIdentifierDoesNotMatchTheProtocol,
+      );
+    }
     if (id <= 0 || id > 9007199254740991) {
-      throw const WalletInputException('Chain ID 必须是有效的正整数。');
+      throw const WalletInputException(
+        MessageCode.msgChainIdMustBeAValidPositiveInteger,
+      );
     }
     if (name.trim().isEmpty || nativeSymbol.trim().isEmpty) {
-      throw const WalletInputException('请填写网络名称和原生代币符号。');
+      throw const WalletInputException(
+        MessageCode.msgEnterTheNetworkNameAndNativeCurrencySymbol,
+      );
     }
     for (final url in [...rpcUrls, if (explorerUrl.isNotEmpty) explorerUrl]) {
       final uri = Uri.tryParse(url);
@@ -117,7 +187,9 @@ class EvmNetwork {
           !uri.hasAuthority ||
           uri.host.isEmpty ||
           !['https', 'http'].contains(uri.scheme)) {
-        throw const WalletInputException('请输入有效的 HTTP / HTTPS 地址。');
+        throw const WalletInputException(
+          MessageCode.msgEnterAValidHttpHttpsUrl,
+        );
       }
     }
   }
@@ -130,13 +202,18 @@ class EvmNetwork {
     'rpcUrls': rpcUrls,
     'explorerUrl': explorerUrl,
     'isTestnet': isTestnet,
+    'protocol': protocol.name,
   };
 
   factory EvmNetwork.fromJson(Map<String, dynamic> json) {
     final urls = json['rpcUrls'] == null
         ? [json['rpcUrl'] as String]
         : List<String>.from(json['rpcUrls'] as List);
-    if (urls.isEmpty) throw const WalletInputException('请至少配置一个 RPC 地址。');
+    if (urls.isEmpty) {
+      throw const WalletInputException(
+        MessageCode.msgConfigureAtLeastOneRpcUrl,
+      );
+    }
     final network = EvmNetwork(
       id: json['id'] as int,
       name: json['name'] as String,
@@ -145,6 +222,9 @@ class EvmNetwork {
       fallbackRpcUrls: List.unmodifiable(urls.skip(1)),
       explorerUrl: json['explorerUrl'] as String? ?? '',
       isTestnet: json['isTestnet'] as bool,
+      protocol: NetworkProtocol.values.byName(
+        json['protocol'] as String? ?? 'evm',
+      ),
     );
     network.validate();
     return network;
@@ -197,10 +277,12 @@ class FlutterSecretStore implements SecretStore {
     } on PlatformException catch (error) {
       if (error.code == '-34018' || error.details?.toString() == '-34018') {
         throw const WalletInputException(
-          '无法访问系统钥匙串（-34018）。请退出应用并重新编译运行；热重载无法更新原生签名权限。',
+          MessageCode.msgCannotAccessKeychainQuitRebuildAndRunThe,
         );
       }
-      throw const WalletInputException('无法访问本机安全存储，请检查系统钥匙串是否已解锁及访问是否被允许。');
+      throw const WalletInputException(
+        MessageCode.msgCannotAccessSecureDeviceStorageCheckThatKeychain,
+      );
     }
   }
 }
@@ -209,6 +291,15 @@ class WalletVault {
   WalletVault({SecretStore? store}) : _store = store ?? FlutterSecretStore();
 
   static const walletBookKey = 'stone_wallet.v2.wallet_book';
+  static const assetIndexerConfigsKey = 'stone_wallet.v1.asset_indexer_configs';
+  Future<String?> readAssetIndexerConfigs() =>
+      _store.read(assetIndexerConfigsKey);
+  Future<void> writeAssetIndexerConfigs(String value) =>
+      _store.write(assetIndexerConfigsKey, value);
+  static const appPreferencesKey = 'stone_wallet.v1.app_preferences';
+  Future<String?> readAppPreferences() => _store.read(appPreferencesKey);
+  Future<void> writeAppPreferences(String value) =>
+      _store.write(appPreferencesKey, value);
   static const mnemonicKey = 'stone_wallet.v1.mnemonic';
   static const selectedNetworkKey = 'stone_wallet.v1.selected_network';
   static const selectedNetworksKey = 'stone_wallet.v1.selected_networks';
@@ -233,11 +324,21 @@ class WalletVault {
     );
   }
 
-  Future<WalletAccount> saveRecoveryPhrase(String mnemonic) async =>
-      (await addMnemonicWallet(mnemonic)).selected!.account;
+  Future<WalletAccount> saveRecoveryPhrase(
+    String mnemonic, {
+    String? name,
+    String? accountName,
+  }) async => (await addMnemonicWallet(
+    mnemonic,
+    name: name,
+    accountName: accountName,
+  )).selected!.account;
 
-  Future<WalletAccount> importWallet(String mnemonic) =>
-      saveRecoveryPhrase(mnemonic);
+  Future<WalletAccount> importWallet(
+    String mnemonic, {
+    String? name,
+    String? accountName,
+  }) => saveRecoveryPhrase(mnemonic, name: name, accountName: accountName);
 
   /// Compatibility view of the selected mnemonic account (or first mnemonic
   /// wallet when a private-key account is selected). It never replaces a root.
@@ -264,23 +365,34 @@ class WalletVault {
   Future<ImportedWallet> importPrivateKeyWallet({
     required String privateKey,
     required int networkId,
+    String Function(int)? nameForWallet,
+    String? accountName,
   }) async {
-    final result = await importPrivateKeyRows([
-      WalletImportRow(chain: networkId.toString(), privateKey: privateKey),
-    ], selectImported: true);
+    final result = await importPrivateKeyRows(
+      [WalletImportRow(chain: networkId.toString(), privateKey: privateKey)],
+      selectImported: true,
+      nameForWallet: nameForWallet,
+      accountName: accountName,
+    );
     if (result.errors.isNotEmpty) {
-      throw WalletInputException(result.errors.first.message);
+      throw WalletInputException.fromMessage(result.errors.first.message);
     }
     return result.imported.single;
   }
 
   Future<BatchImportResult> importPrivateKeyWallets(
-    List<WalletImportRow> rows,
-  ) => importPrivateKeyRows(rows);
+    List<WalletImportRow> rows, {
+    String Function(int)? nameForWallet,
+    String? accountName,
+  }) => importPrivateKeyRows(
+    rows,
+    nameForWallet: nameForWallet,
+    accountName: accountName,
+  );
 
   Future<List<EvmNetwork>> loadNetworks() async {
     final raw = await _store.read(networkConfigsKey);
-    final networks = {for (final n in supportedEvmNetworks) n.id: n};
+    final networks = {for (final n in supportedNetworks) n.id: n};
     if (raw == null) return networks.values.toList();
     try {
       for (final value in jsonDecode(raw) as List) {
@@ -289,7 +401,7 @@ class WalletVault {
         // Upgrade old single-URL profiles while preserving a custom first URL.
         // An explicitly saved new list is always respected, including one URL.
         if (!json.containsKey('rpcUrls')) {
-          final defaults = supportedEvmNetworks
+          final defaults = supportedNetworks
               .where((n) => n.id == network.id)
               .firstOrNull;
           if (defaults != null) {
@@ -309,7 +421,9 @@ class WalletVault {
         networks[network.id] = network;
       }
     } catch (_) {
-      throw const WalletInputException('本机网络配置无法读取，请检查保存的数据。');
+      throw const WalletInputException(
+        MessageCode.msgCannotReadSavedNetworkSettingsCheckTheStored,
+      );
     }
     return networks.values.toList();
   }
@@ -388,7 +502,7 @@ class WalletImportError {
   const WalletImportError(this.row, this.message);
 
   final int row;
-  final String message;
+  final WalletMessage message;
 }
 
 class BatchImportResult {
@@ -406,14 +520,17 @@ class ImportedWallet {
 }
 
 class WalletAccount {
-  WalletAccount._({required this.credentials});
+  WalletAccount._({required this.credentials, EthPrivateKey? tronCredentials})
+    : _tronCredentials = tronCredentials ?? credentials;
 
   factory WalletAccount.fromMnemonic(String mnemonic, {int accountIndex = 0}) {
     if (accountIndex < 0 || accountIndex >= 0x80000000) {
-      throw const WalletInputException('账户序号超出有效范围。');
+      throw const WalletInputException(MessageCode.msgAccountIndexIsOutOfRange);
     }
     if (!bip39.validateMnemonic(mnemonic)) {
-      throw const WalletInputException('助记词无效，请检查单词和顺序。');
+      throw const WalletInputException(
+        MessageCode.msgInvalidRecoveryPhraseCheckTheWordsAndTheir,
+      );
     }
     final seed = bip39.mnemonicToSeed(mnemonic);
     final node = BIP32
@@ -421,10 +538,19 @@ class WalletAccount {
         .derivePath(evmAccountDerivationPath(accountIndex));
     final privateKey = node.privateKey;
     if (privateKey == null) {
-      throw const WalletInputException('无法派生 EVM 私钥。');
+      throw const WalletInputException(
+        MessageCode.msgCannotDeriveTheEvmPrivateKey,
+      );
     }
 
-    return WalletAccount._(credentials: EthPrivateKey(_copyBytes(privateKey)));
+    final tronKey = BIP32
+        .fromSeed(seed)
+        .derivePath(tronAccountDerivationPath(accountIndex))
+        .privateKey!;
+    return WalletAccount._(
+      credentials: EthPrivateKey(_copyBytes(privateKey)),
+      tronCredentials: EthPrivateKey(_copyBytes(tronKey)),
+    );
   }
 
   factory WalletAccount.fromPrivateKey(String privateKey) {
@@ -433,7 +559,9 @@ class WalletAccount {
       '',
     );
     if (!RegExp(r'^[0-9a-fA-F]{64}$').hasMatch(normalized)) {
-      throw const WalletInputException('私钥无效，应为 64 位十六进制字符串。');
+      throw const WalletInputException(
+        MessageCode.msgInvalidPrivateKeyEnterHexadecimalCharacters,
+      );
     }
     final value = BigInt.parse(normalized, radix: 16);
     final order = BigInt.parse(
@@ -441,16 +569,27 @@ class WalletAccount {
       radix: 16,
     );
     if (value <= BigInt.zero || value >= order) {
-      throw const WalletInputException('私钥无效，数值超出有效范围。');
+      throw const WalletInputException(
+        MessageCode.msgPrivateKeyValueIsOutOfRange,
+      );
     }
     try {
       return WalletAccount._(credentials: EthPrivateKey.fromHex(normalized));
     } catch (_) {
-      throw const WalletInputException('私钥无效，无法创建账户。');
+      throw const WalletInputException(
+        MessageCode.msgInvalidPrivateKeyCannotCreateAnAccount,
+      );
     }
   }
 
   final EthPrivateKey credentials;
+  final EthPrivateKey _tronCredentials;
+
+  String get tronAddress => base58.encode(
+    Uint8List.fromList([0x41, ..._tronCredentials.address.addressBytes]),
+  );
+  String addressFor(EvmNetwork? network) =>
+      network?.isTron == true ? tronAddress : checksumAddress;
 
   EthereumAddress get address => credentials.address;
 
@@ -467,7 +606,7 @@ class WalletAccount {
 
 EvmNetwork? networkForValue(
   String value, {
-  List<EvmNetwork> networks = supportedEvmNetworks,
+  List<EvmNetwork> networks = supportedNetworks,
 }) {
   final normalized = value.trim().toLowerCase();
   final id = int.tryParse(normalized);
@@ -486,6 +625,13 @@ EvmNetwork? networkForValue(
     'polygon': 137,
     'matic': 137,
     'amoy': 80002,
+    'bsc': 56,
+    'binance': 56,
+    '币安': 56,
+    'bnb': 56,
+    'tron': 728126428,
+    'trx': 728126428,
+    '波场': 728126428,
   };
   final aliasId = aliases[normalized];
   return networks.where((network) => network.id == aliasId).firstOrNull;
@@ -500,6 +646,14 @@ class EvmNetworkService {
   }) {
     network.validate();
     final effectiveHttpClient = httpClient ?? http.Client();
+    if (network.isTron) {
+      return TronNetworkService._(
+        network: network,
+        httpClient: effectiveHttpClient,
+        ownsHttpClient: httpClient == null,
+        endpointTimeout: endpointTimeout,
+      );
+    }
     final checkedHttp = _RpcHttpClient(effectiveHttpClient);
     return EvmNetworkService._(
       network: network,
@@ -535,7 +689,10 @@ class EvmNetworkService {
   Future<void> _checkChain(Web3Client client) async {
     final actual = await client.getChainId().timeout(endpointTimeout);
     if (actual != BigInt.from(network.id)) {
-      throw WalletInputException('RPC 链不匹配：预期 ${network.id}，实际 $actual。');
+      throw WalletInputException(
+        MessageCode.msgRpcNetworkMismatchExpectedReceived,
+        arguments: [network.id, actual],
+      );
     }
   }
 
@@ -562,7 +719,8 @@ class EvmNetworkService {
     }
     if (lastError is WalletInputException) throw lastError;
     throw WalletInputException(
-      '全部 ${_clients.length} 个 RPC 节点均不可用，请稍后重试或编辑节点列表。',
+      MessageCode.msgAllRpcEndpointsAreUnavailableTryAgainLater,
+      arguments: [_clients.length],
     );
   }
 
@@ -571,6 +729,67 @@ class EvmNetworkService {
   Future<EtherAmount> getNativeBalance(WalletAccount account) =>
       _withFailover((client) => client.getBalance(account.address));
 
+  Future<String> readTokenContract(
+    String contract,
+    String signature,
+    String parameter,
+  ) => _withFailover((client) async {
+    final result = await client.callRaw(
+      contract: EthereumAddress.fromHex(contract, enforceEip55: false),
+      data: Uint8List.fromList([
+        ...keccak256(Uint8List.fromList(utf8.encode(signature))).take(4),
+        ...ec.hexToBytes(parameter),
+      ]),
+    );
+    validateTokenResponse(signature, result);
+    return result;
+  });
+
+  Future<BigInt> getTokenBalance(
+    WalletAccount account,
+    TokenDefinition token,
+  ) async {
+    if (token.networkId != network.id) {
+      throw const WalletInputException(
+        MessageCode.msgTheTokenAndNetworkDoNotMatch,
+      );
+    }
+    token.validate(network);
+    final owner = network.isTron
+        ? bytesToHex(decodeTronAddress(account.tronAddress).sublist(1))
+        : account.addressHex.substring(2);
+    final result = await readTokenContract(
+      token.contract,
+      'balanceOf(address)',
+      owner.padLeft(64, '0'),
+    );
+    return decodeTokenUint(result);
+  }
+
+  Future<TokenDefinition> inspectToken(String contract) async {
+    network.validateAddress(contract);
+    final decimals = decodeTokenUint(
+      await readTokenContract(contract, 'decimals()', ''),
+    ).toInt();
+    if (decimals < 0 || decimals > 36) {
+      throw const WalletInputException(
+        MessageCode.msgOnlyTokensWithDecimalsAreSupported,
+      );
+    }
+    final symbol = decodeTokenSymbol(
+      await readTokenContract(contract, 'symbol()', ''),
+    );
+    final token = TokenDefinition(
+      networkId: network.id,
+      contract: contract,
+      symbol: symbol,
+      decimals: decimals,
+      name: symbol,
+    );
+    token.validate(network);
+    return canonicalToken(token);
+  }
+
   Future<String> sendNative({
     required WalletAccount account,
     required String recipient,
@@ -578,7 +797,9 @@ class EvmNetworkService {
   }) async {
     final to = EthereumAddress.fromHex(recipient, enforceEip55: false);
     if (amountWei <= BigInt.zero) {
-      throw const WalletInputException('金额必须大于 0。');
+      throw const WalletInputException(
+        MessageCode.msgAmountMustBeGreaterThanZero,
+      );
     }
     // Failover during preparation never broadcasts. Once signed, every retry
     // reuses these exact bytes (same nonce and hash), never a new transaction.
@@ -597,7 +818,9 @@ class EvmNetworkService {
         try {
           final result = await client.sendRawTransaction(signed);
           if (result.toLowerCase() != hash.toLowerCase()) {
-            throw const WalletInputException('RPC 返回的交易哈希不匹配。');
+            throw const WalletInputException(
+              MessageCode.msgTheRpcReturnedADifferentTransactionHash,
+            );
           }
           return hash;
         } on RPCError catch (error) {
@@ -640,37 +863,54 @@ class _RpcHttpClient extends http.BaseClient {
 
 class RpcBroadcastException extends WalletInputException {
   RpcBroadcastException(this.transactionHash)
-    : super('无法确认交易是否已广播。请先按交易哈希查询确认状态，避免再次发起转账。');
+    : super(MessageCode.msgBroadcastStatusIsUncertainCheckTheTransactionHash);
   final String transactionHash;
 }
 
 class WalletInputException implements Exception {
-  const WalletInputException(this.message);
-
-  final String message;
-
+  const WalletInputException(this.code, {this.arguments = const []});
+  factory WalletInputException.fromMessage(WalletMessage message) =>
+      WalletInputException(message.code, arguments: message.arguments);
+  final MessageCode code;
+  final List<Object> arguments;
+  WalletMessage get message => WalletMessage(code, arguments);
   @override
-  String toString() => message;
+  String toString() => code.name;
 }
 
-BigInt parseEtherToWei(String input) {
+BigInt parseEtherToWei(String input) => parseNativeAmount(input, 18);
+
+BigInt parseNativeAmount(String input, int decimals) {
   final normalized = input.trim();
-  final match = RegExp(r'^(\d+)(?:\.(\d{1,18}))?$').firstMatch(normalized);
+  final match = RegExp(
+    '^(\\d+)(?:\\.(\\d{1,$decimals}))?\$',
+  ).firstMatch(normalized);
   if (match == null) {
-    throw const WalletInputException('请输入有效金额，最多支持 18 位小数。');
+    throw WalletInputException(
+      MessageCode.msgEnterAValidAmountWithAtMostDecimal,
+      arguments: [decimals],
+    );
   }
 
   final whole = BigInt.parse(match.group(1)!);
-  final fraction = (match.group(2) ?? '').padRight(18, '0');
+  final fraction = (match.group(2) ?? '').padRight(decimals, '0');
   final fractionalWei = fraction.isEmpty ? BigInt.zero : BigInt.parse(fraction);
-  return whole * BigInt.from(10).pow(18) + fractionalWei;
+  return whole * BigInt.from(10).pow(decimals) + fractionalWei;
 }
 
 String formatWeiAsEther(BigInt wei, {int decimals = 6}) {
-  final safeDecimals = decimals.clamp(0, 18).toInt();
-  final base = BigInt.from(10).pow(18);
+  return formatNativeAmount(wei, 18, displayDecimals: decimals);
+}
+
+String formatNativeAmount(
+  BigInt wei,
+  int nativeDecimals, {
+  int displayDecimals = 6,
+}) {
+  final safeDecimals = displayDecimals.clamp(0, nativeDecimals).toInt();
+  final base = BigInt.from(10).pow(nativeDecimals);
   final whole = wei ~/ base;
-  final remainder = wei.remainder(base).toString().padLeft(18, '0');
+  final remainder = wei.remainder(base).toString().padLeft(nativeDecimals, '0');
   final fraction = remainder
       .substring(0, safeDecimals)
       .replaceFirst(RegExp(r'0+$'), '');

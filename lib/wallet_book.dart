@@ -26,6 +26,11 @@ class WalletEntry {
       groupAccountCount == 1 ? groupName : '$groupName · $name';
   String? get derivationPath =>
       kind == WalletKind.mnemonic ? evmAccountDerivationPath(index) : null;
+  String? derivationPathFor(EvmNetwork? network) => kind == WalletKind.mnemonic
+      ? network?.isTron == true
+            ? tronAccountDerivationPath(index)
+            : evmAccountDerivationPath(index)
+      : null;
 }
 
 class WalletGroup {
@@ -134,7 +139,9 @@ extension WalletManagement on WalletVault {
   String _checkedName(String name) {
     final value = name.trim();
     if (value.isEmpty || value.length > 64) {
-      throw const WalletInputException('名称需要包含 1 至 64 个字符。');
+      throw const WalletInputException(
+        MessageCode.msgNamesMustContainCharacters,
+      );
     }
     return value;
   }
@@ -190,7 +197,9 @@ extension WalletManagement on WalletVault {
           activeAccountId: json['activeAccountId'] as String?,
         );
       } catch (_) {
-        throw const WalletInputException('本机钱包簿无法读取，请检查安全存储。');
+        throw const WalletInputException(
+          MessageCode.msgCannotReadTheWalletBookCheckSecureStorage,
+        );
       }
     }
 
@@ -233,7 +242,9 @@ extension WalletManagement on WalletVault {
           );
         }
       } catch (_) {
-        throw const WalletInputException('本机保存的私钥账户数据已损坏。');
+        throw const WalletInputException(
+          MessageCode.msgSavedPrivateKeyAccountDataIsCorrupted,
+        );
       }
     }
     // Keep the previous version's initial preference when migrating.
@@ -269,7 +280,11 @@ extension WalletManagement on WalletVault {
   Future<WalletPortfolio> loadPortfolio() =>
       _changeBook((book) => book.snapshot());
 
-  Future<WalletPortfolio> addMnemonicWallet(String mnemonic, {String? name}) {
+  Future<WalletPortfolio> addMnemonicWallet(
+    String mnemonic, {
+    String? name,
+    String? accountName,
+  }) {
     final phrase = WalletVault._normalizeMnemonic(mnemonic);
     final account = WalletAccount.fromMnemonic(phrase);
     return _changeBook((book) {
@@ -291,7 +306,7 @@ extension WalletManagement on WalletVault {
           name: _checkedName(name ?? (count == 0 ? '主钱包' : '钱包 ${count + 1}')),
           kind: WalletKind.mnemonic,
           secret: phrase,
-          accounts: [_StoredAccount(0, '账户 1')],
+          accounts: [_StoredAccount(0, _checkedName(accountName ?? '账户 1'))],
         );
         book.groups.add(group);
         book.activeAccountId = group.entryId(0);
@@ -303,6 +318,8 @@ extension WalletManagement on WalletVault {
   Future<BatchImportResult> importPrivateKeyRows(
     List<WalletImportRow> rows, {
     bool selectImported = false,
+    String Function(int)? nameForWallet,
+    String? accountName,
   }) async {
     final networks = await loadNetworks();
     return _changeBook((book) {
@@ -317,19 +334,30 @@ extension WalletManagement on WalletVault {
       for (var i = 0; i < rows.length; i++) {
         try {
           final network = networkForValue(rows[i].chain, networks: networks);
-          if (network == null) throw const WalletInputException('不支持的链。');
+          if (network == null) {
+            throw const WalletInputException(MessageCode.msgUnsupportedNetwork);
+          }
           final account = WalletAccount.fromPrivateKey(rows[i].privateKey);
           if (!seen.add('${network.id}:${account.privateKeyHex}')) {
-            throw const WalletInputException('重复记录，已跳过。');
+            throw const WalletInputException(
+              MessageCode.msgDuplicateEntrySkipped,
+            );
           }
           final group = _StoredGroup(
             id: _newWalletId(),
-            name:
-                '私钥账户 ${book.groups.where((g) => g.kind == WalletKind.privateKey).length + 1}',
+            name: _checkedName(
+              nameForWallet?.call(
+                    book.groups
+                            .where((g) => g.kind == WalletKind.privateKey)
+                            .length +
+                        1,
+                  ) ??
+                  '私钥账户 ${book.groups.where((g) => g.kind == WalletKind.privateKey).length + 1}',
+            ),
             kind: WalletKind.privateKey,
             secret: account.privateKeyHex,
             networkId: network.id,
-            accounts: [_StoredAccount(0, '账户 1')],
+            accounts: [_StoredAccount(0, _checkedName(accountName ?? '账户 1'))],
           );
           book.groups.add(group);
           if (selectImported || book.activeAccountId == null) {
@@ -344,29 +372,33 @@ extension WalletManagement on WalletVault {
     });
   }
 
-  Future<WalletPortfolio> addDerivedAccount(String groupId) => _changeBook((
-    book,
-  ) {
-    final group = book.groups.where((g) => g.id == groupId).firstOrNull;
-    if (group == null || group.kind != WalletKind.mnemonic) {
-      throw const WalletInputException('只有助记词钱包可以派生新账户。');
-    }
-    final next =
-        group.accounts.map((a) => a.index).reduce((a, b) => a > b ? a : b) + 1;
-    group.account(
-      next,
-    ); // Validate the derivation before changing persisted data.
-    group.accounts.add(_StoredAccount(next, '账户 ${next + 1}'));
-    book.activeAccountId = group.entryId(next);
-    return book.snapshot();
-  });
+  Future<WalletPortfolio> addDerivedAccount(String groupId, {String? name}) =>
+      _changeBook((book) {
+        final group = book.groups.where((g) => g.id == groupId).firstOrNull;
+        if (group == null || group.kind != WalletKind.mnemonic) {
+          throw const WalletInputException(
+            MessageCode.msgOnlyRecoveryPhraseWalletsCanDeriveAdditionalAccounts,
+          );
+        }
+        final next =
+            group.accounts.map((a) => a.index).reduce((a, b) => a > b ? a : b) +
+            1;
+        group.account(
+          next,
+        ); // Validate the derivation before changing persisted data.
+        group.accounts.add(
+          _StoredAccount(next, _checkedName(name ?? '账户 ${next + 1}')),
+        );
+        book.activeAccountId = group.entryId(next);
+        return book.snapshot();
+      });
 
   Future<WalletPortfolio> selectAccount(String accountId) =>
       _changeBook((book) {
         if (!book.groups.any(
           (g) => g.accounts.any((a) => g.entryId(a.index) == accountId),
         )) {
-          throw const WalletInputException('找不到此账户。');
+          throw const WalletInputException(MessageCode.msgAccountNotFound);
         }
         book.activeAccountId = accountId;
         return book.snapshot();
@@ -375,7 +407,9 @@ extension WalletManagement on WalletVault {
   Future<WalletPortfolio> renameWallet(String groupId, String name) =>
       _changeBook((book) {
         final group = book.groups.where((g) => g.id == groupId).firstOrNull;
-        if (group == null) throw const WalletInputException('找不到此钱包。');
+        if (group == null) {
+          throw const WalletInputException(MessageCode.msgWalletNotFound);
+        }
         group.name = _checkedName(name);
         return book.snapshot();
       });
@@ -390,6 +424,6 @@ extension WalletManagement on WalletVault {
             }
           }
         }
-        throw const WalletInputException('找不到此账户。');
+        throw const WalletInputException(MessageCode.msgAccountNotFound);
       });
 }

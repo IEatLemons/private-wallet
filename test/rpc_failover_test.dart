@@ -1,3 +1,4 @@
+import 'asset_test_helpers.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -193,11 +194,9 @@ void main() {
       await expectLater(
         service.getNativeBalance(account),
         throwsA(
-          isA<WalletInputException>().having(
-            (e) => e.message,
-            'message',
-            contains('全部 3 个'),
-          ),
+          isA<WalletInputException>().having((e) => e.arguments, 'arguments', [
+            3,
+          ]),
         ),
       );
       expect(calls, 3);
@@ -293,10 +292,8 @@ void main() {
             ? http.Response('bad', 503)
             : rpcResult(r, method(r) == 'eth_chainId' ? '0x1' : '0x0');
         await start(tester, vault, rpc, size: size);
-        await tap(
-          tester,
-          size.width < 760 ? find.text('设置') : find.byTooltip('设置'),
-        );
+        await tap(tester, find.byKey(const ValueKey('open-settings')));
+        await settingsNetwork(tester, 1);
         expect(find.text('当前可用节点'), findsOneWidget);
         expect(find.text(pool.rpcUrls[1]), findsOneWidget);
         await tap(tester, find.byKey(const ValueKey('edit-rpc-1')));

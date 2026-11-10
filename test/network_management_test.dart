@@ -1,3 +1,4 @@
+import 'asset_test_helpers.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -8,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:stone_wallet/main.dart';
 import 'package:stone_wallet/wallet_core.dart';
+import 'package:stone_wallet/portfolio_assets.dart';
 
 import 'widget_test.dart' show MapSecretStore;
 
@@ -46,6 +48,8 @@ class RpcFixture {
         request,
         method == 'eth_chainId'
             ? '0x${network.id.toRadixString(16)}'
+            : method == 'eth_call'
+            ? '0x${'0' * 64}'
             : '0x11200c7644d50000',
       ); // 1.234 ETH/POL
     }),
@@ -80,13 +84,21 @@ Future<void> start(
   addTearDown(tester.view.resetDevicePixelRatio);
   addTearDown(tester.view.resetPhysicalSize);
   await tester.pumpWidget(
-    StoneWalletApp(vault: vault, networkServiceBuilder: rpc.service),
+    StoneWalletApp(
+      quoteService: TestQuoteService(),
+      vault: vault,
+      networkServiceBuilder: rpc.service,
+    ),
   );
   await tester.pumpAndSettle();
 }
 
 WalletVault memoryVault() =>
     WalletVault(store: MapSecretStore({WalletVault.mnemonicKey: mnemonic}));
+
+PortfolioHolding nativeRow(WidgetTester tester, int networkId) =>
+    nativePosition(tester, networkId);
+Future<void> openCoins(WidgetTester tester) => allOtherCoins(tester);
 
 void main() {
   test(
@@ -104,7 +116,7 @@ void main() {
       await vault.saveNetwork(overridden);
       await vault.saveNetwork(base);
       final loaded = await WalletVault(store: store).loadNetworks();
-      expect(loaded, hasLength(5));
+      expect(loaded, hasLength(supportedNetworks.length + 1));
       expect(loaded.singleWhere((n) => n.id == 1).rpcUrl, overridden.rpcUrl);
       expect(
         loaded.singleWhere((n) => n.id == 137).rpcUrl,
@@ -192,7 +204,8 @@ void main() {
       final vault = memoryVault(), rpc = RpcFixture();
       await vault.saveSelectedNetwork(ethereumMainnetNetwork);
       await start(tester, vault, rpc);
-      await tap(tester, find.byType(AssetListRow));
+      await openCoins(tester);
+      await nativeDetails(tester, nativeRow(tester, 1).network.id);
       final pending = Completer<http.Response>();
       http.Request? request;
       rpc.handler = (value, _) async {
@@ -216,16 +229,15 @@ void main() {
       (tester) async {
         final vault = memoryVault(), rpc = RpcFixture();
         await start(tester, vault, rpc, size: size);
+        await openCoins(tester);
         expect(rpc.calls, isEmpty);
-        await tap(tester, find.text('选择网络'));
+        await tap(tester, find.text('管理网络').first);
         await tap(tester, find.text('Polygon'));
         await tap(tester, find.text('保存网络选择'));
         expect(await vault.loadSelectedNetworkId(), 137);
         expect(await vault.loadSelectedNetworkIds(), [137]);
-        final hero = tester.widget<PortfolioHero>(find.byType(PortfolioHero));
-        expect(hero.network, 'Polygon');
-        expect(hero.balance, '1.234 POL');
-        expect(hero.syncLabel, contains('RPC 已连接'));
+        expect(nativeRow(tester, 137).amount, '1.234 POL');
+        expect(nativeRow(tester, 137).error, isNull);
         expect(
           rpc.calls,
           everyElement(Uri.parse(polygonMainnetNetwork.rpcUrl)),
@@ -240,7 +252,9 @@ void main() {
   ) async {
     final vault = memoryVault(), rpc = RpcFixture();
     await start(tester, vault, rpc);
-    await tap(tester, find.byTooltip('设置'));
+    await openCoins(tester);
+    await tap(tester, find.byKey(const ValueKey('open-settings')));
+    await settingsEntryTap(tester, 'networks');
     await tap(tester, find.text('添加自定义链'));
     await input(tester, '网络名称', 'Base');
     await input(tester, 'Chain ID', '8453');
@@ -254,12 +268,15 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
     await tester.pumpWidget(
-      StoneWalletApp(vault: vault, networkServiceBuilder: rpc.service),
+      StoneWalletApp(
+        quoteService: TestQuoteService(),
+        vault: vault,
+        networkServiceBuilder: rpc.service,
+      ),
     );
     await tester.pumpAndSettle();
-    final hero = tester.widget<PortfolioHero>(find.byType(PortfolioHero));
-    expect(hero.network, 'Base');
-    expect(hero.balance, '1.234 ETH');
+    await openCoins(tester);
+    expect(nativeRow(tester, 8453).amount, '1.234 ETH');
     expect(tester.takeException(), isNull);
   });
 
@@ -282,25 +299,18 @@ void main() {
                   : '0x11200c7644d50000',
             );
       await start(tester, vault, rpc);
-      expect(
-        tester.widget<PortfolioHero>(find.byType(PortfolioHero)).balance,
-        '— ETH',
-      );
-      expect(
-        tester.widget<PortfolioHero>(find.byType(PortfolioHero)).syncLabel,
-        'RPC 连接失败',
-      );
-      await tap(tester, find.byTooltip('设置'));
+      await openCoins(tester);
+      expect(nativeRow(tester, 1).amount, '— ETH');
+      expect(nativeRow(tester, 1).error, isA<WalletMessage>());
+      await tap(tester, find.byKey(const ValueKey('open-settings')));
+      await settingsNetwork(tester, 1);
       await tap(tester, find.byKey(const ValueKey('edit-rpc-1')));
       await input(tester, 'RPC 地址', 'https://new.example');
       await tap(tester, find.text('保存网络配置'));
       expect(rpc.calls.any((u) => u.host == 'new.example'), isTrue);
       expect((await vault.loadNetworks()).first.rpcUrl, 'https://new.example');
-      await tap(tester, find.byTooltip('首页'));
-      expect(
-        tester.widget<PortfolioHero>(find.byType(PortfolioHero)).balance,
-        '1.234 ETH',
-      );
+      await exitSettings(tester);
+      expect(nativeRow(tester, 1).amount, '1.234 ETH');
       expect(tester.takeException(), isNull);
     },
   );
@@ -329,16 +339,17 @@ void main() {
         );
       };
       await start(tester, vault, rpc);
-      await tap(tester, find.byTooltip('设置'));
+      await openCoins(tester);
+      await tap(tester, find.byKey(const ValueKey('open-settings')));
+      await settingsNetwork(tester, 1);
       await tap(tester, find.byKey(const ValueKey('edit-rpc-1')));
       await input(tester, 'RPC 地址', 'https://new.example');
       await tap(tester, find.text('保存网络配置'));
       late.complete(rpcResult(oldRequest!, '0x89'));
       await tester.pumpAndSettle();
-      await tap(tester, find.byTooltip('首页'));
-      final hero = tester.widget<PortfolioHero>(find.byType(PortfolioHero));
-      expect(hero.balance, '1.234 ETH');
-      expect(hero.syncLabel, contains('RPC 已连接'));
+      await exitSettings(tester);
+      expect(nativeRow(tester, 1).amount, '1.234 ETH');
+      expect(nativeRow(tester, 1).error, isNull);
       expect(tester.takeException(), isNull);
     },
   );
@@ -350,7 +361,8 @@ void main() {
       rpc.handler = (request, _) async => rpcResult(request, '0x1');
       await start(tester, vault, rpc, size: const Size(360, 640));
       addTearDown(tester.view.resetViewInsets);
-      await tap(tester, find.text('设置'));
+      await tap(tester, find.byKey(const ValueKey('open-settings')));
+      await settingsEntryTap(tester, 'networks');
       await tap(tester, find.text('添加自定义链'));
       await input(tester, '网络名称', 'Base');
       await input(tester, 'Chain ID', '1');
@@ -358,7 +370,7 @@ void main() {
       await input(tester, 'RPC 地址', base.rpcUrl);
       await tap(tester, find.text('保存网络配置'));
       expect(find.text('该 Chain ID 已存在，请编辑现有网络的 RPC。'), findsOneWidget);
-      expect(await vault.loadNetworks(), hasLength(4));
+      expect(await vault.loadNetworks(), hasLength(supportedNetworks.length));
       await input(tester, 'Chain ID', '8453');
       tester.view.viewInsets = const FakeViewPadding(bottom: 280);
       await tester.pumpAndSettle();
@@ -366,8 +378,8 @@ void main() {
       tester.view.resetViewInsets();
       await tester.pumpAndSettle();
       await tap(tester, find.text('检测 RPC 连接'));
-      expect(find.text('RPC 链不匹配：预期 8453，实际 1。'), findsOneWidget);
-      expect(await vault.loadNetworks(), hasLength(4));
+      expect(find.text('RPC 链不匹配：预期 8,453，实际 1。'), findsOneWidget);
+      expect(await vault.loadNetworks(), hasLength(supportedNetworks.length));
       await tap(tester, find.byTooltip('关闭'));
       expect(tester.takeException(), isNull);
     },
@@ -390,54 +402,54 @@ void main() {
                 : '0x11200c7644d50000',
           );
     await start(tester, vault, rpc);
-    final hero = tester.widget<PortfolioHero>(find.byType(PortfolioHero));
-    expect(hero.balance, '1.234 ETH');
-    expect(hero.syncLabel, contains('RPC 已连接'));
-    final table = tester.widget<AssetTable>(find.byType(AssetTable));
-    expect(table.assets.singleWhere((a) => a.networkId == 137).amount, '— POL');
-    expect(table.assets.singleWhere((a) => a.networkId == 137).change, '连接失败');
+    await openCoins(tester);
+    expect(nativeRow(tester, 1).amount, '1.234 ETH');
+    expect(nativeRow(tester, 1).error, isNull);
+    expect(nativeRow(tester, 137).amount, '— POL');
+    expect(nativeRow(tester, 137).state, TokenState.failed);
     expect(tester.takeException(), isNull);
   });
 
   for (final size in [const Size(1200, 800), const Size(390, 844)]) {
-    testWidgets(
-      '${size.width}: asset title, view all, search, detail and receive work',
-      (tester) async {
-        final vault = memoryVault(), rpc = RpcFixture();
-        await vault.saveNetwork(base);
-        await vault.saveSelectedNetworks([...supportedEvmNetworks, base]);
-        await start(tester, vault, rpc, size: size);
-        expect(find.byType(AssetListRow), findsNWidgets(4));
-        await tap(tester, find.text('查看全部'));
-        expect(find.byType(AssetsPage), findsOneWidget);
-        expect(find.byType(AssetListRow), findsNWidgets(5));
-        await tester.enterText(find.byType(TextField), 'Base');
-        await tester.pumpAndSettle();
-        expect(find.byType(AssetListRow), findsOneWidget);
-        await tap(tester, find.byType(AssetListRow));
-        expect(find.byType(AssetDetailsPanel), findsOneWidget);
-        expect(
-          find.descendant(
-            of: find.byType(AssetDetailsPanel),
-            matching: find.text('1.234 ETH'),
-          ),
-          findsOneWidget,
-        );
-        expect(find.text(base.rpcUrl), findsOneWidget);
-        await tap(tester, find.text('刷新余额'));
-        await tap(tester, find.text('接收'));
-        expect(find.byType(ActionSheet), findsOneWidget);
-        expect(await vault.loadSelectedNetworkId(), base.id);
-        await tap(tester, find.byTooltip('关闭'));
-        await tap(tester, find.text('返回首页'));
-        expect(find.byType(AssetsPage), findsNothing);
-        await tap(tester, find.text('链上资产'));
-        expect(find.byType(AssetsPage), findsOneWidget);
-        await tester.binding.handlePopRoute();
-        await tester.pumpAndSettle();
-        expect(find.byType(AssetsPage), findsNothing);
-        expect(tester.takeException(), isNull);
-      },
-    );
+    testWidgets('${size.width}: asset home search, detail and receive work', (
+      tester,
+    ) async {
+      final vault = memoryVault(), rpc = RpcFixture();
+      await vault.saveNetwork(base);
+      await vault.saveSelectedNetworks([...supportedEvmNetworks, base]);
+      await start(tester, vault, rpc, size: size);
+      await openCoins(tester);
+      expect(find.byType(AssetsPage), findsOneWidget);
+      expect(
+        find.byType(PortfolioAssetRow),
+        findsNWidgets(supportedEvmNetworks.length + 1),
+      );
+      await assetMenu(tester, MessageCode.portfolioSearch);
+      await tester.enterText(
+        find.byKey(const ValueKey('asset-search')),
+        'Base',
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(PortfolioAssetRow), findsOneWidget);
+      await nativeDetails(tester, base.id);
+      expect(find.byType(AssetDetailsPanel), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(AssetDetailsPanel),
+          matching: find.text('1.234 ETH'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text(base.rpcUrl), findsOneWidget);
+      await tap(tester, find.text('刷新余额'));
+      await tap(tester, find.text('接收'));
+      expect(find.byType(ActionSheet), findsOneWidget);
+      expect(await vault.loadSelectedNetworkId(), base.id);
+      await tap(tester, find.byTooltip('关闭'));
+      expect(find.byType(AssetsPage), findsOneWidget);
+      expect(find.text('返回首页'), findsNothing);
+      expect(find.byType(NavigationBar), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
   }
 }

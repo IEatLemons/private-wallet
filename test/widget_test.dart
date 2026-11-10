@@ -1,3 +1,4 @@
+import 'asset_test_helpers.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 
@@ -7,9 +8,12 @@ import 'package:stone_wallet/wallet_core.dart';
 void main() {
   testWidgets('first launch exposes real wallet onboarding', (tester) async {
     await tester.pumpWidget(
-      StoneWalletApp(vault: WalletVault(store: EmptyStore())),
+      StoneWalletApp(
+        quoteService: TestQuoteService(),
+        vault: WalletVault(store: EmptyStore()),
+      ),
     );
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
 
     expect(find.text('你的密钥，\n你的钱包。'), findsOneWidget);
     expect(find.text('创建新钱包'), findsOneWidget);
@@ -21,14 +25,17 @@ void main() {
 
   testWidgets('import action opens a recovery phrase input', (tester) async {
     await tester.pumpWidget(
-      StoneWalletApp(vault: WalletVault(store: EmptyStore())),
+      StoneWalletApp(
+        quoteService: TestQuoteService(),
+        vault: WalletVault(store: EmptyStore()),
+      ),
     );
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
 
     final importButton = find.text('导入助记词');
     await tester.ensureVisible(importButton);
     await tester.tap(importButton);
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text('导入钱包'), findsOneWidget);
     expect(find.text('请输入 12 或 24 个助记词单词'), findsOneWidget);
@@ -41,16 +48,19 @@ void main() {
       WalletVault.mnemonicKey:
           'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
     });
-    await tester.pumpWidget(StoneWalletApp(vault: WalletVault(store: store)));
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpWidget(
+      StoneWalletApp(
+        quoteService: TestQuoteService(),
+        vault: WalletVault(store: store),
+      ),
+    );
+    await tester.pumpAndSettle();
 
-    expect(find.text('选择网络'), findsOneWidget);
-    expect(find.text('未选择网络'), findsWidgets);
+    expect(find.byType(AssetsPage), findsOneWidget);
+    await assetMenu(tester, MessageCode.msgManageNetworks);
+    await tester.pumpAndSettle();
 
-    await tester.tap(find.text('选择网络'));
-    await tester.pump();
-
-    expect(find.text('管理网络'), findsOneWidget);
+    expect(find.text('管理网络').last, findsOneWidget);
     expect(find.text('Ethereum Sepolia'), findsOneWidget);
     expect(find.text('可同时启用多条链查看余额。只有点击保存后，选中的网络才会访问 RPC。'), findsOneWidget);
   });
@@ -62,13 +72,21 @@ void main() {
       WalletVault.mnemonicKey:
           'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
     });
-    await tester.pumpWidget(StoneWalletApp(vault: WalletVault(store: store)));
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpWidget(
+      StoneWalletApp(
+        quoteService: TestQuoteService(),
+        vault: WalletVault(store: store),
+      ),
+    );
+    await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('设置'));
-    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('open-settings')));
+    await tester.pumpAndSettle();
 
     expect(find.text('网络与 RPC'), findsOneWidget);
+    expect(find.text('iCloud / Google Drive 云备份（暂未接入）'), findsNothing);
+    await settingsEntryTap(tester, 'security-backup');
+    await settingsEntryTap(tester, 'backup');
     expect(find.text('iCloud / Google Drive 云备份（暂未接入）'), findsOneWidget);
     final backupButton = tester.widget<FilledButton>(
       find.widgetWithText(FilledButton, 'iCloud / Google Drive 云备份（暂未接入）'),

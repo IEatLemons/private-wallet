@@ -14,11 +14,13 @@ class WalletManagerPanel extends StatefulWidget {
     required this.theme,
     required this.initial,
     required this.vault,
+    this.network = ethereumMainnetNetwork,
     super.key,
   });
   final WalletTheme theme;
   final WalletPortfolio initial;
   final WalletVault vault;
+  final EvmNetwork network;
   @override
   State<WalletManagerPanel> createState() => _WalletManagerPanelState();
 }
@@ -27,7 +29,7 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
   late WalletPortfolio portfolio = widget.initial;
   bool busy = false;
   String query = '';
-  String? error;
+  WalletMessage? error;
 
   Future<void> _change(
     Future<WalletPortfolio> Function() operation, {
@@ -50,7 +52,9 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
       if (mounted) {
         setState(() {
           busy = false;
-          error = e is WalletInputException ? e.message : '操作失败，请重试。';
+          error = e is WalletInputException
+              ? e.message
+              : WalletMessage(MessageCode.msgOperationFailedPleaseTryAgain);
         });
       }
     }
@@ -62,7 +66,9 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
       width: 440,
       builder: (_) => WalletNamePanel(
         theme: widget.theme,
-        title: account ? '重命名账户' : '重命名钱包',
+        title: account
+            ? tr(context, MessageCode.msgRenameAccount)
+            : tr(context, MessageCode.msgRenameWallet),
         initialName: name,
       ),
     );
@@ -113,7 +119,7 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            group.name,
+                            localized(context, group.name),
                             style: TextStyle(
                               color: theme.text,
                               fontSize: 16,
@@ -122,7 +128,18 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${group.kind == WalletKind.mnemonic ? '助记词钱包' : '私钥钱包'} · ${group.accounts.length} 个账户',
+                            tr(context, MessageCode.walletAccountCount, [
+                              group.kind == WalletKind.mnemonic
+                                  ? tr(
+                                      context,
+                                      MessageCode.msgRecoveryPhraseWallet,
+                                    )
+                                  : tr(
+                                      context,
+                                      MessageCode.msgPrivateKeyWallet,
+                                    ),
+                              group.accounts.length,
+                            ]),
                             style: TextStyle(color: theme.muted, fontSize: 12),
                           ),
                         ],
@@ -131,7 +148,7 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                   ),
                   IconButton(
                     key: ValueKey('rename-wallet-${group.id}'),
-                    tooltip: '重命名钱包',
+                    tooltip: tr(context, MessageCode.msgRenameWallet),
                     onPressed: busy
                         ? null
                         : () => _rename(group.id, group.name),
@@ -165,7 +182,7 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                     size: 20,
                   ),
                   title: Text(
-                    entry.name,
+                    localized(context, entry.name),
                     style: TextStyle(
                       color: theme.text,
                       fontSize: 14,
@@ -173,7 +190,10 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                     ),
                   ),
                   subtitle: Text(
-                    '${shortAddress(entry.account.checksumAddress)}${entry.derivationPath == null ? '' : '\n${entry.derivationPath}'}',
+                    localized(
+                      context,
+                      '${shortAddress(entry.account.addressFor(widget.network))}${entry.derivationPathFor(widget.network) == null ? '' : '\n${entry.derivationPathFor(widget.network)}'}',
+                    ),
                     style: TextStyle(
                       color: theme.muted,
                       fontSize: 12,
@@ -184,9 +204,11 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        tooltip: '复制账户地址',
+                        tooltip: tr(context, MessageCode.msgCopyAccountAddress),
                         onPressed: () => Clipboard.setData(
-                          ClipboardData(text: entry.account.checksumAddress),
+                          ClipboardData(
+                            text: entry.account.addressFor(widget.network),
+                          ),
                         ),
                         icon: Icon(
                           Icons.copy_outlined,
@@ -196,7 +218,7 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                       ),
                       IconButton(
                         key: ValueKey('rename-account-${entry.id}'),
-                        tooltip: '重命名账户',
+                        tooltip: tr(context, MessageCode.msgRenameAccount),
                         onPressed: busy
                             ? null
                             : () =>
@@ -217,10 +239,18 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                   onPressed: busy
                       ? null
                       : () => _change(
-                          () => widget.vault.addDerivedAccount(group.id),
+                          () => widget.vault.addDerivedAccount(
+                            group.id,
+                            name: tr(context, MessageCode.msgAccountMore, [
+                              group.accounts
+                                      .map((a) => a.index)
+                                      .fold<int>(0, (a, b) => a > b ? a : b) +
+                                  2,
+                            ]),
+                          ),
                         ),
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text('添加账户'),
+                  label: Text(tr(context, MessageCode.msgAddAccount)),
                 ),
             ],
           ),
@@ -236,9 +266,10 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
     for (final group in portfolio.groups) {
       final entries = group.accounts
           .where(
-            (a) => '${group.name} ${a.name} ${a.account.checksumAddress}'
-                .toLowerCase()
-                .contains(query.toLowerCase()),
+            (a) =>
+                '${group.name} ${a.name} ${a.account.addressFor(widget.network)}'
+                    .toLowerCase()
+                    .contains(query.toLowerCase()),
           )
           .toList();
       if (entries.isNotEmpty) visible.add((group, entries));
@@ -247,7 +278,7 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
       canPop: !busy,
       child: WalletPanel(
         theme: widget.theme,
-        title: '钱包管理',
+        title: tr(context, MessageCode.msgWalletManagement),
         canClose: !busy,
         scrollBody: false,
         footer: Wrap(
@@ -259,7 +290,7 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                   ? null
                   : () => closeWalletPanel(context, WalletManagerAction.create),
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('创建新钱包'),
+              label: Text(tr(context, MessageCode.msgCreateWallet)),
             ),
             OutlinedButton.icon(
               onPressed: busy
@@ -269,7 +300,7 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                       WalletManagerAction.importOptions,
                     ),
               icon: const Icon(Icons.download_outlined, size: 18),
-              label: const Text('导入钱包'),
+              label: Text(tr(context, MessageCode.msgImportWallet)),
             ),
           ],
         ),
@@ -278,13 +309,19 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              '${portfolio.groups.length} 个钱包 · ${portfolio.accounts.length} 个账户',
+              tr(context, MessageCode.walletAndAccountCount, [
+                portfolio.groups.length,
+                portfolio.accounts.length,
+              ]),
               style: TextStyle(color: widget.theme.muted, fontSize: 13),
             ),
             if (!keyboardVisible) ...[
               const SizedBox(height: 8),
               Text(
-                '一个助记词钱包可添加多个账户；新的助记词或私钥会保存为独立钱包。',
+                tr(
+                  context,
+                  MessageCode.msgARecoveryPhraseWalletCanHaveMultipleAccounts,
+                ),
                 style: TextStyle(
                   color: widget.theme.muted,
                   fontSize: 12,
@@ -296,16 +333,19 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
             TextField(
               key: const ValueKey('wallet-search'),
               onChanged: (s) => setState(() => query = s),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 prefixIcon: Icon(Icons.search),
-                hintText: '搜索钱包、账户或地址',
+                hintText: tr(
+                  context,
+                  MessageCode.msgSearchWalletsAccountsOrAddresses,
+                ),
               ),
             ),
             if (error != null)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Text(
-                  error!,
+                  localized(context, error!),
                   style: TextStyle(color: widget.theme.danger, fontSize: 13),
                 ),
               ),
@@ -316,7 +356,10 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                 child: visible.isEmpty
                     ? Center(
                         child: Text(
-                          '没有匹配的钱包或账户',
+                          tr(
+                            context,
+                            MessageCode.msgNoMatchingWalletsOrAccounts,
+                          ),
                           style: TextStyle(color: widget.theme.muted),
                         ),
                       )
@@ -341,8 +384,8 @@ class WalletImportOptions extends StatelessWidget {
   @override
   Widget build(BuildContext context) => WalletPanel(
     theme: theme,
-    title: '导入钱包',
-    subtitle: '已有的钱包会保留，可随时切换。',
+    title: tr(context, MessageCode.msgImportWallet),
+    subtitle: tr(context, MessageCode.msgExistingWalletsAreKeptYouCanSwitchAt),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -350,20 +393,20 @@ class WalletImportOptions extends StatelessWidget {
           (
             WalletManagerAction.importMnemonic,
             Icons.key_outlined,
-            '导入助记词',
-            '恢复钱包，并继续添加派生账户',
+            tr(context, MessageCode.msgImportRecoveryPhrase),
+            tr(context, MessageCode.msgRestoreAWalletAndAddDerivedAccounts),
           ),
           (
             WalletManagerAction.importPrivateKey,
             Icons.vpn_key_outlined,
-            '导入私钥',
-            '导入已有的单个 EVM 账户',
+            tr(context, MessageCode.msgImportPrivateKey),
+            tr(context, MessageCode.msgImportOneEvmTronAccount),
           ),
           (
             WalletManagerAction.batchImport,
             Icons.upload_file_outlined,
-            '批量导入私钥表格',
-            '从 CSV / TSV 导入多个账户',
+            tr(context, MessageCode.msgImportPrivateKeyFile),
+            tr(context, MessageCode.msgImportMultipleAccountsFromCsvTsv),
           ),
         ])
           ListTile(
@@ -371,11 +414,11 @@ class WalletImportOptions extends StatelessWidget {
             onTap: () => closeWalletPanel(context, option.$1),
             leading: Icon(option.$2, color: theme.primary),
             title: Text(
-              option.$3,
+              localized(context, option.$3),
               style: TextStyle(color: theme.text, fontWeight: FontWeight.w600),
             ),
             subtitle: Text(
-              option.$4,
+              localized(context, option.$4),
               style: TextStyle(color: theme.muted, fontSize: 12),
             ),
             trailing: Icon(Icons.chevron_right, color: theme.muted),
@@ -400,7 +443,7 @@ class WalletNamePanel extends StatefulWidget {
 
 class _WalletNamePanelState extends State<WalletNamePanel> {
   late final controller = TextEditingController(text: widget.initialName);
-  String? error;
+  WalletMessage? error;
   @override
   void dispose() {
     controller.dispose();
@@ -410,7 +453,9 @@ class _WalletNamePanelState extends State<WalletNamePanel> {
   void _save() {
     final value = controller.text.trim();
     if (value.isEmpty || value.length > 64) {
-      setState(() => error = '名称需要包含 1 至 64 个字符。');
+      setState(
+        () => error = WalletMessage(MessageCode.msgNamesMustContainCharacters),
+      );
       return;
     }
     closeWalletPanel(context, value);
@@ -420,7 +465,10 @@ class _WalletNamePanelState extends State<WalletNamePanel> {
   Widget build(BuildContext context) => WalletPanel(
     theme: widget.theme,
     title: widget.title,
-    footer: FilledButton(onPressed: _save, child: const Text('保存名称')),
+    footer: FilledButton(
+      onPressed: _save,
+      child: Text(tr(context, MessageCode.msgSaveName)),
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -429,11 +477,13 @@ class _WalletNamePanelState extends State<WalletNamePanel> {
           maxLength: 64,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _save(),
-          decoration: const InputDecoration(labelText: '名称'),
+          decoration: InputDecoration(
+            labelText: tr(context, MessageCode.msgName),
+          ),
         ),
         if (error != null)
           Text(
-            error!,
+            localized(context, error!),
             style: TextStyle(color: widget.theme.danger, fontSize: 13),
           ),
       ],

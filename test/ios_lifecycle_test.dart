@@ -1,6 +1,8 @@
+import 'asset_test_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stone_wallet/main.dart';
+import 'package:stone_wallet/l10n/generated/app_localizations.dart';
 import 'package:stone_wallet/wallet_core.dart';
 
 import 'widget_test.dart' show MapSecretStore;
@@ -58,6 +60,9 @@ void main() {
       bool? disposedWhenReturned;
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('zh'),
           home: Builder(
             builder: (context) => Scaffold(
               body: TextButton(
@@ -95,7 +100,12 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetViewInsets);
-    await tester.pumpWidget(StoneWalletApp(vault: FixedCreationVault()));
+    await tester.pumpWidget(
+      StoneWalletApp(
+        quoteService: TestQuoteService(),
+        vault: FixedCreationVault(),
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
@@ -167,8 +177,7 @@ void main() {
           await tester.pumpAndSettle();
           expect(tester.takeException(), isNull);
         }
-        await tester.ensureVisible(find.byTooltip('切换主题'));
-        await tester.tap(find.byTooltip('切换主题'));
+        (tester.state(find.byType(StoneWalletApp)) as dynamic).toggleStyle();
         await tester.pumpAndSettle();
       }
     },

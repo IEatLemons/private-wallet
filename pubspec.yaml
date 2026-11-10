@@ -30,10 +30,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
 
   # Real wallet primitives and platform-backed secret storage.
   bip32: ^2.0.0
   bip39: ^1.0.6
+  bs58check: ^1.0.2
+  crypto: ^3.0.8
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -41,6 +46,7 @@ dependencies:
   flutter_secure_storage: ^10.3.1
   file_picker: ^10.3.3
   http: ^1.5.0
+  url_launcher: ^6.3.2
   qr_flutter: ^4.1.0
   web3dart: ^2.7.3
 
@@ -62,6 +68,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  generate: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

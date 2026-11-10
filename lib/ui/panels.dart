@@ -26,7 +26,7 @@ class WalletPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) => WalletPanel(
     theme: theme,
-    title: '选择钱包',
+    title: tr(context, MessageCode.msgSelectWallet),
     scrollBody: false,
     child: SizedBox(
       height: 360,
@@ -51,7 +51,7 @@ class WalletPicker extends StatelessWidget {
               ),
             ),
             title: Text(
-              option.name,
+              localized(context, option.name),
               style: TextStyle(
                 color: theme.text,
                 fontSize: 14,
@@ -59,7 +59,10 @@ class WalletPicker extends StatelessWidget {
               ),
             ),
             subtitle: Text(
-              '${option.network?.name ?? '助记词钱包'}\n${shortAddress(option.account.checksumAddress)}',
+              localized(
+                context,
+                '${option.network?.name ?? tr(context, MessageCode.msgRecoveryPhraseWallet)}\n${shortAddress(option.account.checksumAddress)}',
+              ),
               style: TextStyle(color: theme.muted, fontSize: 12, height: 1.6),
             ),
             trailing: option.selected
@@ -77,23 +80,34 @@ class ActionSheet extends StatelessWidget {
     required this.action,
     required this.theme,
     required this.walletName,
-    required this.networkLabel,
+    this.network,
+    this.networkLabel,
     required this.address,
     required this.onConfirm,
     super.key,
   });
-  final String action, walletName, networkLabel, address;
+  final WalletAction action;
+  final String walletName, address;
+  final String? networkLabel;
+  final EvmNetwork? network;
   final WalletTheme theme;
   final VoidCallback onConfirm;
   @override
   Widget build(BuildContext context) => WalletPanel(
     theme: theme,
-    title: action,
-    subtitle: '请确认接收资产的网络与你选择的网络一致。',
+    title: switch (action) {
+      WalletAction.send => tr(context, MessageCode.msgSend),
+      WalletAction.receive => tr(context, MessageCode.msgReceive),
+      WalletAction.swap => tr(context, MessageCode.msgSwap),
+    },
+    subtitle: tr(
+      context,
+      MessageCode.msgMakeSureTheReceivingNetworkMatchesTheNetwork,
+    ),
     footer: FilledButton.icon(
       onPressed: onConfirm,
       icon: const Icon(Icons.copy_outlined, size: 18),
-      label: const Text('复制收款地址'),
+      label: Text(tr(context, MessageCode.msgCopyReceiveAddress)),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -105,20 +119,30 @@ class ActionSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                walletName,
+                localized(context, walletName),
                 style: TextStyle(
                   color: theme.text,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 8),
-              Text(networkLabel, style: TextStyle(color: theme.muted)),
+              Text(
+                network == null
+                    ? (networkLabel ??
+                          tr(context, MessageCode.msgNoNetworkSelected))
+                    : '${network!.name} · ${tr(context, network!.isTestnet ? MessageCode.msgTestnet : MessageCode.msgMainnet)}',
+                style: TextStyle(color: theme.muted),
+              ),
             ],
           ),
         ),
         const SizedBox(height: 24),
         Center(
           child: QrImageView(
+            semanticsLabel: tr(
+              context,
+              MessageCode.msgCurrentAccountReceiveAddress,
+            ),
             data: address,
             size: 176,
             backgroundColor: Colors.white,
@@ -126,7 +150,7 @@ class ActionSheet extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         SelectableText(
-          address,
+          localized(context, address),
           textAlign: TextAlign.center,
           style: TextStyle(color: theme.text, fontSize: 14, height: 1.6),
         ),
@@ -202,16 +226,26 @@ class _NetworkSelectorSheetState extends State<NetworkSelectorSheet> {
   @override
   Widget build(BuildContext context) => WalletPanel(
     theme: widget.theme,
-    title: '管理网络',
-    subtitle: '可同时启用多条链查看余额。只有点击保存后，选中的网络才会访问 RPC。',
+    title: tr(context, MessageCode.msgManageNetworks),
+    subtitle: tr(
+      context,
+      MessageCode.msgEnableMultipleNetworksToViewBalancesOnlySelected,
+    ),
     footer: FilledButton(
       onPressed: _save,
-      child: Text(selectedIds.isEmpty ? '断开所有网络' : '保存网络选择'),
+      child: Text(
+        localized(
+          context,
+          selectedIds.isEmpty
+              ? tr(context, MessageCode.msgDisconnectAllNetworks)
+              : tr(context, MessageCode.msgSaveNetworkSelection),
+        ),
+      ),
     ),
     child: Column(
       children: [
         Text(
-          '点击网络名称可切换当前链；勾选框用于同时启用多条链。',
+          tr(context, MessageCode.msgTapANetworkNameToUseItFor),
           style: TextStyle(color: widget.theme.muted, fontSize: 13),
         ),
         const SizedBox(height: 12),
@@ -219,7 +253,7 @@ class _NetworkSelectorSheetState extends State<NetworkSelectorSheet> {
           OutlinedButton.icon(
             onPressed: () => _edit(null),
             icon: const Icon(Icons.add),
-            label: const Text('添加自定义链'),
+            label: Text(tr(context, MessageCode.msgAddCustomNetwork)),
           ),
         const SizedBox(height: 12),
         for (final network in networks)
@@ -241,7 +275,7 @@ class _NetworkSelectorSheetState extends State<NetworkSelectorSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            network.name,
+                            localized(context, network.name),
                             style: TextStyle(
                               color: widget.theme.text,
                               fontSize: 14,
@@ -250,7 +284,7 @@ class _NetworkSelectorSheetState extends State<NetworkSelectorSheet> {
                           ),
                           if (currentId == network.id)
                             Text(
-                              '当前操作链',
+                              tr(context, MessageCode.msgTransactionNetwork),
                               style: TextStyle(
                                 color: widget.theme.primary,
                                 fontSize: 12,
@@ -259,11 +293,14 @@ class _NetworkSelectorSheetState extends State<NetworkSelectorSheet> {
                           if (widget.onEdit != null)
                             TextButton(
                               onPressed: () => _edit(network),
-                              child: const Text('编辑 RPC'),
+                              child: Text(tr(context, MessageCode.msgEditRpc)),
                             ),
                           const SizedBox(height: 6),
                           Text(
-                            'Chain ID ${network.id} · ${network.nativeSymbol} · ${network.isTestnet ? '测试网' : '主网'}',
+                            localized(
+                              context,
+                              '${network.identifierLabel} · ${network.nativeSymbol} · ${network.isTestnet ? tr(context, MessageCode.msgTestnet) : tr(context, MessageCode.msgMainnet)}',
+                            ),
                             style: TextStyle(
                               color: widget.theme.muted,
                               fontSize: 12,
@@ -276,7 +313,7 @@ class _NetworkSelectorSheetState extends State<NetworkSelectorSheet> {
                   ),
                 ),
                 IconButton(
-                  tooltip: '设为当前操作链',
+                  tooltip: tr(context, MessageCode.msgUseForTransactions),
                   onPressed: () => _setCurrent(network),
                   icon: Icon(
                     currentId == network.id
@@ -325,7 +362,7 @@ class _RecoveryPhraseSheetState extends State<RecoveryPhraseSheet> {
   late final words = widget.mnemonic.split(' ');
   final controllers = List.generate(3, (_) => TextEditingController());
   bool verifying = false;
-  String? error;
+  WalletMessage? error;
   @override
   void dispose() {
     for (final c in controllers) {
@@ -345,7 +382,11 @@ class _RecoveryPhraseSheetState extends State<RecoveryPhraseSheet> {
           words[e.value].toLowerCase(),
     );
     if (!valid) {
-      setState(() => error = '助记词校验不正确，请重新核对第 2、6、10 个单词。');
+      setState(
+        () => error = WalletMessage(
+          MessageCode.msgRecoveryPhraseVerificationFailedCheckWordsAnd,
+        ),
+      );
       return;
     }
     closeWalletPanel(context, true);
@@ -354,18 +395,32 @@ class _RecoveryPhraseSheetState extends State<RecoveryPhraseSheet> {
   @override
   Widget build(BuildContext context) => WalletPanel(
     theme: widget.theme,
-    title: verifying ? '验证恢复助记词' : '记录恢复助记词',
+    title: verifying
+        ? tr(context, MessageCode.msgVerifyRecoveryPhrase)
+        : tr(context, MessageCode.msgWriteDownRecoveryPhrase),
     canClose: widget.allowCancel,
     expandBody: WalletLayout.of(context).mobile,
     footer: FilledButton(
       onPressed: _continue,
-      child: Text(verifying ? '验证并进入钱包' : '我已记录，继续验证'),
+      child: Text(
+        localized(
+          context,
+          verifying
+              ? tr(context, MessageCode.msgVerifyAndOpenWallet)
+              : tr(context, MessageCode.msgIWroteItDownVerify),
+        ),
+      ),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          verifying ? '记录  ✓     →     ② 验证' : '① 记录     →     ② 验证',
+          localized(
+            context,
+            verifying
+                ? tr(context, MessageCode.msgWrittenVerify)
+                : tr(context, MessageCode.msgWriteDownVerify),
+          ),
           style: TextStyle(
             color: widget.theme.primary,
             fontSize: 14,
@@ -374,7 +429,15 @@ class _RecoveryPhraseSheetState extends State<RecoveryPhraseSheet> {
         ),
         const SizedBox(height: 16),
         Text(
-          verifying ? '请输入指定位置的单词，验证后完成创建。' : '请按顺序记录以下单词，保存在离线安全位置。',
+          localized(
+            context,
+            verifying
+                ? tr(
+                    context,
+                    MessageCode.msgEnterTheRequestedWordsToFinishCreatingYour,
+                  )
+                : tr(context, MessageCode.msgWriteDownTheseWordsInOrderAndKeep),
+          ),
           style: TextStyle(
             color: widget.theme.muted,
             fontSize: 14,
@@ -404,7 +467,7 @@ class _RecoveryPhraseSheetState extends State<RecoveryPhraseSheet> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
-                        '${entry.key + 1}. ${entry.value}',
+                        localized(context, '${entry.key + 1}. ${entry.value}'),
                         style: TextStyle(
                           color: widget.theme.text,
                           fontSize: 14,
@@ -431,13 +494,15 @@ class _RecoveryPhraseSheetState extends State<RecoveryPhraseSheet> {
                     ? _continue()
                     : FocusScope.of(context).nextFocus(),
                 decoration: InputDecoration(
-                  labelText: '第 ${entry.value + 1} 个单词',
+                  labelText: tr(context, MessageCode.msgWord, [
+                    entry.value + 1,
+                  ]),
                 ),
               ),
             ),
         const SizedBox(height: 20),
         Text(
-          '不要截图、复制或发送助记词。校验在本机完成。',
+          tr(context, MessageCode.msgDoNotScreenshotCopyOrSendYourRecovery),
           style: TextStyle(
             color: widget.theme.danger,
             fontSize: 12,
@@ -447,7 +512,7 @@ class _RecoveryPhraseSheetState extends State<RecoveryPhraseSheet> {
         if (error != null) ...[
           const SizedBox(height: 12),
           Text(
-            error!,
+            localized(context, error!),
             style: TextStyle(color: widget.theme.danger, fontSize: 13),
           ),
         ],
@@ -474,11 +539,14 @@ class _ImportWalletDialogState extends State<ImportWalletDialog> {
   @override
   Widget build(BuildContext context) => WalletPanel(
     theme: widget.theme,
-    title: '导入钱包',
-    subtitle: '输入已有钱包的助记词，单词之间用空格分隔。',
+    title: tr(context, MessageCode.msgImportWallet),
+    subtitle: tr(
+      context,
+      MessageCode.msgEnterYourExistingRecoveryPhraseSeparatingWordsWith,
+    ),
     footer: FilledButton(
       onPressed: () => closeWalletPanel(context, controller.text),
-      child: const Text('导入'),
+      child: Text(tr(context, MessageCode.msgImport)),
     ),
     child: TextField(
       controller: controller,
@@ -491,7 +559,9 @@ class _ImportWalletDialogState extends State<ImportWalletDialog> {
       enableSuggestions: false,
       enableIMEPersonalizedLearning: false,
       style: TextStyle(color: widget.theme.text, fontSize: 14, height: 1.6),
-      decoration: const InputDecoration(hintText: '请输入 12 或 24 个助记词单词'),
+      decoration: InputDecoration(
+        hintText: tr(context, MessageCode.msgEnterYourOrWordRecoveryPhrase),
+      ),
     ),
   );
 }
@@ -519,7 +589,7 @@ class _ImportPrivateKeyPanelState extends State<ImportPrivateKeyPanel> {
   late EvmNetwork? network = widget.currentNetwork;
   bool obscure = true;
   bool importing = false;
-  String? error;
+  WalletMessage? error;
 
   @override
   void dispose() {
@@ -531,7 +601,11 @@ class _ImportPrivateKeyPanelState extends State<ImportPrivateKeyPanel> {
     if (importing) return;
     final selected = network;
     if (selected == null) {
-      setState(() => error = '请选择导入后要查看的网络。');
+      setState(
+        () => error = WalletMessage(
+          MessageCode.msgChooseANetworkToViewAfterImporting,
+        ),
+      );
       return;
     }
     FocusManager.instance.primaryFocus?.unfocus();
@@ -547,7 +621,11 @@ class _ImportPrivateKeyPanelState extends State<ImportPrivateKeyPanel> {
       if (mounted) {
         setState(() {
           importing = false;
-          error = e is WalletInputException ? e.message : '私钥导入失败，请重试。';
+          error = e is WalletInputException
+              ? e.message
+              : WalletMessage(
+                  MessageCode.msgPrivateKeyImportFailedPleaseTryAgain,
+                );
         });
       }
     }
@@ -558,12 +636,22 @@ class _ImportPrivateKeyPanelState extends State<ImportPrivateKeyPanel> {
     canPop: !importing,
     child: WalletPanel(
       theme: widget.theme,
-      title: '导入私钥',
-      subtitle: '使用已有的 EVM 私钥恢复账户，无需助记词。',
+      title: tr(context, MessageCode.msgImportPrivateKey),
+      subtitle: tr(
+        context,
+        MessageCode.msgRestoreAnAccountWithAnEvmTronHexadecimal,
+      ),
       canClose: !importing,
       footer: FilledButton(
         onPressed: importing ? null : _submit,
-        child: Text(importing ? '导入中…' : '导入并进入钱包'),
+        child: Text(
+          localized(
+            context,
+            importing
+                ? tr(context, MessageCode.msgImporting)
+                : tr(context, MessageCode.msgImportAndOpenWallet),
+          ),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -571,14 +659,19 @@ class _ImportPrivateKeyPanelState extends State<ImportPrivateKeyPanel> {
           DropdownButtonFormField<int>(
             initialValue: network?.id,
             isExpanded: true,
-            decoration: const InputDecoration(labelText: '网络'),
-            hint: const Text('请选择网络'),
+            decoration: InputDecoration(
+              labelText: tr(context, MessageCode.msgNetwork),
+            ),
+            hint: Text(tr(context, MessageCode.msgSelectANetwork)),
             items: [
               for (final n in widget.networks)
                 DropdownMenuItem(
                   value: n.id,
                   child: Text(
-                    '${n.name} · ${n.isTestnet ? '测试网' : '主网'}',
+                    localized(
+                      context,
+                      '${n.name} · ${n.isTestnet ? tr(context, MessageCode.msgTestnet) : tr(context, MessageCode.msgMainnet)}',
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -603,10 +696,15 @@ class _ImportPrivateKeyPanelState extends State<ImportPrivateKeyPanel> {
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _submit(),
             decoration: InputDecoration(
-              labelText: '私钥',
-              hintText: '64 位十六进制，可带 0x 前缀',
+              labelText: tr(context, MessageCode.msgPrivateKey),
+              hintText: tr(
+                context,
+                MessageCode.msgHexadecimalCharactersOptionallyPrefixedWithX,
+              ),
               suffixIcon: IconButton(
-                tooltip: obscure ? '显示私钥' : '隐藏私钥',
+                tooltip: obscure
+                    ? tr(context, MessageCode.msgShowPrivateKey)
+                    : tr(context, MessageCode.msgHidePrivateKey),
                 onPressed: importing
                     ? null
                     : () => setState(() => obscure = !obscure),
@@ -620,7 +718,10 @@ class _ImportPrivateKeyPanelState extends State<ImportPrivateKeyPanel> {
           ),
           const SizedBox(height: 16),
           Text(
-            '私钥仅保存在本机系统安全存储中。导入成功后，将连接所选网络查询余额；私钥不会发送给 RPC。',
+            tr(
+              context,
+              MessageCode.msgPrivateKeysStayInSecureDeviceStorageAfter,
+            ),
             style: TextStyle(
               color: widget.theme.muted,
               fontSize: 13,
@@ -630,7 +731,7 @@ class _ImportPrivateKeyPanelState extends State<ImportPrivateKeyPanel> {
           if (error != null) ...[
             const SizedBox(height: 16),
             Text(
-              error!,
+              localized(context, error!),
               style: TextStyle(color: widget.theme.danger, fontSize: 13),
             ),
           ],
@@ -653,11 +754,11 @@ class ImportResultDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) => WalletPanel(
     theme: theme,
-    title: '导入结果',
+    title: tr(context, MessageCode.msgImportResults),
     scrollBody: false,
     footer: FilledButton(
       onPressed: () => Navigator.pop(context),
-      child: const Text('知道了'),
+      child: Text(tr(context, MessageCode.msgDone)),
     ),
     child: Column(
       mainAxisSize: MainAxisSize.min,
@@ -666,7 +767,10 @@ class ImportResultDialog extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(8, 0, 8, 20),
           child: Text(
-            '成功 $importedCount 条 · 跳过或失败 ${errors.length} 条',
+            tr(context, MessageCode.msgImportedSkippedOrFailed, [
+              importedCount,
+              errors.length,
+            ]),
             style: TextStyle(color: theme.text, fontSize: 15),
           ),
         ),
@@ -680,7 +784,10 @@ class ImportResultDialog extends StatelessWidget {
                 itemBuilder: (_, index) => Padding(
                   padding: const EdgeInsets.all(8),
                   child: Text(
-                    '第 ${errors[index].row} 条：${errors[index].message}',
+                    tr(context, MessageCode.msgRow, [
+                      errors[index].row,
+                      errors[index].message,
+                    ]),
                     style: TextStyle(
                       color: theme.danger,
                       fontSize: 13,
@@ -716,7 +823,7 @@ class _SendSheetState extends State<SendSheet> {
   final recipientController = TextEditingController(),
       amountController = TextEditingController();
   bool sending = false;
-  String? error;
+  WalletMessage? error;
   String? uncertainHash;
   @override
   void dispose() {
@@ -731,11 +838,17 @@ class _SendSheetState extends State<SendSheet> {
     try {
       final recipient = recipientController.text.trim(),
           amount = amountController.text.trim();
-      EthereumAddress.fromHex(recipient, enforceEip55: false);
-      final wei = parseEtherToWei(amount);
-      if (wei <= BigInt.zero) throw const WalletInputException('金额必须大于 0。');
+      widget.network.validateAddress(recipient);
+      final wei = widget.network.parseAmount(amount);
+      if (wei <= BigInt.zero) {
+        throw const WalletInputException(
+          MessageCode.msgAmountMustBeGreaterThanZero,
+        );
+      }
       if (widget.balanceWei != null && wei > widget.balanceWei!) {
-        throw const WalletInputException('金额超过当前余额。');
+        throw const WalletInputException(
+          MessageCode.msgAmountExceedsTheAvailableBalance,
+        );
       }
       setState(() {
         sending = true;
@@ -747,7 +860,7 @@ class _SendSheetState extends State<SendSheet> {
       if (mounted) {
         setState(() {
           sending = false;
-          error = e.toString();
+          error = walletMessage(e);
           if (e is RpcBroadcastException) uncertainHash = e.transactionHash;
         });
       }
@@ -759,10 +872,16 @@ class _SendSheetState extends State<SendSheet> {
     canPop: !sending,
     child: WalletPanel(
       theme: widget.theme,
-      title: '发送 ${widget.network.nativeSymbol}',
+      title: tr(context, MessageCode.msgSendMore, [
+        widget.network.nativeSymbol,
+      ]),
       canClose: !sending,
-      subtitle:
-          '${widget.network.name} · ${widget.network.isTestnet ? '测试网' : '主网'} · 在本机完成签名',
+      subtitle: tr(context, MessageCode.msgSignedOnThisDevice, [
+        widget.network.name,
+        widget.network.isTestnet
+            ? tr(context, MessageCode.msgTestnet)
+            : tr(context, MessageCode.msgMainnet),
+      ]),
       footer: FilledButton(
         onPressed: sending || uncertainHash != null ? null : _submit,
         child: sending
@@ -771,7 +890,17 @@ class _SendSheetState extends State<SendSheet> {
                 height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
-            : Text(uncertainHash != null ? '请先确认交易状态' : '签名并广播'),
+            : Text(
+                localized(
+                  context,
+                  uncertainHash != null
+                      ? tr(
+                          context,
+                          MessageCode.msgCheckTheTransactionStatusFirst,
+                        )
+                      : tr(context, MessageCode.msgSignAndBroadcast),
+                ),
+              ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -780,9 +909,9 @@ class _SendSheetState extends State<SendSheet> {
             controller: recipientController,
             enabled: !sending,
             autocorrect: false,
-            decoration: const InputDecoration(
-              labelText: '收款地址',
-              hintText: '0x…',
+            decoration: InputDecoration(
+              labelText: tr(context, MessageCode.msgRecipientAddress),
+              hintText: widget.network.addressHint,
             ),
           ),
           const SizedBox(height: 20),
@@ -791,14 +920,29 @@ class _SendSheetState extends State<SendSheet> {
             enabled: !sending,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
-              labelText: '金额（${widget.network.nativeSymbol}）',
+              labelText: tr(context, MessageCode.msgAmount, [
+                widget.network.nativeSymbol,
+              ]),
               hintText: '0.00',
             ),
           ),
           const SizedBox(height: 16),
           if (widget.balanceWei != null)
             Text(
-              '可用余额：${formatWeiAsEther(widget.balanceWei!)} ${widget.network.nativeSymbol} · Gas 费另行扣除',
+              tr(context, MessageCode.msgAvailable, [
+                displayQuantity(
+                  context,
+                  widget.network.formatAmount(widget.balanceWei!),
+                ),
+                widget.network.nativeSymbol,
+                widget.network.isTron
+                    ? tr(
+                        context,
+                        MessageCode
+                            .msgInsufficientBandwidthConsumesTrxAnUnactivatedRecipientMay,
+                      )
+                    : tr(context, MessageCode.msgGasFeesAreChargedSeparately),
+              ]),
               style: TextStyle(
                 color: widget.theme.muted,
                 fontSize: 12,
@@ -808,14 +952,14 @@ class _SendSheetState extends State<SendSheet> {
           if (error != null) ...[
             const SizedBox(height: 16),
             Text(
-              error!,
+              localized(context, error!),
               style: TextStyle(color: widget.theme.danger, fontSize: 13),
             ),
           ],
           if (uncertainHash != null) ...[
             const SizedBox(height: 12),
             SelectableText(
-              '交易哈希：$uncertainHash',
+              tr(context, MessageCode.msgTransactionHash, [uncertainHash]),
               style: TextStyle(color: widget.theme.text, fontSize: 13),
             ),
           ],

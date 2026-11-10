@@ -1,0 +1,750 @@
+{
+  "@@locale": "zh",
+  "msgSyncing": "同步中…",
+  "msgRefreshAssets": "刷新资产",
+  "msgManageNetworks": "管理网络",
+  "msgStablecoins": "稳定币",
+  "msgOtherCoins": "其他币种",
+  "msgAddTokens": "添加币种",
+  "msgSearchAssetsOrNetworks": "搜索资产或网络",
+  "msgNativeCoinsPayNetworkFeesUnsyncedBalancesAppear": "原生币用于支付网络费用。未同步余额显示为 —。",
+  "msgTokensAreIdentifiedByNetworkAndContractMatching": "按网络与合约区分代币；同名代币不会自动合并。",
+  "msgNoMatchingAssets": "没有匹配的资产。",
+  "msgAssetDetails": "{p0} 资产详情",
+  "@msgAssetDetails": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSend": "发送",
+  "msgReceive": "接收",
+  "msgUseThisNetwork": "设为当前链",
+  "msgRefreshBalance": "刷新余额",
+  "msgNetwork": "网络",
+  "msgWalletAddress": "钱包地址",
+  "msgRpcUrl": "RPC 地址",
+  "msgBlockExplorer": "区块浏览器",
+  "msgExplorerLinkCopied": "浏览器链接已复制",
+  "msgCopyExplorerLink": "复制浏览器链接",
+  "msgSystemDefault": "跟随系统",
+  "languageSimplifiedChinese": "简体中文",
+  "languageTraditionalChinese": "繁體中文",
+  "msgLanguage": "语言",
+  "msgPreferencesCouldNotBeSavedPreviousSettingsMay": "偏好未能保存，重启后可能恢复旧设置。",
+  "msgYourKeysYourWallet": "你的密钥，\n你的钱包。",
+  "msgManageYourOnchainAssetsCreateAWalletOr": "轻松管理你的链上资产。\n创建钱包，或导入已有账户，即可开始。",
+  "msgSelfCustodyWallet": "自托管钱包",
+  "msgTransactionsAreSignedOnThisDeviceYouControl": "交易在本机签名，密钥由你掌握。",
+  "msgSecureDeviceStorage": "系统安全存储",
+  "msgRecoveryCredentialsStayInThisDeviceSSecure": "恢复凭证保存在本机系统安全存储中。",
+  "msgChooseYourNetworks": "网络由你选择",
+  "msgRpcConnectionsStartOnlyAfterYouEnableA": "启用网络后，才会连接对应的 RPC。",
+  "msgGetStartedWithStoneWallet": "开始使用 Stone Wallet",
+  "msgChooseHowToGetStarted": "选择适合你的方式",
+  "msgCreateWallet": "创建新钱包",
+  "msgImportRecoveryPhrase": "导入助记词",
+  "msgImportPrivateKey": "导入私钥",
+  "msgImportPrivateKeyFile": "批量导入私钥表格",
+  "msgCsvTsvColumnsChainPrivateKey": "CSV / TSV · 包含「链」「私钥」两列",
+  "msgKeepYourRecoveryPhraseAndPrivateKeysSafe": "请妥善保管助记词与私钥，它们是恢复钱包的凭证。",
+  "msgNetworksAndRpc": "网络与 RPC",
+  "msgNoNetworkSelectedEnableANetworkToQuery": "尚未选择网络。启用网络后才会查询余额。",
+  "msgTransactionNetwork": "当前操作链",
+  "msgTestnet": "测试网",
+  "msgMainnet": "主网",
+  "endpointCount": "{p0} 个节点 · 失败自动切换",
+  "@endpointCount": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "msgActiveEndpoint": "当前可用节点",
+  "msgSyncingMore": "○ 同步中…",
+  "msgRpcConnected": "● RPC 已连接",
+  "msgNotSynced": "○ 尚未同步",
+  "msgEditRpc": "编辑 RPC",
+  "msgAddCustomNetwork": "添加自定义链",
+  "msgWalletSecurity": "钱包安全",
+  "msgAccountSource": "账户来源",
+  "msgDerivationPath": "派生路径",
+  "msgPrivateKeyImport": "私钥导入",
+  "msgRecoveryPhrasesAndPrivateKeysRemainInSecure": "助记词与私钥仅保存在本机安全存储中，请自行保管恢复凭证。",
+  "msgWalletManagement": "钱包管理",
+  "walletAndAccountSummary": "{p0} 个钱包 · {p1} 个账户\n创建、导入更多钱包，或在助记词钱包下继续添加账户。",
+  "@walletAndAccountSummary": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      },
+      "p1": {
+        "type": "int"
+      }
+    }
+  },
+  "msgManageWalletsAndAccounts": "管理钱包与账户",
+  "msgChooseFileToImport": "选择表格导入",
+  "msgBackup": "备份",
+  "msgIcloudGoogleDriveBackupNotConnected": "iCloud / Google Drive 云备份（暂未接入）",
+  "msgKeepYourRecoveryCredentialsInASecureOffline": "请将恢复凭证妥善保存在离线安全位置。",
+  "msgOnchainAssets": "链上资产",
+  "msgViewAll": "查看全部",
+  "msgAssets": "资产",
+  "msgBalance": "余额",
+  "msgStatus": "状态",
+  "msgSynced": "已同步",
+  "msgNetworksQueried": "{p0}/{p1}\n链已查询",
+  "@msgNetworksQueried": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "int"
+      }
+    }
+  },
+  "msgQueriedBalanceDistribution": "已查询余额分布",
+  "msgStablecoinOverview": "稳定币总览",
+  "msgRefreshStablecoins": "刷新稳定币",
+  "msgCurrentAccount": "当前账户 · {p0}",
+  "@msgCurrentAccount": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgTrackedTotal": "已展示 {p0} 总量",
+  "@msgTrackedTotal": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgQueriedSubtotal": "已查询合计",
+  "msgNetworksQueriedMore": "{p0}/{p1} 条链已查询{p2}",
+  "@msgNetworksQueriedMore": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "int"
+      },
+      "p2": {
+        "type": "String"
+      }
+    }
+  },
+  "msgFullySynced": " · 已完整同步",
+  "msgCoverageIsIncomplete": " · 余额可能尚未完整",
+  "msgIncludesTrackedUsdtBinancePegVersionsTokenQuantities": "含已展示的 USDT0 / Binance-Peg 版本；仅按代币数量汇总，不是美元估值。",
+  "msgOnlyAddedCircleUsdcContractsAreCountedBy": "仅汇总已添加的 Circle USDC 合约，按代币数量统计。",
+  "msgViewNetworkDistribution": "查看各链分布 →",
+  "msgByNetwork": "各链 {p0}",
+  "@msgByNetwork": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgEnableQueryNetworks": "启用查询网络",
+  "msgNoAddedYet": "尚未添加 {p0}",
+  "@msgNoAddedYet": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAddTokensToViewTheirNetworkDistribution": "添加币种后即可查看跨链分布。",
+  "msgEnableStablecoinNetworks": "启用稳定币查询网络",
+  "msgOfQueriedBalances": "占已查询余额 {p0}%",
+  "@msgOfQueriedBalances": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgZeroBalance": "余额为 0",
+  "msgAwaitingOnchainBalance": "等待链上余额",
+  "msgCopyReceiveAddress": "复制收款地址",
+  "msgQuerying": "查询中…",
+  "msgCurrentAccountReceiveAddress": "当前账户收款地址",
+  "msgTokenContractDecimals": "合约地址 · {p0} 位精度",
+  "@msgTokenContractDecimals": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "msgCheckTheNetworkAndContractBeforeReceivingToken": "请核对收款网络和合约。此处用于查看与收款，暂不提供代币转账。",
+  "msgCannotReadThisTokenCheckTheNetworkContract": "无法读取代币，请检查网络、合约与节点。",
+  "msgAddingATokenChangesItsDisplayOnlyIt": "添加仅改变资产展示，不会发起授权或交易。",
+  "msgCommonStablecoins": "常用稳定币",
+  "msgAddedCustomTokens": "已添加的自定义代币",
+  "msgHideToken": "隐藏代币",
+  "msgAddCustomToken": "添加自定义代币",
+  "msgTokenContractAddress": "代币合约地址",
+  "msgProcessing": "处理中…",
+  "msgReadTokenInfo": "读取代币信息",
+  "msgDecimals": "{p0} · {p1} 位精度",
+  "@msgDecimals": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "int"
+      }
+    }
+  },
+  "msgCustomTokensWithMatchingTickersAreNotAutomatically": "自定义同名代币不会自动计入 USDT / USDC 汇总。",
+  "msgMatchesAPresetContractItWillBeIncluded": "已匹配预置合约，将计入 {p0} 汇总。",
+  "@msgMatchesAPresetContractItWillBeIncluded": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAdded": "已添加",
+  "msgConfirmAddition": "确认添加",
+  "msgSwitchTheme": "切换主题",
+  "msgClose": "关闭",
+  "msgSelectWallet": "选择钱包",
+  "msgRecoveryPhraseWallet": "助记词钱包",
+  "msgSwap": "兑换",
+  "msgMakeSureTheReceivingNetworkMatchesTheNetwork": "请确认接收资产的网络与你选择的网络一致。",
+  "msgEnableMultipleNetworksToViewBalancesOnlySelected": "可同时启用多条链查看余额。只有点击保存后，选中的网络才会访问 RPC。",
+  "msgDisconnectAllNetworks": "断开所有网络",
+  "msgSaveNetworkSelection": "保存网络选择",
+  "msgTapANetworkNameToUseItFor": "点击网络名称可切换当前链；勾选框用于同时启用多条链。",
+  "msgUseForTransactions": "设为当前操作链",
+  "msgRecoveryPhraseVerificationFailedCheckWordsAnd": "助记词校验不正确，请重新核对第 2、6、10 个单词。",
+  "msgVerifyRecoveryPhrase": "验证恢复助记词",
+  "msgWriteDownRecoveryPhrase": "记录恢复助记词",
+  "msgVerifyAndOpenWallet": "验证并进入钱包",
+  "msgIWroteItDownVerify": "我已记录，继续验证",
+  "msgWrittenVerify": "记录  ✓     →     ② 验证",
+  "msgWriteDownVerify": "① 记录     →     ② 验证",
+  "msgEnterTheRequestedWordsToFinishCreatingYour": "请输入指定位置的单词，验证后完成创建。",
+  "msgWriteDownTheseWordsInOrderAndKeep": "请按顺序记录以下单词，保存在离线安全位置。",
+  "msgWord": "第 {p0} 个单词",
+  "@msgWord": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgDoNotScreenshotCopyOrSendYourRecovery": "不要截图、复制或发送助记词。校验在本机完成。",
+  "msgImportWallet": "导入钱包",
+  "msgEnterYourExistingRecoveryPhraseSeparatingWordsWith": "输入已有钱包的助记词，单词之间用空格分隔。",
+  "msgImport": "导入",
+  "msgEnterYourOrWordRecoveryPhrase": "请输入 12 或 24 个助记词单词",
+  "msgChooseANetworkToViewAfterImporting": "请选择导入后要查看的网络。",
+  "msgPrivateKeyImportFailedPleaseTryAgain": "私钥导入失败，请重试。",
+  "msgRestoreAnAccountWithAnEvmTronHexadecimal": "使用已有的 EVM / TRON 十六进制私钥恢复账户，无需助记词。",
+  "msgImporting": "导入中…",
+  "msgImportAndOpenWallet": "导入并进入钱包",
+  "msgSelectANetwork": "请选择网络",
+  "msgPrivateKey": "私钥",
+  "msgHexadecimalCharactersOptionallyPrefixedWithX": "64 位十六进制，可带 0x 前缀",
+  "msgShowPrivateKey": "显示私钥",
+  "msgHidePrivateKey": "隐藏私钥",
+  "msgPrivateKeysStayInSecureDeviceStorageAfter": "私钥仅保存在本机系统安全存储中。导入成功后，将连接所选网络查询余额；私钥不会发送给 RPC。",
+  "msgImportResults": "导入结果",
+  "msgDone": "知道了",
+  "msgImportedSkippedOrFailed": "成功 {p0} 条 · 跳过或失败 {p1} 条",
+  "@msgImportedSkippedOrFailed": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "msgRow": "第 {p0} 条：{p1}",
+  "@msgRow": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAmountMustBeGreaterThanZero": "金额必须大于 0。",
+  "msgAmountExceedsTheAvailableBalance": "金额超过当前余额。",
+  "msgSendMore": "发送 {p0}",
+  "@msgSendMore": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSignedOnThisDevice": "{p0} · {p1} · 在本机完成签名",
+  "@msgSignedOnThisDevice": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "msgCheckTheTransactionStatusFirst": "请先确认交易状态",
+  "msgSignAndBroadcast": "签名并广播",
+  "msgRecipientAddress": "收款地址",
+  "msgAmount": "金额（{p0}）",
+  "@msgAmount": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAvailable": "可用余额：{p0} {p1} · {p2}",
+  "@msgAvailable": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      },
+      "p2": {
+        "type": "String"
+      }
+    }
+  },
+  "msgInsufficientBandwidthConsumesTrxAnUnactivatedRecipientMay": "带宽不足时消耗 TRX，接收方未激活可能另收费用",
+  "msgGasFeesAreChargedSeparately": "Gas 费另行扣除",
+  "msgTransactionHash": "交易哈希：{p0}",
+  "@msgTransactionHash": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSettings": "设置",
+  "msgYourKeysStayWithYouTransactionsAreSigned": "密钥由你掌握\n签名在本机完成",
+  "msgHome": "首页",
+  "msgChooseNetwork": "选择网络",
+  "msgChainIdMustBeAValidPositiveInteger": "Chain ID 必须是有效的正整数。",
+  "msgThisChainIdAlreadyExistsEditItsRpc": "该 Chain ID 已存在，请编辑现有网络的 RPC。",
+  "msgConfigureAtLeastOneRpcUrl": "请至少配置一个 RPC 地址。",
+  "msgTronHttpApiIsAvailableTheMainnetGenesis": "TRON HTTP API 可用，已验证主网创世区块。",
+  "msgRpcIsAvailableAndItsChainIdMatches": "RPC 可用，Chain ID 与网络配置一致。",
+  "msgConnectionCheckFailedCheckTheRpcUrlNetwork": "检测失败，请检查 RPC 地址、网络或访问凭证。",
+  "msgCouldNotSaveNetworkSettingsPleaseTryAgain": "网络配置保存失败，请重试。",
+  "msgAddCustomEvmNetwork": "添加自定义 EVM 链",
+  "msgEditNetworkAndRpc": "编辑网络与 RPC",
+  "msgEnterOneRpcUrlPerLineInPriority": "每行填写一个 RPC 地址，按顺序尝试；失败后自动切换，后续优先使用可用节点。",
+  "msgSaving": "保存中…",
+  "msgSaveNetworkSettings": "保存网络配置",
+  "msgNetworkName": "网络名称",
+  "msgForExampleBase": "例如：Base",
+  "msgForExample": "例如：8453",
+  "msgNativeCurrencySymbol": "原生代币符号",
+  "msgForExampleEth": "例如：ETH",
+  "msgHttpsPrimaryEndpointHttpsBackupEndpoint": "https://第一个节点\nhttps://备用节点",
+  "msgOneUrlPerLineOrderSetsPriorityDuplicates": "每行一个；顺序即优先级，自动去重。",
+  "msgRestoreBuiltInFreeEndpoints": "恢复内置免费节点",
+  "msgBlockExplorerUrlOptional": "区块浏览器地址（可选）",
+  "msgChecking": "检测中…",
+  "msgCheckRpcConnection": "检测 RPC 连接",
+  "msgOperationFailedPleaseTryAgain": "操作失败，请重试。",
+  "msgRenameAccount": "重命名账户",
+  "msgRenameWallet": "重命名钱包",
+  "walletAccountCount": "{p0} · {p1} 个账户",
+  "@walletAccountCount": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "int"
+      }
+    }
+  },
+  "msgPrivateKeyWallet": "私钥钱包",
+  "msgCopyAccountAddress": "复制账户地址",
+  "msgAddAccount": "添加账户",
+  "walletAndAccountCount": "{p0} 个钱包 · {p1} 个账户",
+  "@walletAndAccountCount": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      },
+      "p1": {
+        "type": "int"
+      }
+    }
+  },
+  "msgARecoveryPhraseWalletCanHaveMultipleAccounts": "一个助记词钱包可添加多个账户；新的助记词或私钥会保存为独立钱包。",
+  "msgSearchWalletsAccountsOrAddresses": "搜索钱包、账户或地址",
+  "msgNoMatchingWalletsOrAccounts": "没有匹配的钱包或账户",
+  "msgExistingWalletsAreKeptYouCanSwitchAt": "已有的钱包会保留，可随时切换。",
+  "msgRestoreAWalletAndAddDerivedAccounts": "恢复钱包，并继续添加派生账户",
+  "msgImportOneEvmTronAccount": "导入已有的单个 EVM / TRON 账户",
+  "msgImportMultipleAccountsFromCsvTsv": "从 CSV / TSV 导入多个账户",
+  "msgNamesMustContainCharacters": "名称需要包含 1 至 64 个字符。",
+  "msgSaveName": "保存名称",
+  "msgName": "名称",
+  "msgCustomToken": "自定义代币",
+  "msgInvalidTokenInformationReadTheContractAgain": "代币信息无效，请重新读取合约。",
+  "msgTokenSymbolContainsInvalidCharacters": "代币符号包含无效字符。",
+  "msgTheTokenContractReturnedAnInvalidValue": "代币合约返回值无效。",
+  "msgInvalidTokenSymbol": "代币符号无效。",
+  "msgOnlyTokensWithDecimalsAreSupported": "仅支持 0–36 位精度的代币。",
+  "msgCannotReadTheTokenSymbol": "无法读取代币符号。",
+  "msgInvalidTokenSymbolEncoding": "代币符号编码无效。",
+  "msgInvalidTokenSymbolLength": "代币符号长度无效。",
+  "msgCannotReadTheSavedTokenListExistingRecords": "本机代币列表无法读取，未覆盖原有记录。",
+  "msgThisTokenHasAlreadyBeenAddedOnThis": "该链上的代币已添加。",
+  "msgNetworkDisabled": "未启用网络",
+  "msgQueryingMore": "查询中",
+  "msgQueryFailed": "查询失败",
+  "msgTronMainnetIdentifierDoesNotMatchTheProtocol": "TRON 主网标识与协议不匹配。",
+  "msgEnterTheNetworkNameAndNativeCurrencySymbol": "请填写网络名称和原生代币符号。",
+  "msgEnterAValidHttpHttpsUrl": "请输入有效的 HTTP / HTTPS 地址。",
+  "msgCannotAccessKeychainQuitRebuildAndRunThe": "无法访问系统钥匙串（-34018）。请退出应用并重新编译运行；热重载无法更新原生签名权限。",
+  "msgCannotAccessSecureDeviceStorageCheckThatKeychain": "无法访问本机安全存储，请检查系统钥匙串是否已解锁及访问是否被允许。",
+  "msgCannotReadSavedNetworkSettingsCheckTheStored": "本机网络配置无法读取，请检查保存的数据。",
+  "msgAccountIndexIsOutOfRange": "账户序号超出有效范围。",
+  "msgInvalidRecoveryPhraseCheckTheWordsAndTheir": "助记词无效，请检查单词和顺序。",
+  "msgCannotDeriveTheEvmPrivateKey": "无法派生 EVM 私钥。",
+  "msgInvalidPrivateKeyEnterHexadecimalCharacters": "私钥无效，应为 64 位十六进制字符串。",
+  "msgPrivateKeyValueIsOutOfRange": "私钥无效，数值超出有效范围。",
+  "msgInvalidPrivateKeyCannotCreateAnAccount": "私钥无效，无法创建账户。",
+  "msgBinance": "币安",
+  "msgTron": "波场",
+  "msgRpcNetworkMismatchExpectedReceived": "RPC 链不匹配：预期 {p0}，实际 {p1}。",
+  "@msgRpcNetworkMismatchExpectedReceived": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAllRpcEndpointsAreUnavailableTryAgainLater": "全部 {p0} 个 RPC 节点均不可用，请稍后重试或编辑节点列表。",
+  "@msgAllRpcEndpointsAreUnavailableTryAgainLater": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "msgTheTokenAndNetworkDoNotMatch": "代币与网络不匹配。",
+  "msgTheRpcReturnedADifferentTransactionHash": "RPC 返回的交易哈希不匹配。",
+  "msgBroadcastStatusIsUncertainCheckTheTransactionHash": "无法确认交易是否已广播。请先按交易哈希查询确认状态，避免再次发起转账。",
+  "msgEnterAValidAmountWithAtMostDecimal": "请输入有效金额，最多支持 {p0} 位小数。",
+  "@msgEnterAValidAmountWithAtMostDecimal": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "msgMainWallet": "主钱包",
+  "msgNoNetworkSelected": "未选择网络",
+  "msgChooseANetworkToView": "请先选择要查看的链",
+  "msgRpcNotConnected": "未连接 RPC",
+  "msgNativeAsset": "原生资产",
+  "msgConnectionFailed": "连接失败",
+  "msgAwaitingSync": "待同步",
+  "msgWallet": "钱包",
+  "msgRpcRequestTimedOutCheckTheUrlOr": "RPC 请求超时，请检查地址或更换节点。",
+  "msgRpcRequestFailedCheckTheNetworkEndpointOr": "RPC 请求失败，请检查网络、节点地址或访问凭证。",
+  "msgCouldNotConnectToEditRpcSettingsOr": "{p0} 连接失败，可在设置中修改 RPC 或重试。",
+  "@msgCouldNotConnectToEditRpcSettingsOr": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgTheAccountHasChangedReopenThisAsset": "账户已切换，请重新打开资产。",
+  "msgCouldNotSaveNetworkSelectionPleaseTryAgain": "网络选择保存失败，请重试。",
+  "msgPrivateKeyAccountImported": "私钥账户已导入",
+  "msgTheAccountWasSavedButCouldNotBe": "账户已保存，加载失败，请重新打开钱包。",
+  "msgCannotReadThisFile": "无法读取表格文件。",
+  "msgNoImportableRowsTheHeaderMustContainChain": "表格没有可导入的数据。首行为：链,私钥",
+  "importedRowSummary": "成功导入 {p0} 条{p1}。",
+  "@importedRowSummary": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "msgFailed": "，{p0} 条失败",
+  "@msgFailed": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgChain": "链",
+  "msgSelectedConnectingToRpc": "已选择 {p0}，正在连接 RPC…",
+  "@msgSelectedConnectingToRpc": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgNetworkSettingsSaved": "{p0} 网络配置已保存",
+  "@msgNetworkSettingsSaved": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSwapsAreNotConnectedNoOrderOrSignature": "兑换功能尚未接入，没有创建订单或签名。",
+  "msgUnavailable": "暂不可用",
+  "msgAddressCopied": "地址已复制",
+  "msgSelectANetworkBeforeSending": "发送前请先选择网络。",
+  "msgTransactionBroadcast": "交易已广播：{p0}",
+  "@msgTransactionBroadcast": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgWalletOperationFailedPleaseTryAgain": "钱包操作失败，请重试。",
+  "msgMostRecentlyBroadcastTransaction": "最近广播的交易",
+  "msgEnterAValidTronAddressStartingWithT": "请输入有效的 TRON 地址（T 开头，含正确校验码）。",
+  "msgTheTronEndpointReturnedAnErrorTryAnother": "TRON 节点返回错误，请更换节点或稍后重试。",
+  "msgTronNetworkMismatchAMainnetEndpointIsRequired": "TRON 节点网络不匹配：需要 TRON 主网。",
+  "msgAllTronEndpointsAreUnavailableTryAgainLater": "全部 {p0} 个 TRON 节点均不可用，请稍后重试或编辑节点列表。",
+  "@msgAllTronEndpointsAreUnavailableTryAgainLater": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "msgTrcQueryFailedCheckTheContractAndEndpoint": "TRC20 合约查询失败，请检查合约和节点。",
+  "msgTheTronEndpointReturnedADifferentAccountS": "TRON 节点返回了不同账户的余额。",
+  "msgTheTronEndpointReturnedAnInvalidBalance": "TRON 节点返回的余额无效。",
+  "msgTrxAmountIsOutOfRange": "TRX 金额超出有效范围。",
+  "msgTronReferenceBlockIsInvalidOrStaleCheck": "TRON 参考区块无效或已过期，请检查本机时间和节点。",
+  "msgTheTronEndpointDidNotConfirmTheBroadcast": "TRON 节点未确认交易广播。",
+  "msgCannotReadTheWalletBookCheckSecureStorage": "本机钱包簿无法读取，请检查安全存储。",
+  "msgAccount": "账户 1",
+  "msgPrivateKeyAccount": "私钥账户 {p0}",
+  "@msgPrivateKeyAccount": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSavedPrivateKeyAccountDataIsCorrupted": "本机保存的私钥账户数据已损坏。",
+  "msgWalletMore": "钱包 {p0}",
+  "@msgWalletMore": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgUnsupportedNetwork": "不支持的链。",
+  "msgDuplicateEntrySkipped": "重复记录，已跳过。",
+  "msgOnlyRecoveryPhraseWalletsCanDeriveAdditionalAccounts": "只有助记词钱包可以派生新账户。",
+  "msgAccountMore": "账户 {p0}",
+  "@msgAccountMore": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAccountNotFound": "找不到此账户。",
+  "msgWalletNotFound": "找不到此钱包。",
+  "msgUnexpectedErrorPleaseTryAgain": "未知错误，请稍后重试。",
+  "msgSelfCustodyEvmTron": "自托管 · EVM / TRON",
+  "portfolioOverview": "地址总览",
+  "portfolioByCoin": "按币种",
+  "portfolioReferenceValue": "参考资产估值",
+  "portfolioValuedSubtotal": "已估值合计",
+  "portfolioAllAddresses": "全部关联地址",
+  "portfolioAllNetworks": "全部启用网络",
+  "portfolioAllAssets": "全部资产",
+  "portfolioSimple": "简洁",
+  "portfolioDetailed": "详细",
+  "portfolioDisplaySettings": "资产展示",
+  "portfolioDisplayMode": "展示模式",
+  "portfolioInitialCount": "首屏币种数量",
+  "portfolioAll": "全部",
+  "portfolioSort": "资产排序",
+  "portfolioSortValue": "估值从高到低",
+  "portfolioStableFirst": "稳定币优先",
+  "portfolioSortName": "名称",
+  "portfolioHideZero": "隐藏已确认的零余额",
+  "portfolioShowSpam": "显示索引服务标记的疑似垃圾资产",
+  "portfolioExpand": "展开全部（{p0}）",
+  "@portfolioExpand": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioCollapse": "收起",
+  "portfolioSelectCoin": "选择币种",
+  "portfolioSearch": "搜索币种、合约或网络",
+  "portfolioChainCount": "{p0} 条链",
+  "@portfolioChainCount": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "portfolioCoinCount": "{p0} 个币种",
+  "@portfolioCoinCount": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "portfolioInformation": "估值与查询详情",
+  "portfolioValueExplanation": "按 USDT 市价估算，1 USDT≈1 USD；仅包含已启用网络下已添加和已发现的资产。",
+  "portfolioVersionExplanation": "USDT0、Binance-Peg 版本使用 USDT 参考价；同名符号不会自动归并或匹配行情。",
+  "portfolioCoverage": "{p0}/{p1} 项持仓已查询 · {p2} 项未定价",
+  "@portfolioCoverage": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      },
+      "p2": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioPartial": "部分结果",
+  "portfolioStalePrices": "行情已过期，使用近期缓存",
+  "portfolioNoPrice": "暂无参考价格",
+  "portfolioNoAssets": "没有符合条件的资产",
+  "portfolioShowZero": "查看零余额资产",
+  "portfolioRefresh": "刷新余额与行情",
+  "portfolioSourceRpc": "余额来自 RPC",
+  "portfolioSourceIndexer": "索引服务发现",
+  "portfolioPriceSource": "行情：Binance 公开 USDT 交易对",
+  "portfolioUpdated": "行情时间：{p0}",
+  "@portfolioUpdated": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioTestnetExcluded": "测试网资产不计入估值。",
+  "discoveryServices": "资产索引服务",
+  "discoveryConfigure": "配置自动发现",
+  "discoveryNotConfigured": "自动发现未配置",
+  "discoveryQuerying": "正在发现资产…",
+  "discoveryPartial": "资产发现尚未完成",
+  "discoveryUnavailable": "自动发现暂不可用",
+  "discoveryLoadMore": "继续加载资产",
+  "discoveryConfigureProvider": "配置 {p0}",
+  "@discoveryConfigureProvider": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "discoveryGetKey": "获取 API Key",
+  "discoveryDocs": "官方文档",
+  "discoveryPlans": "套餐与额度",
+  "discoveryApiKey": "服务 API Key",
+  "discoveryKeyHint": "填写自己的服务密钥，不是钱包私钥",
+  "discoveryKeyRequired": "请填写服务 API Key。",
+  "discoveryPrivacy": "启用后，所选服务商会收到对应网络的关联公开地址。服务密钥保存在本机安全存储中。",
+  "discoveryAssignments": "选择网络（将替换该网络的现有索引服务）",
+  "discoveryChooseNetwork": "请至少选择一个受支持的已启用网络。",
+  "discoveryTest": "测试连接",
+  "discoveryConnected": "连接成功，密钥与响应有效。",
+  "discoverySaveEnable": "保存并启用",
+  "discoveryEnabled": "已启用",
+  "discoveryDisabled": "已停用",
+  "discoveryDisable": "停用",
+  "discoveryDelete": "删除配置",
+  "discoveryEdit": "配置",
+  "discoveryUnauthorized": "服务密钥无效或权限不足，请检查密钥和套餐权限。",
+  "discoveryLimited": "索引服务额度不足或触发限流，请稍后重试。",
+  "discoveryResponseInvalid": "索引服务返回了无效的资产数据。",
+  "discoveryRequestFailed": "索引服务连接失败，已关注资产仍可查看。",
+  "discoverySettingsUnreadable": "无法读取索引服务配置，原记录已保留。",
+  "discoverySaveFailed": "索引服务配置保存失败，请重试。",
+  "discoveryUnsupported": "本应用尚未接入该服务在此网络的资产发现。",
+  "discoveryWatch": "加入关注",
+  "discoveryWatched": "已加入关注资产",
+  "discoveryMoralisGuide": "注册 Moralis → 获取 Web3 API Key → 选择 Ethereum、Polygon 或 BNB Chain。额度以套餐页为准。",
+  "discoveryAlchemyGuide": "创建 Alchemy App → 启用 Ethereum 或 Polygon → 复制 API Key。本应用使用 Token API。",
+  "discoveryTronGridGuide": "登录 TronGrid → 创建 API Key → 启用 TRON 主网。本应用发现 TRC20 持仓。",
+  "discoveryLinkCopied": "浏览器未能打开，链接已复制。",
+  "discoveryNoEnabledNetworks": "请先启用一个受支持网络，再配置自动发现。",
+  "portfolioAddressDetails": "关联地址",
+  "portfolioBalanceStatus": "余额状态",
+  "portfolioSpam": "疑似垃圾资产",
+  "portfolioNoCoin": "当前筛选下没有币种",
+  "discoveryNotConfiguredShort": "未配置",
+  "settingsSearch": "搜索设置",
+  "settingsSearchHint": "语言、显示模式、RPC…",
+  "settingsQuickLinks": "常用设置",
+  "settingsCategories": "全部设置",
+  "settingsWallets": "钱包与账户",
+  "settingsWalletsHint": "管理、创建与导入",
+  "settingsAssetsHint": "展示偏好与关注币种",
+  "settingsData": "网络与数据",
+  "settingsDataHint": "网络 RPC 与资产索引服务",
+  "settingsSecurity": "安全与备份",
+  "settingsSecurityHint": "账户安全信息与备份说明",
+  "settingsGeneral": "通用",
+  "settingsGeneralHint": "语言与外观主题",
+  "settingsAppearance": "外观主题",
+  "settingsLight": "浅色",
+  "settingsDark": "深色",
+  "settingsWatchedTokens": "关注币种管理",
+  "settingsNoResults": "没有找到相关设置",
+  "settingsClearSearch": "清空搜索",
+  "settingsUnavailable": "暂未接入",
+  "settingsNetworkDisabled": "未启用",
+  "settingsNetworkEnabled": "已启用",
+  "settingsNetworkState": "启用网络",
+  "settingsBackupHint": "恢复凭证请妥善离线保管。云备份暂未接入。",
+  "settingsMatchedOption": "已定位此设置"
+}

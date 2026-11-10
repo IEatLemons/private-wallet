@@ -70,9 +70,13 @@ void main() {
           operation(),
           throwsA(
             isA<WalletInputException>()
-                .having((e) => e.message, 'message', contains('重新编译'))
                 .having(
-                  (e) => e.message,
+                  (e) => e.code,
+                  'code',
+                  MessageCode.msgCannotAccessKeychainQuitRebuildAndRunThe,
+                )
+                .having(
+                  (e) => e.toString(),
                   'message',
                   isNot(contains('native diagnostic')),
                 ),

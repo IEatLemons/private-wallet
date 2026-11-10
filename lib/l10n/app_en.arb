@@ -1,0 +1,786 @@
+{
+  "@@locale": "en",
+  "msgSyncing": "Syncing…",
+  "msgRefreshAssets": "Refresh assets",
+  "msgManageNetworks": "Manage networks",
+  "msgStablecoins": "Stablecoins",
+  "msgOtherCoins": "Other coins",
+  "msgAddTokens": "Add tokens",
+  "msgSearchAssetsOrNetworks": "Search assets or networks",
+  "msgNativeCoinsPayNetworkFeesUnsyncedBalancesAppear": "Native coins pay network fees. Unsynced balances appear as —.",
+  "msgTokensAreIdentifiedByNetworkAndContractMatching": "Tokens are identified by network and contract. Matching tickers are not automatically combined.",
+  "msgNoMatchingAssets": "No matching assets.",
+  "msgAssetDetails": "{p0} asset details",
+  "@msgAssetDetails": {
+    "description": "{p0} 资产详情",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSend": "Send",
+  "msgReceive": "Receive",
+  "msgUseThisNetwork": "Use this network",
+  "msgRefreshBalance": "Refresh balance",
+  "msgNetwork": "Network",
+  "msgWalletAddress": "Wallet address",
+  "msgRpcUrl": "RPC URL",
+  "msgBlockExplorer": "Block explorer",
+  "msgExplorerLinkCopied": "Explorer link copied",
+  "msgCopyExplorerLink": "Copy explorer link",
+  "msgSystemDefault": "System default",
+  "languageSimplifiedChinese": "简体中文",
+  "languageTraditionalChinese": "繁體中文",
+  "msgLanguage": "Language",
+  "msgPreferencesCouldNotBeSavedPreviousSettingsMay": "Preferences could not be saved. Previous settings may return after restarting.",
+  "msgYourKeysYourWallet": "Your keys,\nyour wallet.",
+  "msgManageYourOnchainAssetsCreateAWalletOr": "Manage your onchain assets.\nCreate a wallet or import an existing account to start.",
+  "msgSelfCustodyWallet": "Self-custody wallet",
+  "msgTransactionsAreSignedOnThisDeviceYouControl": "Transactions are signed on this device. You control your keys.",
+  "msgSecureDeviceStorage": "Secure device storage",
+  "msgRecoveryCredentialsStayInThisDeviceSSecure": "Recovery credentials stay in this device’s secure storage.",
+  "msgChooseYourNetworks": "Choose your networks",
+  "msgRpcConnectionsStartOnlyAfterYouEnableA": "RPC connections start only after you enable a network.",
+  "msgGetStartedWithStoneWallet": "Get started with Stone Wallet",
+  "msgChooseHowToGetStarted": "Choose how to get started",
+  "msgCreateWallet": "Create wallet",
+  "msgImportRecoveryPhrase": "Import recovery phrase",
+  "msgImportPrivateKey": "Import private key",
+  "msgImportPrivateKeyFile": "Import private-key file",
+  "msgCsvTsvColumnsChainPrivateKey": "CSV / TSV · Columns: chain, private key",
+  "msgKeepYourRecoveryPhraseAndPrivateKeysSafe": "Keep your recovery phrase and private keys safe. They restore access to your wallet.",
+  "msgNetworksAndRpc": "Networks and RPC",
+  "msgNoNetworkSelectedEnableANetworkToQuery": "No network selected. Enable a network to query balances.",
+  "msgTransactionNetwork": "Transaction network",
+  "msgTestnet": "Testnet",
+  "msgMainnet": "Mainnet",
+  "endpointCount": "{p0, plural, one{{p0} endpoint · Automatic failover} other{{p0} endpoints · Automatic failover}}",
+  "@endpointCount": {
+    "description": "{p0} 个节点 · 失败自动切换",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "msgActiveEndpoint": "Active endpoint",
+  "msgSyncingMore": "○ Syncing…",
+  "msgRpcConnected": "● RPC connected",
+  "msgNotSynced": "○ Not synced",
+  "msgEditRpc": "Edit RPC",
+  "msgAddCustomNetwork": "Add custom network",
+  "msgWalletSecurity": "Wallet security",
+  "msgAccountSource": "Account source",
+  "msgDerivationPath": "Derivation path",
+  "msgPrivateKeyImport": "Private-key import",
+  "msgRecoveryPhrasesAndPrivateKeysRemainInSecure": "Recovery phrases and private keys remain in secure device storage. Keep an offline backup.",
+  "msgWalletManagement": "Wallet management",
+  "walletAndAccountSummary": "{p0, plural, one{{p0} wallet} other{{p0} wallets}} · {p1, plural, one{{p1} account} other{{p1} accounts}}\nCreate or import wallets, or add accounts to a recovery-phrase wallet.",
+  "@walletAndAccountSummary": {
+    "description": "{p0} 个钱包 · {p1} 个账户\n创建、导入更多钱包，或在助记词钱包下继续添加账户。",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      },
+      "p1": {
+        "type": "int"
+      }
+    }
+  },
+  "msgManageWalletsAndAccounts": "Manage wallets and accounts",
+  "msgChooseFileToImport": "Choose file to import",
+  "msgBackup": "Backup",
+  "msgIcloudGoogleDriveBackupNotConnected": "iCloud / Google Drive backup (not connected)",
+  "msgKeepYourRecoveryCredentialsInASecureOffline": "Keep your recovery credentials in a secure offline location.",
+  "msgOnchainAssets": "Onchain assets",
+  "msgViewAll": "View all",
+  "msgAssets": "Assets",
+  "msgBalance": "Balance",
+  "msgStatus": "Status",
+  "msgSynced": "Synced",
+  "msgNetworksQueried": "{p0}/{p1}\n{p1, plural, one{network queried} other{networks queried}}",
+  "@msgNetworksQueried": {
+    "description": "{p0}/{p1}\n链已查询",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "int"
+      }
+    }
+  },
+  "msgQueriedBalanceDistribution": "Queried balance distribution",
+  "msgStablecoinOverview": "Stablecoin overview",
+  "msgRefreshStablecoins": "Refresh stablecoins",
+  "msgCurrentAccount": "Current account · {p0}",
+  "@msgCurrentAccount": {
+    "description": "当前账户 · {p0}",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgTrackedTotal": "Tracked {p0} total",
+  "@msgTrackedTotal": {
+    "description": "已展示 {p0} 总量",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgQueriedSubtotal": "Queried subtotal",
+  "msgNetworksQueriedMore": "{p0}/{p1} {p1, plural, one{network queried} other{networks queried}}{p2}",
+  "@msgNetworksQueriedMore": {
+    "description": "{p0}/{p1} 条链已查询{p2}",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "int"
+      },
+      "p2": {
+        "type": "String"
+      }
+    }
+  },
+  "msgFullySynced": " · Fully synced",
+  "msgCoverageIsIncomplete": " · Coverage is incomplete",
+  "msgIncludesTrackedUsdtBinancePegVersionsTokenQuantities": "Includes tracked USDT0 / Binance-Peg versions. Token quantities only, not a USD valuation.",
+  "msgOnlyAddedCircleUsdcContractsAreCountedBy": "Only added Circle USDC contracts are counted, by token quantity.",
+  "msgViewNetworkDistribution": "View network distribution →",
+  "msgByNetwork": "{p0} by network",
+  "@msgByNetwork": {
+    "description": "各链 {p0}",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgEnableQueryNetworks": "Enable query networks",
+  "msgNoAddedYet": "No {p0} added yet",
+  "@msgNoAddedYet": {
+    "description": "尚未添加 {p0}",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAddTokensToViewTheirNetworkDistribution": "Add tokens to view their network distribution.",
+  "msgEnableStablecoinNetworks": "Enable stablecoin networks",
+  "msgOfQueriedBalances": "{p0}% of queried balances",
+  "@msgOfQueriedBalances": {
+    "description": "占已查询余额 {p0}%",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgZeroBalance": "Zero balance",
+  "msgAwaitingOnchainBalance": "Awaiting onchain balance",
+  "msgCopyReceiveAddress": "Copy receive address",
+  "msgQuerying": "Querying…",
+  "msgCurrentAccountReceiveAddress": "Current account receive address",
+  "msgTokenContractDecimals": "Token contract · {p0, plural, one{{p0} decimal} other{{p0} decimals}}",
+  "@msgTokenContractDecimals": {
+    "description": "合约地址 · {p0} 位精度",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "msgCheckTheNetworkAndContractBeforeReceivingToken": "Check the network and contract before receiving. Token transfers are not available here yet.",
+  "msgCannotReadThisTokenCheckTheNetworkContract": "Cannot read this token. Check the network, contract and endpoint.",
+  "msgAddingATokenChangesItsDisplayOnlyIt": "Adding a token changes its display only. It does not approve or send a transaction.",
+  "msgCommonStablecoins": "Common stablecoins",
+  "msgAddedCustomTokens": "Added custom tokens",
+  "msgHideToken": "Hide token",
+  "msgAddCustomToken": "Add custom token",
+  "msgTokenContractAddress": "Token contract address",
+  "msgProcessing": "Processing…",
+  "msgReadTokenInfo": "Read token info",
+  "msgDecimals": "{p0} · {p1, plural, one{{p1} decimal} other{{p1} decimals}}",
+  "@msgDecimals": {
+    "description": "{p0} · {p1} 位精度",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "int"
+      }
+    }
+  },
+  "msgCustomTokensWithMatchingTickersAreNotAutomatically": "Custom tokens with matching tickers are not automatically included in USDT / USDC totals.",
+  "msgMatchesAPresetContractItWillBeIncluded": "Matches a preset contract. It will be included in the {p0} total.",
+  "@msgMatchesAPresetContractItWillBeIncluded": {
+    "description": "已匹配预置合约，将计入 {p0} 汇总。",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAdded": "Added",
+  "msgConfirmAddition": "Confirm addition",
+  "msgSwitchTheme": "Switch theme",
+  "msgClose": "Close",
+  "msgSelectWallet": "Select wallet",
+  "msgRecoveryPhraseWallet": "Recovery-phrase wallet",
+  "msgSwap": "Swap",
+  "msgMakeSureTheReceivingNetworkMatchesTheNetwork": "Make sure the receiving network matches the network you selected.",
+  "msgEnableMultipleNetworksToViewBalancesOnlySelected": "Enable multiple networks to view balances. Only selected networks connect to RPC after you save.",
+  "msgDisconnectAllNetworks": "Disconnect all networks",
+  "msgSaveNetworkSelection": "Save network selection",
+  "msgTapANetworkNameToUseItFor": "Tap a network name to use it for transactions. Checkboxes enable additional networks for balance queries.",
+  "msgUseForTransactions": "Use for transactions",
+  "msgRecoveryPhraseVerificationFailedCheckWordsAnd": "Recovery phrase verification failed. Check words 2, 6 and 10.",
+  "msgVerifyRecoveryPhrase": "Verify recovery phrase",
+  "msgWriteDownRecoveryPhrase": "Write down recovery phrase",
+  "msgVerifyAndOpenWallet": "Verify and open wallet",
+  "msgIWroteItDownVerify": "I wrote it down — verify",
+  "msgWrittenVerify": "Written ✓     →     ② Verify",
+  "msgWriteDownVerify": "① Write down     →     ② Verify",
+  "msgEnterTheRequestedWordsToFinishCreatingYour": "Enter the requested words to finish creating your wallet.",
+  "msgWriteDownTheseWordsInOrderAndKeep": "Write down these words in order and keep them in a secure offline location.",
+  "msgWord": "Word {p0}",
+  "@msgWord": {
+    "description": "第 {p0} 个单词",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgDoNotScreenshotCopyOrSendYourRecovery": "Do not screenshot, copy or send your recovery phrase. Verification happens on this device.",
+  "msgImportWallet": "Import wallet",
+  "msgEnterYourExistingRecoveryPhraseSeparatingWordsWith": "Enter your existing recovery phrase, separating words with spaces.",
+  "msgImport": "Import",
+  "msgEnterYourOrWordRecoveryPhrase": "Enter your 12- or 24-word recovery phrase",
+  "msgChooseANetworkToViewAfterImporting": "Choose a network to view after importing.",
+  "msgPrivateKeyImportFailedPleaseTryAgain": "Private-key import failed. Please try again.",
+  "msgRestoreAnAccountWithAnEvmTronHexadecimal": "Restore an account with an EVM / TRON hexadecimal private key. No recovery phrase is required.",
+  "msgImporting": "Importing…",
+  "msgImportAndOpenWallet": "Import and open wallet",
+  "msgSelectANetwork": "Select a network",
+  "msgPrivateKey": "Private key",
+  "msgHexadecimalCharactersOptionallyPrefixedWithX": "64 hexadecimal characters, optionally prefixed with 0x",
+  "msgShowPrivateKey": "Show private key",
+  "msgHidePrivateKey": "Hide private key",
+  "msgPrivateKeysStayInSecureDeviceStorageAfter": "Private keys stay in secure device storage. After import, the selected network is queried for balances. Private keys are never sent to RPC.",
+  "msgImportResults": "Import results",
+  "msgDone": "Done",
+  "msgImportedSkippedOrFailed": "{p0} imported · {p1} skipped or failed",
+  "@msgImportedSkippedOrFailed": {
+    "description": "成功 {p0} 条 · 跳过或失败 {p1} 条",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "msgRow": "Row {p0}: {p1}",
+  "@msgRow": {
+    "description": "第 {p0} 条：{p1}",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAmountMustBeGreaterThanZero": "Amount must be greater than zero.",
+  "msgAmountExceedsTheAvailableBalance": "Amount exceeds the available balance.",
+  "msgSendMore": "Send {p0}",
+  "@msgSendMore": {
+    "description": "发送 {p0}",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSignedOnThisDevice": "{p0} · {p1} · Signed on this device",
+  "@msgSignedOnThisDevice": {
+    "description": "{p0} · {p1} · 在本机完成签名",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "msgCheckTheTransactionStatusFirst": "Check the transaction status first",
+  "msgSignAndBroadcast": "Sign and broadcast",
+  "msgRecipientAddress": "Recipient address",
+  "msgAmount": "Amount ({p0})",
+  "@msgAmount": {
+    "description": "金额（{p0}）",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAvailable": "Available: {p0} {p1} · {p2}",
+  "@msgAvailable": {
+    "description": "可用余额：{p0} {p1} · {p2}",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      },
+      "p2": {
+        "type": "String"
+      }
+    }
+  },
+  "msgInsufficientBandwidthConsumesTrxAnUnactivatedRecipientMay": "Insufficient bandwidth consumes TRX. An unactivated recipient may incur extra fees.",
+  "msgGasFeesAreChargedSeparately": "Gas fees are charged separately",
+  "msgTransactionHash": "Transaction hash: {p0}",
+  "@msgTransactionHash": {
+    "description": "交易哈希：{p0}",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSettings": "Settings",
+  "msgYourKeysStayWithYouTransactionsAreSigned": "Your keys stay with you\nTransactions are signed on this device",
+  "msgHome": "Home",
+  "msgChooseNetwork": "Choose network",
+  "msgChainIdMustBeAValidPositiveInteger": "Chain ID must be a valid positive integer.",
+  "msgThisChainIdAlreadyExistsEditItsRpc": "This Chain ID already exists. Edit its RPC settings instead.",
+  "msgConfigureAtLeastOneRpcUrl": "Configure at least one RPC URL.",
+  "msgTronHttpApiIsAvailableTheMainnetGenesis": "TRON HTTP API is available. The mainnet genesis block was verified.",
+  "msgRpcIsAvailableAndItsChainIdMatches": "RPC is available and its Chain ID matches the network.",
+  "msgConnectionCheckFailedCheckTheRpcUrlNetwork": "Connection check failed. Check the RPC URL, network or credentials.",
+  "msgCouldNotSaveNetworkSettingsPleaseTryAgain": "Could not save network settings. Please try again.",
+  "msgAddCustomEvmNetwork": "Add custom EVM network",
+  "msgEditNetworkAndRpc": "Edit network and RPC",
+  "msgEnterOneRpcUrlPerLineInPriority": "Enter one RPC URL per line in priority order. Failed endpoints are skipped and working ones are preferred.",
+  "msgSaving": "Saving…",
+  "msgSaveNetworkSettings": "Save network settings",
+  "msgNetworkName": "Network name",
+  "msgForExampleBase": "For example: Base",
+  "msgForExample": "For example: 8453",
+  "msgNativeCurrencySymbol": "Native currency symbol",
+  "msgForExampleEth": "For example: ETH",
+  "msgHttpsPrimaryEndpointHttpsBackupEndpoint": "https://primary-endpoint\nhttps://backup-endpoint",
+  "msgOneUrlPerLineOrderSetsPriorityDuplicates": "One URL per line. Order sets priority. Duplicates are removed.",
+  "msgRestoreBuiltInFreeEndpoints": "Restore built-in free endpoints",
+  "msgBlockExplorerUrlOptional": "Block explorer URL (optional)",
+  "msgChecking": "Checking…",
+  "msgCheckRpcConnection": "Check RPC connection",
+  "msgOperationFailedPleaseTryAgain": "Operation failed. Please try again.",
+  "msgRenameAccount": "Rename account",
+  "msgRenameWallet": "Rename wallet",
+  "walletAccountCount": "{p0} · {p1, plural, one{{p1} account} other{{p1} accounts}}",
+  "@walletAccountCount": {
+    "description": "{p0} · {p1} 个账户",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "int"
+      }
+    }
+  },
+  "msgPrivateKeyWallet": "Private-key wallet",
+  "msgCopyAccountAddress": "Copy account address",
+  "msgAddAccount": "Add account",
+  "walletAndAccountCount": "{p0, plural, one{{p0} wallet} other{{p0} wallets}} · {p1, plural, one{{p1} account} other{{p1} accounts}}",
+  "@walletAndAccountCount": {
+    "description": "{p0} 个钱包 · {p1} 个账户",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      },
+      "p1": {
+        "type": "int"
+      }
+    }
+  },
+  "msgARecoveryPhraseWalletCanHaveMultipleAccounts": "A recovery-phrase wallet can have multiple accounts. A different recovery phrase or private key creates a separate wallet.",
+  "msgSearchWalletsAccountsOrAddresses": "Search wallets, accounts or addresses",
+  "msgNoMatchingWalletsOrAccounts": "No matching wallets or accounts",
+  "msgExistingWalletsAreKeptYouCanSwitchAt": "Existing wallets are kept. You can switch at any time.",
+  "msgRestoreAWalletAndAddDerivedAccounts": "Restore a wallet and add derived accounts",
+  "msgImportOneEvmTronAccount": "Import one EVM / TRON account",
+  "msgImportMultipleAccountsFromCsvTsv": "Import multiple accounts from CSV / TSV",
+  "msgNamesMustContainCharacters": "Names must contain 1–64 characters.",
+  "msgSaveName": "Save name",
+  "msgName": "Name",
+  "msgCustomToken": "Custom token",
+  "msgInvalidTokenInformationReadTheContractAgain": "Invalid token information. Read the contract again.",
+  "msgTokenSymbolContainsInvalidCharacters": "Token symbol contains invalid characters.",
+  "msgTheTokenContractReturnedAnInvalidValue": "The token contract returned an invalid value.",
+  "msgInvalidTokenSymbol": "Invalid token symbol.",
+  "msgOnlyTokensWithDecimalsAreSupported": "Only tokens with 0–36 decimals are supported.",
+  "msgCannotReadTheTokenSymbol": "Cannot read the token symbol.",
+  "msgInvalidTokenSymbolEncoding": "Invalid token symbol encoding.",
+  "msgInvalidTokenSymbolLength": "Invalid token symbol length.",
+  "msgCannotReadTheSavedTokenListExistingRecords": "Cannot read the saved token list. Existing records were not overwritten.",
+  "msgThisTokenHasAlreadyBeenAddedOnThis": "This token has already been added on this network.",
+  "msgNetworkDisabled": "Network disabled",
+  "msgQueryingMore": "Querying",
+  "msgQueryFailed": "Query failed",
+  "msgTronMainnetIdentifierDoesNotMatchTheProtocol": "TRON mainnet identifier does not match the protocol.",
+  "msgEnterTheNetworkNameAndNativeCurrencySymbol": "Enter the network name and native currency symbol.",
+  "msgEnterAValidHttpHttpsUrl": "Enter a valid HTTP / HTTPS URL.",
+  "msgCannotAccessKeychainQuitRebuildAndRunThe": "Cannot access Keychain (-34018). Quit, rebuild and run the app. Hot reload cannot update native signing permissions.",
+  "msgCannotAccessSecureDeviceStorageCheckThatKeychain": "Cannot access secure device storage. Check that Keychain is unlocked and access is allowed.",
+  "msgCannotReadSavedNetworkSettingsCheckTheStored": "Cannot read saved network settings. Check the stored configuration.",
+  "msgAccountIndexIsOutOfRange": "Account index is out of range.",
+  "msgInvalidRecoveryPhraseCheckTheWordsAndTheir": "Invalid recovery phrase. Check the words and their order.",
+  "msgCannotDeriveTheEvmPrivateKey": "Cannot derive the EVM private key.",
+  "msgInvalidPrivateKeyEnterHexadecimalCharacters": "Invalid private key. Enter 64 hexadecimal characters.",
+  "msgPrivateKeyValueIsOutOfRange": "Private key value is out of range.",
+  "msgInvalidPrivateKeyCannotCreateAnAccount": "Invalid private key. Cannot create an account.",
+  "msgBinance": "Binance",
+  "msgTron": "TRON",
+  "msgRpcNetworkMismatchExpectedReceived": "RPC network mismatch: expected {p0}, received {p1}.",
+  "@msgRpcNetworkMismatchExpectedReceived": {
+    "description": "RPC 链不匹配：预期 {p0}，实际 {p1}。",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAllRpcEndpointsAreUnavailableTryAgainLater": "{p0, plural, one{The RPC endpoint is unavailable.} other{All {p0} RPC endpoints are unavailable.}} Try again later or edit the endpoint list.",
+  "@msgAllRpcEndpointsAreUnavailableTryAgainLater": {
+    "description": "全部 {p0} 个 RPC 节点均不可用，请稍后重试或编辑节点列表。",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "msgTheTokenAndNetworkDoNotMatch": "The token and network do not match.",
+  "msgTheRpcReturnedADifferentTransactionHash": "The RPC returned a different transaction hash.",
+  "msgBroadcastStatusIsUncertainCheckTheTransactionHash": "Broadcast status is uncertain. Check the transaction hash before trying again to avoid duplicate transfers.",
+  "msgEnterAValidAmountWithAtMostDecimal": "Enter a valid amount with at most {p0, plural, one{{p0} decimal place} other{{p0} decimal places}}.",
+  "@msgEnterAValidAmountWithAtMostDecimal": {
+    "description": "请输入有效金额，最多支持 {p0} 位小数。",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "msgMainWallet": "Main wallet",
+  "msgNoNetworkSelected": "No network selected",
+  "msgChooseANetworkToView": "Choose a network to view",
+  "msgRpcNotConnected": "RPC not connected",
+  "msgNativeAsset": "Native asset",
+  "msgConnectionFailed": "Connection failed",
+  "msgAwaitingSync": "Awaiting sync",
+  "msgWallet": "Wallet",
+  "msgRpcRequestTimedOutCheckTheUrlOr": "RPC request timed out. Check the URL or try another endpoint.",
+  "msgRpcRequestFailedCheckTheNetworkEndpointOr": "RPC request failed. Check the network, endpoint or credentials.",
+  "msgCouldNotConnectToEditRpcSettingsOr": "Could not connect to {p0}. Edit RPC settings or retry.",
+  "@msgCouldNotConnectToEditRpcSettingsOr": {
+    "description": "{p0} 连接失败，可在设置中修改 RPC 或重试。",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgTheAccountHasChangedReopenThisAsset": "The account has changed. Reopen this asset.",
+  "msgCouldNotSaveNetworkSelectionPleaseTryAgain": "Could not save network selection. Please try again.",
+  "msgPrivateKeyAccountImported": "Private-key account imported",
+  "msgTheAccountWasSavedButCouldNotBe": "The account was saved but could not be loaded. Reopen the wallet.",
+  "msgCannotReadThisFile": "Cannot read this file.",
+  "msgNoImportableRowsTheHeaderMustContainChain": "No importable rows. The header must contain chain and private key columns.",
+  "importedRowSummary": "Imported {p0, plural, one{{p0} row} other{{p0} rows}}{p1}.",
+  "@importedRowSummary": {
+    "description": "成功导入 {p0} 条{p1}。",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "msgFailed": "; {p0} failed",
+  "@msgFailed": {
+    "description": "，{p0} 条失败",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgChain": "Chain",
+  "msgSelectedConnectingToRpc": "Selected {p0}. Connecting to RPC…",
+  "@msgSelectedConnectingToRpc": {
+    "description": "已选择 {p0}，正在连接 RPC…",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgNetworkSettingsSaved": "{p0} network settings saved",
+  "@msgNetworkSettingsSaved": {
+    "description": "{p0} 网络配置已保存",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSwapsAreNotConnectedNoOrderOrSignature": "Swaps are not connected. No order or signature was created.",
+  "msgUnavailable": "Unavailable",
+  "msgAddressCopied": "Address copied",
+  "msgSelectANetworkBeforeSending": "Select a network before sending.",
+  "msgTransactionBroadcast": "Transaction broadcast: {p0}",
+  "@msgTransactionBroadcast": {
+    "description": "交易已广播：{p0}",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgWalletOperationFailedPleaseTryAgain": "Wallet operation failed. Please try again.",
+  "msgMostRecentlyBroadcastTransaction": "Most recently broadcast transaction",
+  "msgEnterAValidTronAddressStartingWithT": "Enter a valid TRON address starting with T and a correct checksum.",
+  "msgTheTronEndpointReturnedAnErrorTryAnother": "The TRON endpoint returned an error. Try another endpoint or retry later.",
+  "msgTronNetworkMismatchAMainnetEndpointIsRequired": "TRON network mismatch. A mainnet endpoint is required.",
+  "msgAllTronEndpointsAreUnavailableTryAgainLater": "{p0, plural, one{The TRON endpoint is unavailable.} other{All {p0} TRON endpoints are unavailable.}} Try again later or edit the endpoint list.",
+  "@msgAllTronEndpointsAreUnavailableTryAgainLater": {
+    "description": "全部 {p0} 个 TRON 节点均不可用，请稍后重试或编辑节点列表。",
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "msgTrcQueryFailedCheckTheContractAndEndpoint": "TRC20 query failed. Check the contract and endpoint.",
+  "msgTheTronEndpointReturnedADifferentAccountS": "The TRON endpoint returned a different account’s balance.",
+  "msgTheTronEndpointReturnedAnInvalidBalance": "The TRON endpoint returned an invalid balance.",
+  "msgTrxAmountIsOutOfRange": "TRX amount is out of range.",
+  "msgTronReferenceBlockIsInvalidOrStaleCheck": "TRON reference block is invalid or stale. Check your clock and endpoint.",
+  "msgTheTronEndpointDidNotConfirmTheBroadcast": "The TRON endpoint did not confirm the broadcast.",
+  "msgCannotReadTheWalletBookCheckSecureStorage": "Cannot read the wallet book. Check secure storage.",
+  "msgAccount": "Account 1",
+  "msgPrivateKeyAccount": "Private-key account {p0}",
+  "@msgPrivateKeyAccount": {
+    "description": "私钥账户 {p0}",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSavedPrivateKeyAccountDataIsCorrupted": "Saved private-key account data is corrupted.",
+  "msgWalletMore": "Wallet {p0}",
+  "@msgWalletMore": {
+    "description": "钱包 {p0}",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgUnsupportedNetwork": "Unsupported network.",
+  "msgDuplicateEntrySkipped": "Duplicate entry skipped.",
+  "msgOnlyRecoveryPhraseWalletsCanDeriveAdditionalAccounts": "Only recovery-phrase wallets can derive additional accounts.",
+  "msgAccountMore": "Account {p0}",
+  "@msgAccountMore": {
+    "description": "账户 {p0}",
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "msgAccountNotFound": "Account not found.",
+  "msgWalletNotFound": "Wallet not found.",
+  "msgUnexpectedErrorPleaseTryAgain": "Unexpected error. Please try again.",
+  "msgSelfCustodyEvmTron": "Self-custody · EVM / TRON",
+  "portfolioOverview": "Address overview",
+  "portfolioByCoin": "By coin",
+  "portfolioReferenceValue": "Reference value",
+  "portfolioValuedSubtotal": "Valued subtotal",
+  "portfolioAllAddresses": "All linked addresses",
+  "portfolioAllNetworks": "All enabled networks",
+  "portfolioAllAssets": "All assets",
+  "portfolioSimple": "Simple",
+  "portfolioDetailed": "Detailed",
+  "portfolioDisplaySettings": "Asset display",
+  "portfolioDisplayMode": "Display mode",
+  "portfolioInitialCount": "Initial coin count",
+  "portfolioAll": "All",
+  "portfolioSort": "Sort assets",
+  "portfolioSortValue": "Value: high to low",
+  "portfolioStableFirst": "Stablecoins first",
+  "portfolioSortName": "Name",
+  "portfolioHideZero": "Hide confirmed zero balances",
+  "portfolioShowSpam": "Show suspected spam from indexers",
+  "portfolioExpand": "Show all ({p0})",
+  "@portfolioExpand": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioCollapse": "Show fewer",
+  "portfolioSelectCoin": "Select a coin",
+  "portfolioSearch": "Search coins, contracts or networks",
+  "portfolioChainCount": "{p0, plural, one{{p0} chain} other{{p0} chains}}",
+  "@portfolioChainCount": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "portfolioCoinCount": "{p0, plural, one{{p0} coin} other{{p0} coins}}",
+  "@portfolioCoinCount": {
+    "placeholders": {
+      "p0": {
+        "type": "int"
+      }
+    }
+  },
+  "portfolioInformation": "Value and query details",
+  "portfolioValueExplanation": "USDT market prices, using 1 USDT ≈ 1 USD. Includes watched and discovered assets on enabled networks only.",
+  "portfolioVersionExplanation": "USDT0 and Binance-Peg versions use the USDT reference price. Matching tickers alone never identify an asset.",
+  "portfolioCoverage": "{p0}/{p1} holdings queried · {p2} without a price",
+  "@portfolioCoverage": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      },
+      "p2": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioPartial": "Partial",
+  "portfolioStalePrices": "Cached prices · update failed",
+  "portfolioNoPrice": "Price unavailable",
+  "portfolioNoAssets": "No matching assets",
+  "portfolioShowZero": "Show zero balances",
+  "portfolioRefresh": "Refresh balances and prices",
+  "portfolioSourceRpc": "Balance from RPC",
+  "portfolioSourceIndexer": "Discovered by indexer",
+  "portfolioPriceSource": "Prices: Binance public USDT markets",
+  "portfolioUpdated": "Price time: {p0}",
+  "@portfolioUpdated": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioTestnetExcluded": "Testnet balances are excluded from the value.",
+  "discoveryServices": "Asset indexers",
+  "discoveryConfigure": "Configure auto-discovery",
+  "discoveryNotConfigured": "Auto-discovery not configured",
+  "discoveryQuerying": "Discovering assets…",
+  "discoveryPartial": "Discovery is incomplete",
+  "discoveryUnavailable": "Auto-discovery unavailable",
+  "discoveryLoadMore": "Continue discovery",
+  "discoveryConfigureProvider": "Configure {p0}",
+  "@discoveryConfigureProvider": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "discoveryGetKey": "Get an API key",
+  "discoveryDocs": "Official guide",
+  "discoveryPlans": "Plans and quotas",
+  "discoveryApiKey": "Service API key",
+  "discoveryKeyHint": "Use your own service key, not a wallet private key",
+  "discoveryKeyRequired": "Enter a service API key.",
+  "discoveryPrivacy": "When enabled, this service receives the linked public address on selected networks. Keys stay in this device’s secure storage.",
+  "discoveryAssignments": "Choose networks (replaces their current indexer)",
+  "discoveryChooseNetwork": "Choose at least one supported enabled network.",
+  "discoveryTest": "Test connection",
+  "discoveryConnected": "Connected. Credentials and response are valid.",
+  "discoverySaveEnable": "Save and enable",
+  "discoveryEnabled": "Enabled",
+  "discoveryDisabled": "Disabled",
+  "discoveryDisable": "Disable",
+  "discoveryDelete": "Delete configuration",
+  "discoveryEdit": "Configure",
+  "discoveryUnauthorized": "Service key rejected. Check the key and plan permissions.",
+  "discoveryLimited": "Indexer quota or rate limit reached. Retry later.",
+  "discoveryResponseInvalid": "The indexer returned invalid asset data.",
+  "discoveryRequestFailed": "Could not connect to the indexer. Watched assets remain available.",
+  "discoverySettingsUnreadable": "Could not read indexer settings. Existing records have been kept.",
+  "discoverySaveFailed": "Could not save indexer settings. Please retry.",
+  "discoveryUnsupported": "This indexer does not support the selected network in this app.",
+  "discoveryWatch": "Watch this token",
+  "discoveryWatched": "Token added to watched assets",
+  "discoveryMoralisGuide": "Create a Moralis account → copy the Web3 API key → choose Ethereum, Polygon or BNB Chain. View current quotas on the plans page.",
+  "discoveryAlchemyGuide": "Create an Alchemy app → enable Ethereum or Polygon → copy its API key. This app uses the Token API.",
+  "discoveryTronGridGuide": "Sign in to TronGrid → create an API key → enable TRON Mainnet. This app discovers TRC20 holdings.",
+  "discoveryLinkCopied": "Could not open the browser. The link has been copied.",
+  "discoveryNoEnabledNetworks": "Enable a supported network before configuring discovery.",
+  "portfolioAddressDetails": "Linked addresses",
+  "portfolioBalanceStatus": "Balance status",
+  "portfolioSpam": "Suspected spam",
+  "portfolioNoCoin": "No coins in this selection",
+  "discoveryNotConfiguredShort": "Not configured",
+  "settingsSearch": "Search settings",
+  "settingsSearchHint": "Language, display mode, RPC…",
+  "settingsQuickLinks": "Quick settings",
+  "settingsCategories": "All settings",
+  "settingsWallets": "Wallets and accounts",
+  "settingsWalletsHint": "Manage, create and import",
+  "settingsAssetsHint": "Display preferences and watched tokens",
+  "settingsData": "Networks and data",
+  "settingsDataHint": "Network RPC and asset indexers",
+  "settingsSecurity": "Security and backup",
+  "settingsSecurityHint": "Account security and backup guidance",
+  "settingsGeneral": "General",
+  "settingsGeneralHint": "Language and appearance",
+  "settingsAppearance": "Appearance",
+  "settingsLight": "Light",
+  "settingsDark": "Dark",
+  "settingsWatchedTokens": "Watched tokens",
+  "settingsNoResults": "No matching settings",
+  "settingsClearSearch": "Clear search",
+  "settingsUnavailable": "Not available yet",
+  "settingsNetworkDisabled": "Not enabled",
+  "settingsNetworkEnabled": "Enabled",
+  "settingsNetworkState": "Enable network",
+  "settingsBackupHint": "Keep recovery credentials safely offline. Cloud backup is not available yet.",
+  "settingsMatchedOption": "Setting located"
+}

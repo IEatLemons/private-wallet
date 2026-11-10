@@ -1,3 +1,4 @@
+import 'asset_test_helpers.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -297,10 +298,13 @@ void main() {
         store: MapSecretStore({WalletVault.mnemonicKey: phraseA}),
       );
       await start(tester, vault, RpcFixture());
-      await tap(tester, find.byTooltip('设置'));
+      await tap(tester, find.byKey(const ValueKey('open-settings')));
+      await settingsEntryTap(tester, 'wallets');
       expect(find.text('管理钱包与账户'), findsOneWidget);
       expect(find.text('创建新钱包'), findsOneWidget);
+      await settingsEntryTap(tester, 'import-wallet');
       expect(find.text('导入助记词'), findsOneWidget);
+      await tap(tester, find.byType(BackButton));
       await tap(tester, find.text('创建新钱包'));
       expect(find.byType(RecoveryPhraseSheet), findsOneWidget);
       await tap(tester, find.byTooltip('关闭'));

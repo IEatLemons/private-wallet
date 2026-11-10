@@ -12,18 +12,18 @@ class OnboardingPage extends StatelessWidget {
     super.key,
   });
   final WalletTheme theme;
-  final String? error;
+  final WalletMessage? error;
   final VoidCallback onCreate,
       onImport,
       onImportPrivateKey,
       onBatchImport,
       onToggleStyle;
 
-  Widget _intro(bool mobile) => Column(
+  Widget _intro(BuildContext context, bool mobile) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(
-        'SELF-CUSTODY · EVM',
+        tr(context, MessageCode.msgSelfCustodyEvmTron),
         style: TextStyle(
           color: theme.primary,
           fontSize: 12,
@@ -33,7 +33,7 @@ class OnboardingPage extends StatelessWidget {
       ),
       const SizedBox(height: 16),
       Text(
-        '你的密钥，\n你的钱包。',
+        tr(context, MessageCode.msgYourKeysYourWallet),
         style: TextStyle(
           color: theme.text,
           fontSize: mobile ? 30 : 40,
@@ -44,46 +44,55 @@ class OnboardingPage extends StatelessWidget {
       ),
       const SizedBox(height: 16),
       Text(
-        '轻松管理你的链上资产。\n创建钱包，或导入已有账户，即可开始。',
+        tr(context, MessageCode.msgManageYourOnchainAssetsCreateAWalletOr),
         style: TextStyle(color: theme.muted, fontSize: 15, height: 1.7),
       ),
     ],
   );
 
-  Widget _features() => Column(
+  Widget _features(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       _NoticeLine(
         theme: theme,
         icon: Icons.key_outlined,
-        title: '自托管钱包',
-        detail: '交易在本机签名，密钥由你掌握。',
+        title: tr(context, MessageCode.msgSelfCustodyWallet),
+        detail: tr(
+          context,
+          MessageCode.msgTransactionsAreSignedOnThisDeviceYouControl,
+        ),
       ),
       const SizedBox(height: 20),
       _NoticeLine(
         theme: theme,
         icon: Icons.lock_outline,
-        title: '系统安全存储',
-        detail: '恢复凭证保存在本机系统安全存储中。',
+        title: tr(context, MessageCode.msgSecureDeviceStorage),
+        detail: tr(
+          context,
+          MessageCode.msgRecoveryCredentialsStayInThisDeviceSSecure,
+        ),
       ),
       const SizedBox(height: 20),
       _NoticeLine(
         theme: theme,
         icon: Icons.public,
-        title: '网络由你选择',
-        detail: '启用网络后，才会连接对应的 RPC。',
+        title: tr(context, MessageCode.msgChooseYourNetworks),
+        detail: tr(
+          context,
+          MessageCode.msgRpcConnectionsStartOnlyAfterYouEnableA,
+        ),
       ),
     ],
   );
 
-  Widget _actions(bool mobile) => WalletCard(
+  Widget _actions(BuildContext context, bool mobile) => WalletCard(
     theme: theme,
     padding: EdgeInsets.all(mobile ? 20 : 32),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          '开始使用 Stone Wallet',
+          tr(context, MessageCode.msgGetStartedWithStoneWallet),
           style: TextStyle(
             color: theme.text,
             fontSize: mobile ? 20 : 22,
@@ -91,60 +100,66 @@ class OnboardingPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Text('选择适合你的方式', style: TextStyle(color: theme.muted, fontSize: 14)),
+        Text(
+          tr(context, MessageCode.msgChooseHowToGetStarted),
+          style: TextStyle(color: theme.muted, fontSize: 14),
+        ),
         const SizedBox(height: 24),
         FilledButton.icon(
           onPressed: onCreate,
           icon: const Icon(Icons.add, size: 18),
-          label: const Text('创建新钱包'),
+          label: Text(tr(context, MessageCode.msgCreateWallet)),
         ),
         const SizedBox(height: 12),
         OutlinedButton.icon(
           onPressed: onImport,
           icon: const Icon(Icons.key_outlined, size: 18),
-          label: const Text('导入助记词'),
+          label: Text(tr(context, MessageCode.msgImportRecoveryPhrase)),
         ),
         const SizedBox(height: 12),
         OutlinedButton.icon(
           onPressed: onImportPrivateKey,
           icon: const Icon(Icons.vpn_key_outlined, size: 18),
-          label: const Text('导入私钥'),
+          label: Text(tr(context, MessageCode.msgImportPrivateKey)),
         ),
         const SizedBox(height: 12),
         OutlinedButton.icon(
           onPressed: onBatchImport,
           icon: const Icon(Icons.upload_file_outlined, size: 18),
-          label: const Text('批量导入私钥表格'),
+          label: Text(tr(context, MessageCode.msgImportPrivateKeyFile)),
         ),
         const SizedBox(height: 12),
         Text(
-          'CSV / TSV · 包含「链」「私钥」两列',
+          tr(context, MessageCode.msgCsvTsvColumnsChainPrivateKey),
           style: TextStyle(color: theme.muted, fontSize: 12, height: 1.5),
         ),
         if (error != null) ...[
           const SizedBox(height: 12),
-          Text(error!, style: TextStyle(color: theme.danger, fontSize: 13)),
+          Text(
+            localized(context, error!),
+            style: TextStyle(color: theme.danger, fontSize: 13),
+          ),
         ],
         const SizedBox(height: 24),
         Divider(color: theme.border, height: 1),
         const SizedBox(height: 16),
         Text(
-          '请妥善保管助记词与私钥，它们是恢复钱包的凭证。',
+          tr(context, MessageCode.msgKeepYourRecoveryPhraseAndPrivateKeysSafe),
           style: TextStyle(color: theme.muted, fontSize: 12, height: 1.6),
         ),
       ],
     ),
   );
 
-  Widget _mobileFeatures() => Wrap(
+  Widget _mobileFeatures(BuildContext context) => Wrap(
     spacing: 12,
     runSpacing: 12,
     alignment: WrapAlignment.center,
     children: [
       for (final feature in [
-        (Icons.key_outlined, '自托管钱包'),
-        (Icons.lock_outline, '系统安全存储'),
-        (Icons.public, '网络由你选择'),
+        (Icons.key_outlined, tr(context, MessageCode.msgSelfCustodyWallet)),
+        (Icons.lock_outline, tr(context, MessageCode.msgSecureDeviceStorage)),
+        (Icons.public, tr(context, MessageCode.msgChooseYourNetworks)),
       ])
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -152,7 +167,7 @@ class OnboardingPage extends StatelessWidget {
             Icon(feature.$1, color: theme.primary, size: 16),
             const SizedBox(width: 6),
             Text(
-              feature.$2,
+              localized(context, feature.$2),
               style: TextStyle(color: theme.muted, fontSize: 12),
             ),
           ],
@@ -194,7 +209,7 @@ class OnboardingPage extends StatelessWidget {
                             ),
                           ),
                         ),
-                        ThemeToggle(theme: theme, onTap: onToggleStyle),
+                        const LanguageMenuButton(),
                       ],
                     ),
                     SizedBox(height: layout.mobile ? 32 : 24),
@@ -214,23 +229,28 @@ class OnboardingPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  _intro(false),
+                                  _intro(context, false),
                                   const SizedBox(height: 32),
-                                  _features(),
+                                  _features(context),
                                 ],
                               ),
                             ),
                             const SizedBox(width: 64),
-                            SizedBox(width: 400, child: _actions(false)),
+                            SizedBox(
+                              width: 400,
+                              child: _actions(context, false),
+                            ),
                           ],
                         ),
                       )
                     else ...[
-                      _intro(layout.mobile),
+                      _intro(context, layout.mobile),
                       const SizedBox(height: 24),
-                      _actions(layout.mobile),
+                      _actions(context, layout.mobile),
                       const SizedBox(height: 28),
-                      layout.mobile ? _mobileFeatures() : _features(),
+                      layout.mobile
+                          ? _mobileFeatures(context)
+                          : _features(context),
                     ],
                   ],
                 ),
@@ -271,7 +291,7 @@ class _NoticeLine extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              title,
+              localized(context, title),
               style: TextStyle(
                 color: theme.text,
                 fontSize: 14,
@@ -280,7 +300,7 @@ class _NoticeLine extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              detail,
+              localized(context, detail),
               style: TextStyle(color: theme.muted, fontSize: 13, height: 1.5),
             ),
           ],
@@ -288,321 +308,4 @@ class _NoticeLine extends StatelessWidget {
       ),
     ],
   );
-}
-
-class SettingsPage extends StatelessWidget {
-  const SettingsPage({
-    required this.theme,
-    required this.address,
-    required this.networks,
-    required this.currentNetwork,
-    required this.networkServices,
-    required this.responsiveNetworkIds,
-    required this.onManageNetworks,
-    required this.onBatchImport,
-    required this.onRefresh,
-    required this.onToggleStyle,
-    this.isPrivateKey = false,
-    this.onEditNetwork,
-    this.onAddNetwork,
-    this.onImportPrivateKey,
-    this.onManageWallets,
-    this.onCreateWallet,
-    this.onImportMnemonic,
-    this.walletCount = 0,
-    this.accountCount = 0,
-    this.derivationPath,
-    this.networkErrors = const {},
-    this.pendingNetworkIds = const {},
-    super.key,
-  });
-  final WalletTheme theme;
-  final String address;
-  final List<EvmNetwork> networks;
-  final EvmNetwork? currentNetwork;
-  final Map<int, EvmNetworkService> networkServices;
-  final Set<int> responsiveNetworkIds;
-  final VoidCallback onManageNetworks, onBatchImport, onToggleStyle;
-  final Future<void> Function() onRefresh;
-  final bool isPrivateKey;
-  final Future<EvmNetwork?> Function(EvmNetwork?)? onEditNetwork;
-  final VoidCallback? onAddNetwork;
-  final VoidCallback? onImportPrivateKey;
-  final VoidCallback? onManageWallets, onCreateWallet, onImportMnemonic;
-  final int walletCount, accountCount;
-  final String? derivationPath;
-  final Map<int, String> networkErrors;
-  final Set<int> pendingNetworkIds;
-
-  Widget _section(String title, IconData icon, Widget child) => WalletCard(
-    theme: theme,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Icon(icon, color: theme.primary, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  color: theme.text,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        child,
-      ],
-    ),
-  );
-
-  Widget _info(String label, String value) => Padding(
-    padding: const EdgeInsets.only(bottom: 16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(color: theme.muted, fontSize: 12)),
-        const SizedBox(height: 6),
-        SelectableText(
-          value,
-          style: TextStyle(color: theme.text, fontSize: 14, height: 1.5),
-        ),
-      ],
-    ),
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    final networkCard = _section(
-      '网络与 RPC',
-      Icons.public,
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (networks.isEmpty)
-            Text(
-              '尚未选择网络。首页不会请求任何 RPC。',
-              style: TextStyle(color: theme.muted, fontSize: 14, height: 1.5),
-            ),
-          for (final network in networks)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        network.name,
-                        style: TextStyle(
-                          color: theme.text,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (currentNetwork?.id == network.id)
-                        Text(
-                          '当前操作链',
-                          style: TextStyle(color: theme.primary, fontSize: 12),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Chain ID ${network.id} · ${network.nativeSymbol} · ${network.isTestnet ? '测试网' : '主网'}',
-                    style: TextStyle(color: theme.muted, fontSize: 12),
-                  ),
-                  const SizedBox(height: 8),
-                  SelectableText(
-                    network.rpcUrls.join('\n'),
-                    style: TextStyle(
-                      color: theme.muted,
-                      fontSize: 13,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${network.rpcUrls.length} 个节点 · 失败自动切换',
-                    style: TextStyle(color: theme.muted, fontSize: 12),
-                  ),
-                  if (responsiveNetworkIds.contains(network.id) &&
-                      networkServices[network.id] != null)
-                    _info('当前可用节点', networkServices[network.id]!.activeRpcUrl),
-                  const SizedBox(height: 8),
-                  Text(
-                    pendingNetworkIds.contains(network.id)
-                        ? '○ 同步中…'
-                        : networkErrors[network.id] ??
-                              (responsiveNetworkIds.contains(network.id)
-                                  ? '● RPC 已连接'
-                                  : '○ 尚未同步'),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: responsiveNetworkIds.contains(network.id)
-                          ? theme.success
-                          : theme.muted,
-                    ),
-                  ),
-                  if (onEditNetwork != null)
-                    TextButton.icon(
-                      key: ValueKey('edit-rpc-${network.id}'),
-                      onPressed: () => onEditNetwork!(network),
-                      icon: const Icon(Icons.edit_outlined, size: 16),
-                      label: const Text('编辑 RPC'),
-                    ),
-                ],
-              ),
-            ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              OutlinedButton.icon(
-                onPressed: onManageNetworks,
-                icon: const Icon(Icons.tune, size: 18),
-                label: const Text('管理网络'),
-              ),
-              IconButton(
-                tooltip: '刷新余额',
-                onPressed: () => onRefresh(),
-                icon: Icon(Icons.refresh, color: theme.primary),
-              ),
-              if (onAddNetwork != null)
-                OutlinedButton.icon(
-                  onPressed: onAddNetwork,
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('添加自定义链'),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-    final security = _section(
-      '钱包安全',
-      Icons.shield_outlined,
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _info('钱包地址', address),
-          _info(
-            isPrivateKey ? '账户来源' : '派生路径',
-            isPrivateKey ? '私钥导入' : derivationPath ?? evmDerivationPath,
-          ),
-          Text(
-            '助记词与私钥仅保存在本机安全存储中，请自行保管恢复凭证。',
-            style: TextStyle(color: theme.muted, fontSize: 13, height: 1.5),
-          ),
-        ],
-      ),
-    );
-    final batch = _section(
-      '钱包管理',
-      Icons.upload_file_outlined,
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            '$walletCount 个钱包 · $accountCount 个账户\n创建、导入更多钱包，或在助记词钱包下继续添加账户。',
-            style: TextStyle(color: theme.muted, fontSize: 14, height: 1.6),
-          ),
-          const SizedBox(height: 16),
-          if (onManageWallets != null) ...[
-            OutlinedButton.icon(
-              onPressed: onManageWallets,
-              icon: const Icon(Icons.account_balance_wallet_outlined, size: 18),
-              label: const Text('管理钱包与账户'),
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (onCreateWallet != null) ...[
-            OutlinedButton.icon(
-              onPressed: onCreateWallet,
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('创建新钱包'),
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (onImportMnemonic != null) ...[
-            OutlinedButton.icon(
-              onPressed: onImportMnemonic,
-              icon: const Icon(Icons.key_outlined, size: 18),
-              label: const Text('导入助记词'),
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (onImportPrivateKey != null) ...[
-            Align(
-              alignment: Alignment.centerLeft,
-              child: OutlinedButton.icon(
-                onPressed: onImportPrivateKey,
-                icon: const Icon(Icons.vpn_key_outlined, size: 18),
-                label: const Text('导入私钥'),
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: onBatchImport,
-              icon: const Icon(Icons.upload_file_outlined, size: 18),
-              label: const Text('选择表格导入'),
-            ),
-          ),
-        ],
-      ),
-    );
-    final backup = _section(
-      '备份',
-      Icons.backup_outlined,
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const FilledButton(
-            onPressed: null,
-            child: Text(
-              'iCloud / Google Drive 云备份（暂未接入）',
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '请将恢复凭证妥善保存在离线安全位置。',
-            style: TextStyle(color: theme.muted, fontSize: 13, height: 1.5),
-          ),
-        ],
-      ),
-    );
-    final side = Column(
-      children: [
-        security,
-        const SizedBox(height: 24),
-        batch,
-        const SizedBox(height: 24),
-        backup,
-      ],
-    );
-    if (WalletLayout.of(context).wide) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(child: networkCard),
-          const SizedBox(width: 24),
-          Expanded(child: side),
-        ],
-      );
-    }
-    return Column(children: [networkCard, const SizedBox(height: 24), side]);
-  }
 }

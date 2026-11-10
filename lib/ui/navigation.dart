@@ -5,13 +5,11 @@ class WalletRail extends StatelessWidget {
     required this.theme,
     required this.selected,
     required this.onSelect,
-    required this.onToggleStyle,
     super.key,
   });
   final WalletTheme theme;
-  final int selected;
-  final ValueChanged<int> onSelect;
-  final VoidCallback onToggleStyle;
+  final WalletPage selected;
+  final ValueChanged<WalletPage> onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -50,21 +48,29 @@ class WalletRail extends StatelessWidget {
           ),
           const SizedBox(height: 40),
           for (final item in [
-            (Icons.grid_view_rounded, '首页'),
-            (Icons.settings_outlined, '设置'),
+            (
+              Icons.account_balance_wallet_outlined,
+              tr(context, MessageCode.msgAssets),
+              WalletPage.assets,
+            ),
+            (
+              Icons.settings_outlined,
+              tr(context, MessageCode.msgSettings),
+              WalletPage.settings,
+            ),
           ].asMap().entries)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Tooltip(
                 message: item.value.$2,
                 child: Material(
-                  color: selected == item.key
+                  color: selected == item.value.$3
                       ? theme.surfaceStrong
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(10),
-                    onTap: () => onSelect(item.key),
+                    onTap: () => onSelect(item.value.$3),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                         vertical: 14,
@@ -78,20 +84,22 @@ class WalletRail extends StatelessWidget {
                           Icon(
                             item.value.$1,
                             size: 20,
-                            color: selected == item.key
+                            color: selected == item.value.$3
                                 ? theme.primary
                                 : theme.muted,
                           ),
                           if (layout.wide) ...[
                             const SizedBox(width: 12),
-                            Text(
-                              item.value.$2,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                                color: selected == item.key
-                                    ? theme.primary
-                                    : theme.muted,
+                            Expanded(
+                              child: Text(
+                                localized(context, item.value.$2),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  color: selected == item.value.$3
+                                      ? theme.primary
+                                      : theme.muted,
+                                ),
                               ),
                             ),
                           ],
@@ -107,7 +115,10 @@ class WalletRail extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
-                '密钥由你掌握\n签名在本机完成',
+                tr(
+                  context,
+                  MessageCode.msgYourKeysStayWithYouTransactionsAreSigned,
+                ),
                 style: TextStyle(color: theme.muted, fontSize: 12, height: 1.7),
               ),
             ),
@@ -115,34 +126,6 @@ class WalletRail extends StatelessWidget {
       ),
     );
   }
-}
-
-class WalletBottomBar extends StatelessWidget {
-  const WalletBottomBar({
-    required this.theme,
-    required this.selected,
-    required this.onSelect,
-    super.key,
-  });
-  final WalletTheme theme;
-  final int selected;
-  final ValueChanged<int> onSelect;
-  @override
-  Widget build(BuildContext context) => NavigationBar(
-    height: 68,
-    backgroundColor: theme.surface,
-    selectedIndex: selected,
-    indicatorColor: theme.surfaceStrong,
-    onDestinationSelected: onSelect,
-    destinations: const [
-      NavigationDestination(
-        icon: Icon(Icons.grid_view_outlined),
-        selectedIcon: Icon(Icons.grid_view_rounded),
-        label: '首页',
-      ),
-      NavigationDestination(icon: Icon(Icons.settings_outlined), label: '设置'),
-    ],
-  );
 }
 
 class BrandMark extends StatelessWidget {
@@ -170,64 +153,73 @@ class WalletHeader extends StatelessWidget {
     required this.walletName,
     required this.address,
     required this.onWalletTap,
-    required this.onToggleStyle,
-    this.pageTitle = '首页',
-    this.networkLabel = '选择网络',
+    required this.onSettings,
+    required this.pageTitle,
+    required this.networkLabel,
+    this.linkedAddresses,
     this.onNetworkTap,
     super.key,
   });
   final WalletTheme theme;
   final String walletName, address, pageTitle, networkLabel;
-  final VoidCallback onWalletTap, onToggleStyle;
+  final VoidCallback onWalletTap, onSettings;
   final VoidCallback? onNetworkTap;
+  final List<String>? linkedAddresses;
 
   @override
   Widget build(BuildContext context) {
     final layout = WalletLayout.of(context);
     final wallet = ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 260),
-      child: InkWell(
-        onTap: onWalletTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: theme.surfaceStrong,
-                child: Icon(
-                  Icons.account_balance_wallet_outlined,
-                  color: theme.primary,
-                  size: 18,
+      child: Semantics(
+        button: true,
+        label: tr(context, MessageCode.msgSelectWallet),
+        child: InkWell(
+          onTap: onWalletTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: theme.surfaceStrong,
+                  child: Icon(
+                    Icons.account_balance_wallet_outlined,
+                    color: theme.primary,
+                    size: 18,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      walletName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: theme.text,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        localized(context, walletName),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: theme.text,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    Text(
-                      shortAddress(address),
-                      style: TextStyle(color: theme.muted, fontSize: 12),
-                    ),
-                  ],
+                      Text(
+                        linkedAddresses?.map(shortAddress).join(' · ') ??
+                            shortAddress(address),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: theme.muted, fontSize: 12),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Icon(Icons.expand_more, size: 18, color: theme.muted),
-            ],
+                const SizedBox(width: 8),
+                Icon(Icons.expand_more, size: 18, color: theme.muted),
+              ],
+            ),
           ),
         ),
       ),
@@ -241,17 +233,22 @@ class WalletHeader extends StatelessWidget {
               Expanded(
                 child: Align(alignment: Alignment.centerLeft, child: wallet),
               ),
-              ThemeToggle(theme: theme, onTap: onToggleStyle),
+              IconButton(
+                key: const ValueKey('open-settings'),
+                tooltip: tr(context, MessageCode.msgSettings),
+                onPressed: onSettings,
+                icon: Icon(Icons.settings_outlined, color: theme.muted),
+              ),
             ],
           ),
-          if (pageTitle != '首页') ...[
-            const SizedBox(height: 20),
-            Text(
-              pageTitle,
-              style: TextStyle(
-                color: theme.text,
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
+          if (onNetworkTap != null) ...[
+            const SizedBox(height: 12),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 260),
+              child: NetworkButton(
+                theme: theme,
+                label: networkLabel,
+                onTap: onNetworkTap!,
               ),
             ),
           ],
@@ -272,19 +269,23 @@ class WalletHeader extends StatelessWidget {
                 label: networkLabel,
                 onTap: onNetworkTap!,
               ),
-            ThemeToggle(theme: theme, onTap: onToggleStyle),
+            IconButton(
+              key: const ValueKey('open-settings'),
+              tooltip: tr(context, MessageCode.msgSettings),
+              onPressed: onSettings,
+              icon: Icon(Icons.settings_outlined, color: theme.muted),
+            ),
           ],
         );
         final title = Text(
-          pageTitle,
+          localized(context, pageTitle),
           style: TextStyle(
             color: theme.text,
             fontSize: 28,
             fontWeight: FontWeight.w700,
           ),
         );
-        if (constraints.maxWidth < 700 ||
-            MediaQuery.textScalerOf(context).scale(1) > 1.2) {
+        if (constraints.maxWidth < 700) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [title, const SizedBox(height: 16), actions],
@@ -318,6 +319,10 @@ class NetworkButton extends StatelessWidget {
   Widget build(BuildContext context) => OutlinedButton.icon(
     onPressed: onTap,
     icon: const Icon(Icons.public, size: 16),
-    label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+    label: Text(
+      localized(context, label),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    ),
   );
 }

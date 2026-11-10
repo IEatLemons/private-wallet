@@ -1,3 +1,4 @@
+import 'asset_test_helpers.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -8,6 +9,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stone_wallet/main.dart';
+import 'package:stone_wallet/l10n/generated/app_localizations.dart';
 import 'package:stone_wallet/wallet_core.dart';
 
 import 'widget_test.dart' show EmptyStore, MapSecretStore;
@@ -49,6 +51,7 @@ Future<void> app(
     RepaintBoundary(
       key: captureKey,
       child: StoneWalletApp(
+        quoteService: TestQuoteService(),
         key: UniqueKey(),
         vault: WalletVault(
           store: loaded
@@ -60,13 +63,13 @@ Future<void> app(
   );
   await tester.pumpAndSettle();
   if (dark) {
-    await tester.tap(find.byTooltip('切换主题'));
+    (tester.state(find.byType(StoneWalletApp)) as dynamic).toggleStyle();
     await tester.pumpAndSettle();
   }
 }
 
 Future<void> navigateSettings(WidgetTester tester, bool mobile) async {
-  await tester.tap(mobile ? find.text('设置') : find.byTooltip('设置'));
+  await tester.tap(find.byKey(const ValueKey('open-settings')));
   await tester.pumpAndSettle();
 }
 
@@ -76,6 +79,9 @@ Widget panelHarness(
   bool fullscreen = false,
   bool dismissible = true,
 }) => MaterialApp(
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
+  locale: const Locale('zh'),
   home: Scaffold(
     body: Builder(
       builder: (context) => TextButton(
@@ -173,24 +179,19 @@ void main() {
               find.byType(WalletRail),
               size.width >= 760 ? findsOneWidget : findsNothing,
             );
+            expect(find.byType(NavigationBar), findsNothing);
+            expect(find.byType(AssetsPage), findsOneWidget);
             expect(
-              find.byType(WalletBottomBar),
-              size.width < 760 ? findsOneWidget : findsNothing,
+              find.byKey(const ValueKey('portfolio-summary')),
+              findsOneWidget,
             );
-            final portfolioRect = tester.getRect(find.byType(PortfolioHero));
-            final activityRect = tester.getRect(find.byType(ActivityPanel));
-            if (size.width >= 1100) {
-              expect(activityRect.left, greaterThan(portfolioRect.right));
-            } else {
-              expect(activityRect.top, greaterThan(portfolioRect.bottom));
-            }
             if (scale == 1 && (size.width == 1200 || size.width == 390)) {
               await capture(
                 tester,
                 '${size.width == 390 ? 'mobile' : 'desktop'}-home${dark ? '-dark' : ''}',
               );
             }
-            await tester.tap(find.text('选择网络'));
+            await assetMenu(tester, MessageCode.msgManageNetworks);
             await tester.pumpAndSettle();
             await tester.ensureVisible(find.text('Ethereum Sepolia'));
             expect(find.text('保存网络选择'), findsNothing);
@@ -205,6 +206,8 @@ void main() {
                 '${size.width == 390 ? 'mobile' : 'desktop'}-settings${dark ? '-dark' : ''}',
               );
             }
+            await settingsEntryTap(tester, 'security-backup');
+            await settingsEntryTap(tester, 'backup');
             await tester.ensureVisible(
               find.text('iCloud / Google Drive 云备份（暂未接入）'),
             );
@@ -227,8 +230,8 @@ void main() {
     for (final width in [1099.0, 760.0, 759.0, 390.0, 1100.0]) {
       await viewport(tester, Size(width, 800));
       await tester.pumpAndSettle();
-      expect(find.byType(SettingsPage), findsOneWidget);
-      expect(find.text('主钱包'), findsOneWidget);
+      expect(find.byKey(const ValueKey('settings-hub')), findsOneWidget);
+      expect(find.byKey(const ValueKey('settings-hub')), findsOneWidget);
       expect(tester.takeException(), isNull);
     }
   });
@@ -276,7 +279,13 @@ void main() {
           (_) => ImportResultDialog(
             theme: WalletTheme.light,
             importedCount: 5,
-            errors: List.generate(100, (i) => WalletImportError(i, '无效数据')),
+            errors: List.generate(
+              100,
+              (i) => WalletImportError(
+                i,
+                const WalletMessage(MessageCode.msgUnsupportedNetwork),
+              ),
+            ),
           ),
           width: 640,
         ),
@@ -284,7 +293,7 @@ void main() {
       await tester.tap(find.text('open'));
       await tester.pumpAndSettle();
       expect(find.text('知道了').hitTestable(), findsOneWidget);
-      await tester.scrollUntilVisible(find.text('第 99 条：无效数据'), 300);
+      await tester.scrollUntilVisible(find.text('第 99 条：不支持的链。'), 300);
       expect(find.text('知道了').hitTestable(), findsOneWidget);
       await tester.tap(find.text('知道了'));
       await tester.pumpAndSettle();
@@ -372,9 +381,7 @@ const accountAddress = '0x9858EfFD232B4033E47d90003D41EC34EcaEda94';
 
 // Additional stress cases are kept outside the matrix so their failure is easy to identify.
 void stressTests() {
-  testWidgets('long network labels, RPC URLs and addresses wrap', (
-    tester,
-  ) async {
+  testWidgets('long wallet header labels and addresses wrap', (tester) async {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     final network = EvmNetwork(
@@ -393,6 +400,9 @@ void stressTests() {
       await viewport(tester, size);
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('zh'),
           home: Scaffold(
             body: SingleChildScrollView(
               child: Padding(
@@ -405,20 +415,9 @@ void stressTests() {
                       address: accountAddress,
                       networkLabel: network.name,
                       onWalletTap: () {},
-                      onToggleStyle: () {},
+                      onSettings: () {},
+                      pageTitle: '资产',
                       onNetworkTap: () {},
-                    ),
-                    SettingsPage(
-                      theme: WalletTheme.light,
-                      address: accountAddress,
-                      networks: [network],
-                      currentNetwork: network,
-                      networkServices: const {},
-                      responsiveNetworkIds: const {},
-                      onManageNetworks: () {},
-                      onBatchImport: () {},
-                      onRefresh: () async {},
-                      onToggleStyle: () {},
                     ),
                   ],
                 ),
@@ -467,9 +466,13 @@ void stressTests() {
       await tester.pump();
       expect(find.byType(SendSheet), findsOneWidget);
       expect(find.byTooltip('关闭'), findsNothing);
-      completion.completeError(const WalletInputException('测试网络不可用'));
+      completion.completeError(
+        const WalletInputException(
+          MessageCode.msgUnexpectedErrorPleaseTryAgain,
+        ),
+      );
       await tester.pumpAndSettle();
-      expect(find.text('测试网络不可用'), findsOneWidget);
+      expect(find.text('未知错误，请稍后重试。'), findsOneWidget);
       await tester.tap(find.byTooltip('关闭'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
@@ -485,6 +488,7 @@ void stressTests() {
       final privateKey = '1'.padLeft(64, '0');
       await tester.pumpWidget(
         StoneWalletApp(
+          quoteService: TestQuoteService(),
           vault: WalletVault(
             store: MapSecretStore({
               WalletVault.mnemonicKey: mnemonic,
@@ -501,7 +505,10 @@ void stressTests() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('主钱包'));
       await tester.pumpAndSettle();
-      expect(find.text(shortAddress(accountAddress)), findsOneWidget);
+      expect(
+        tester.widget<WalletHeader>(find.byType(WalletHeader)).address,
+        accountAddress,
+      );
       expect(find.text('主钱包'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },

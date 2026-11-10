@@ -36,7 +36,7 @@ class WalletCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       border: Border.all(color: theme.border),
     ),
-    child: child,
+    child: Material(color: Colors.transparent, child: child),
   );
 }
 
@@ -47,7 +47,7 @@ class ThemeToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => IconButton(
-    tooltip: '切换主题',
+    tooltip: tr(context, MessageCode.msgSwitchTheme),
     onPressed: onTap,
     icon: Icon(
       theme.isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
@@ -67,6 +67,10 @@ Future<T?> showWalletPanel<T>({
   FocusManager.instance.primaryFocus?.unfocus();
   final mobile = WalletLayout.of(context).mobile;
   TransitionRoute<T>? panelRoute;
+  // Keep the form element alive when a resize changes its dialog/sheet wrapper.
+  final contentKey = GlobalKey();
+  Widget panelBody(BuildContext context) =>
+      KeyedSubtree(key: contentKey, child: builder(context));
   Widget surface(BuildContext context) {
     panelRoute ??= ModalRoute.of<T>(context);
     final media = MediaQuery.of(context);
@@ -77,7 +81,7 @@ Future<T?> showWalletPanel<T>({
         child: Dialog.fullscreen(
           child: Scaffold(
             resizeToAvoidBottomInset: true,
-            body: SafeArea(child: SizedBox.expand(child: builder(context))),
+            body: SafeArea(child: SizedBox.expand(child: panelBody(context))),
           ),
         ),
       );
@@ -94,7 +98,7 @@ Future<T?> showWalletPanel<T>({
             available.clamp(0, double.infinity) *
             (WalletLayout.of(context).mobile ? .92 : .85),
       ),
-      child: builder(context),
+      child: panelBody(context),
     );
     if (!WalletLayout.of(context).mobile) {
       return PopScope(
@@ -192,7 +196,7 @@ class WalletPanel extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  title,
+                  localized(context, title),
                   style: TextStyle(
                     color: theme.text,
                     fontSize: 22,
@@ -202,7 +206,7 @@ class WalletPanel extends StatelessWidget {
               ),
               if (canClose)
                 IconButton(
-                  tooltip: '关闭',
+                  tooltip: tr(context, MessageCode.msgClose),
                   onPressed: () => closeWalletPanel(context),
                   icon: Icon(Icons.close, color: theme.muted),
                 ),
@@ -222,7 +226,7 @@ class WalletPanel extends StatelessWidget {
                     children: [
                       if (subtitle != null) ...[
                         Text(
-                          subtitle!,
+                          localized(context, subtitle!),
                           style: TextStyle(
                             color: theme.muted,
                             fontSize: 14,
