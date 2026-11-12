@@ -1,6 +1,6 @@
-# Stone Wallet
+# Asterkeel Wallet · 星舟钱包
 
-Stone Wallet is a Flutter cross-platform self-custodial Web3 wallet foundation covering iOS, Android, macOS, and Windows project targets.
+Asterkeel Wallet is a Flutter cross-platform self-custodial Web3 wallet foundation covering iOS, Android, macOS, and Windows project targets.
 
 ## Current milestone
 
@@ -119,7 +119,7 @@ flutter test
 
 创建或导入完成后直接进入资产页。手机不再显示底部导航，固定顶部提供账户切换和
 设置齿轮；桌面侧栏仅保留“资产 / 设置”。设置作为独立 `/settings` 页面打开，
-返回保留视图、币种选择、筛选、搜索内容及滚动位置。主题切换位于设置中。
+返回保留视图、币种选择、筛选、搜索内容及滚动位置。外观设置支持跟随系统、浅色、深色，默认跟随系统并记住选择；系统深浅色变化会即时生效。
 
 设置采用独立导航栈，分为钱包与账户、资产、网络与数据、安全与备份、通用五个分类。
 首页顶部固定搜索入口，提供语言、资产展示、网络 RPC 快捷入口；详细配置逐级进入。
@@ -147,7 +147,7 @@ flutter test
 新建默认名称使用创建时的语言；助记词、私钥、地址、合约、哈希及符号均不翻译。
 
 偏好单独保存在 `stone_wallet.v1.app_preferences`（version 1），字段为
-语言、视图、显示模式、条数、排序、资产 / 地址 / 网络筛选及选中币种；旧 `category / family`
+语言、外观模式、视图、显示模式、条数、排序、资产 / 地址 / 网络筛选及选中币种；旧 `category / family`
 字段保留兼容。通过串行队列保存，避免快速操作覆盖其他偏好。
 无效字段按项回退，读取失败不会阻止钱包加载；保存失败显示提示。此改动不迁移或改写
 钱包密钥、账户名称、代币列表及网络记录。

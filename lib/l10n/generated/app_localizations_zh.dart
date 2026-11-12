@@ -9,6 +9,9 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get appName => '星舟钱包';
+
+  @override
   String get msgSyncing => '同步中…';
 
   @override
@@ -119,7 +122,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get msgRpcConnectionsStartOnlyAfterYouEnableA => '启用网络后，才会连接对应的 RPC。';
 
   @override
-  String get msgGetStartedWithStoneWallet => '开始使用 Stone Wallet';
+  String get msgGetStartedWithWallet => '开始使用星舟钱包';
 
   @override
   String get msgChooseHowToGetStarted => '选择适合你的方式';
@@ -1368,6 +1371,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   AppLocalizationsZhHant() : super('zh_Hant');
 
   @override
+  String get appName => '星舟錢包';
+
+  @override
   String get msgSyncing => '同步中…';
 
   @override
@@ -1478,7 +1484,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get msgRpcConnectionsStartOnlyAfterYouEnableA => '啓用網路後，才會連接對應的 RPC。';
 
   @override
-  String get msgGetStartedWithStoneWallet => '開始使用 Stone Wallet';
+  String get msgGetStartedWithWallet => '開始使用星舟錢包';
 
   @override
   String get msgChooseHowToGetStarted => '選擇適合你的方式';

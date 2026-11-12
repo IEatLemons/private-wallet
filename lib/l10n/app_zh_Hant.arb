@@ -1,5 +1,6 @@
 {
   "@@locale": "zh_Hant",
+  "appName": "星舟錢包",
   "msgSyncing": "同步中…",
   "msgRefreshAssets": "刷新資產",
   "msgManageNetworks": "管理網路",
@@ -41,7 +42,7 @@
   "msgRecoveryCredentialsStayInThisDeviceSSecure": "恢復憑證保存在本機系統安全存儲中。",
   "msgChooseYourNetworks": "網路由你選擇",
   "msgRpcConnectionsStartOnlyAfterYouEnableA": "啓用網路後，才會連接對應的 RPC。",
-  "msgGetStartedWithStoneWallet": "開始使用 Stone Wallet",
+  "msgGetStartedWithWallet": "開始使用星舟錢包",
   "msgChooseHowToGetStarted": "選擇適合你的方式",
   "msgCreateWallet": "創建新錢包",
   "msgImportRecoveryPhrase": "導入助記詞",

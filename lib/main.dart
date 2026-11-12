@@ -120,7 +120,6 @@ class StoneWalletApp extends StatefulWidget {
 }
 
 class _StoneWalletAppState extends State<StoneWalletApp> {
-  WalletStyle style = WalletStyle.lightPortfolio;
   late final WalletVault vault;
   late final PreferencesController preferences;
   @override
@@ -141,61 +140,69 @@ class _StoneWalletAppState extends State<StoneWalletApp> {
   }
 
   void toggleStyle() {
-    setState(() {
-      style = style == WalletStyle.lightPortfolio
-          ? WalletStyle.darkCommand
-          : WalletStyle.lightPortfolio;
-    });
+    final dark = switch (preferences.value.appearance) {
+      AppAppearance.system =>
+        WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+            Brightness.dark,
+      AppAppearance.light => false,
+      AppAppearance.dark => true,
+    };
+    preferences.update(
+      appearance: dark ? AppAppearance.light : AppAppearance.dark,
+    );
   }
+
+  ThemeData _themeData(WalletTheme walletTheme) => ThemeData(
+    useMaterial3: true,
+    brightness: walletTheme.isDark ? Brightness.dark : Brightness.light,
+    scaffoldBackgroundColor: walletTheme.background,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: walletTheme.primary,
+      primary: walletTheme.primary,
+      onPrimary: walletTheme.isDark ? const Color(0xFF10234A) : Colors.white,
+      brightness: walletTheme.isDark ? Brightness.dark : Brightness.light,
+      surface: walletTheme.surface,
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: walletTheme.surfaceStrong,
+      contentPadding: const EdgeInsets.all(16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: walletTheme.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: walletTheme.border),
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
-    final walletTheme = style == WalletStyle.lightPortfolio
-        ? WalletTheme.light
-        : WalletTheme.dark;
-
     return AnimatedBuilder(
       animation: preferences,
       builder: (context, _) => AppSettingsScope(
         controller: preferences,
         child: MaterialApp(
-          title: 'Stone Wallet',
+          onGenerateTitle: (context) => AppLocalizations.of(context).appName,
           locale: selectedLocale(preferences.value.language),
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           localeListResolutionCallback: resolveWalletLocale,
           debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            useMaterial3: true,
-            brightness: walletTheme.isDark ? Brightness.dark : Brightness.light,
-            scaffoldBackgroundColor: walletTheme.background,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: walletTheme.primary,
-              primary: walletTheme.primary,
-              onPrimary: walletTheme.isDark
-                  ? const Color(0xFF10234A)
-                  : Colors.white,
-              brightness: walletTheme.isDark
-                  ? Brightness.dark
-                  : Brightness.light,
-              surface: walletTheme.surface,
-            ),
-            inputDecorationTheme: InputDecorationTheme(
-              filled: true,
-              fillColor: walletTheme.surfaceStrong,
-              contentPadding: const EdgeInsets.all(16),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: walletTheme.border),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: walletTheme.border),
-              ),
-            ),
-          ),
+          theme: _themeData(WalletTheme.light),
+          darkTheme: _themeData(WalletTheme.dark),
+          themeMode: switch (preferences.value.appearance) {
+            AppAppearance.system => ThemeMode.system,
+            AppAppearance.light => ThemeMode.light,
+            AppAppearance.dark => ThemeMode.dark,
+          },
           builder: (context, child) {
             final data = Theme.of(context);
+            final walletTheme = data.brightness == Brightness.dark
+                ? WalletTheme.dark
+                : WalletTheme.light;
             final height = WalletLayout.of(context).controlHeight;
             final style = ButtonStyle(
               minimumSize: WidgetStatePropertyAll(Size(0, height)),
@@ -227,17 +234,26 @@ class _StoneWalletAppState extends State<StoneWalletApp> {
               child: child!,
             );
           },
-          home: !preferences.loaded
-              ? const Scaffold(body: Center(child: CircularProgressIndicator()))
-              : WalletShell(
-                  walletTheme: walletTheme,
-                  style: style,
-                  onToggleStyle: toggleStyle,
-                  vault: vault,
-                  networkServiceBuilder: widget.networkServiceBuilder,
-                  quoteService: widget.quoteService,
-                  discoveryServiceBuilder: widget.discoveryServiceBuilder,
-                ),
+          home: Builder(
+            builder: (context) {
+              final dark = Theme.of(context).brightness == Brightness.dark;
+              return !preferences.loaded
+                  ? const Scaffold(
+                      body: Center(child: CircularProgressIndicator()),
+                    )
+                  : WalletShell(
+                      walletTheme: dark ? WalletTheme.dark : WalletTheme.light,
+                      style: dark
+                          ? WalletStyle.darkCommand
+                          : WalletStyle.lightPortfolio,
+                      onToggleStyle: toggleStyle,
+                      vault: vault,
+                      networkServiceBuilder: widget.networkServiceBuilder,
+                      quoteService: widget.quoteService,
+                      discoveryServiceBuilder: widget.discoveryServiceBuilder,
+                    );
+            },
+          ),
         ),
       ),
     );

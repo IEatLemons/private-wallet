@@ -117,12 +117,13 @@ Future<T?> showWalletPanel<T>({
       canPop: dismissible,
       child: Padding(
         padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
-        child: SafeArea(
-          top: false,
-          child: Material(
-            color: Theme.of(context).colorScheme.surface,
-            clipBehavior: Clip.antiAlias,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        // Paint through the home-indicator area; only the controls are inset.
+        child: Material(
+          color: Theme.of(context).colorScheme.surface,
+          clipBehavior: Clip.antiAlias,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          child: SafeArea(
+            top: false,
             child: SizedBox(width: double.infinity, child: content),
           ),
         ),

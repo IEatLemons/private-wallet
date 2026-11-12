@@ -292,10 +292,17 @@ final settingsEntries = <SettingsEntry>[
     (s) => s.settingsAppearance,
     Icons.contrast,
     category: SettingsDestination.general,
-    aliases: 'theme dark light 主题 主題 深色 浅色 淺色',
+    aliases: 'theme dark light system 主题 主題 深色 浅色 淺色 跟随系统 跟隨系統',
     anchor: 'appearance',
   ),
 ];
+
+String appearanceLabel(AppLocalizations s, AppAppearance appearance) =>
+    switch (appearance) {
+      AppAppearance.system => s.msgSystemDefault,
+      AppAppearance.light => s.settingsLight,
+      AppAppearance.dark => s.settingsDark,
+    };
 
 SettingsEntry settingsEntry(String id) =>
     settingsEntries.firstWhere((e) => e.id == id);
@@ -558,12 +565,13 @@ class _SettingsRow extends StatelessWidget {
     this.value,
     this.icon,
     this.selected = false,
+    this.selection = false,
     super.key,
   });
   final String title;
   final String? subtitle, value;
   final IconData? icon;
-  final bool selected;
+  final bool selected, selection;
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) => Padding(
@@ -573,63 +581,83 @@ class _SettingsRow extends StatelessWidget {
           ? Theme.of(context).colorScheme.primary.withValues(alpha: .09)
           : Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          child: Row(
-            children: [
-              if (icon != null) ...[
-                Icon(
-                  icon,
-                  size: 21,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 12),
-              ],
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (subtitle != null && subtitle!.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              if (value != null && value!.isNotEmpty) ...[
-                const SizedBox(width: 12),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 104),
-                  child: Text(
-                    value!,
-                    textAlign: TextAlign.end,
-                    style: TextStyle(
-                      fontSize: 12,
+      child: MergeSemantics(
+        child: Semantics(
+          checked: selection ? selected : null,
+          inMutuallyExclusiveGroup: selection ? true : null,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              child: Row(
+                children: [
+                  if (icon != null) ...[
+                    Icon(
+                      icon,
+                      size: 21,
                       color: Theme.of(context).colorScheme.primary,
                     ),
+                    const SizedBox(width: 12),
+                  ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (subtitle != null && subtitle!.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            subtitle!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
-              const SizedBox(width: 8),
-              const Icon(Icons.chevron_right, size: 18),
-            ],
+                  if (value != null && value!.isNotEmpty) ...[
+                    const SizedBox(width: 12),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 104),
+                      child: Text(
+                        value!,
+                        textAlign: TextAlign.end,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(width: 8),
+                  Icon(
+                    selection
+                        ? (selected
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_unchecked)
+                        : Icons.chevron_right,
+                    size: selection ? 22 : 18,
+                    color: selection
+                        ? (selected
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.onSurfaceVariant)
+                        : null,
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -752,10 +780,7 @@ class _SettingsScreenState extends State<_SettingsScreen> {
     final p = AppSettingsScope.of(context).value;
     return switch (e.id) {
       'language' => languageLabel(context, p.language),
-      'appearance' =>
-        Theme.of(context).brightness == Brightness.dark
-            ? s.settingsDark
-            : s.settingsLight,
+      'appearance' => appearanceLabel(s, p.appearance),
       'display-mode' || 'display' =>
         p.display == AssetDisplay.simple
             ? s.portfolioSimple
@@ -1130,9 +1155,8 @@ class _SettingsScreenState extends State<_SettingsScreen> {
                   _SettingsRow(
                     key: ValueKey('settings-language-${language.name}'),
                     title: languageLabel(context, language),
-                    icon: preferences.value.language == language
-                        ? Icons.check_circle
-                        : Icons.circle_outlined,
+                    icon: Icons.language,
+                    selection: true,
                     selected: preferences.value.language == language,
                     onTap: () => preferences.update(language: language),
                   ),
@@ -1143,26 +1167,30 @@ class _SettingsScreenState extends State<_SettingsScreen> {
             Text(s.msgPreferencesCouldNotBeSavedPreviousSettingsMay),
         ];
       case SettingsDestination.appearance:
+        final preferences = AppSettingsScope.of(context);
         return [
           target(
             'appearance',
             Column(
               children: [
-                for (final dark in [false, true])
+                for (final appearance in AppAppearance.values)
                   _SettingsRow(
-                    key: ValueKey('settings-theme-${dark ? 'dark' : 'light'}'),
-                    title: dark ? s.settingsDark : s.settingsLight,
-                    icon: dark
-                        ? Icons.dark_mode_outlined
-                        : Icons.light_mode_outlined,
-                    selected: dark == theme.isDark,
-                    onTap: () {
-                      if (dark != theme.isDark) shell.widget.onToggleStyle();
+                    key: ValueKey('settings-theme-${appearance.name}'),
+                    title: appearanceLabel(s, appearance),
+                    icon: switch (appearance) {
+                      AppAppearance.system => Icons.brightness_auto_outlined,
+                      AppAppearance.light => Icons.light_mode_outlined,
+                      AppAppearance.dark => Icons.dark_mode_outlined,
                     },
+                    selection: true,
+                    selected: preferences.value.appearance == appearance,
+                    onTap: () => preferences.update(appearance: appearance),
                   ),
               ],
             ),
           ),
+          if (preferences.saveFailed)
+            Text(s.msgPreferencesCouldNotBeSavedPreviousSettingsMay),
         ];
     }
   }

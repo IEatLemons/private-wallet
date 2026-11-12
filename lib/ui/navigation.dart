@@ -30,12 +30,12 @@ class WalletRail extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              BrandMark(theme: theme),
+              const BrandMark(),
               if (layout.wide) ...[
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Stone Wallet',
+                    AppLocalizations.of(context).appName,
                     style: TextStyle(
                       color: theme.text,
                       fontSize: 16,
@@ -129,21 +129,17 @@ class WalletRail extends StatelessWidget {
 }
 
 class BrandMark extends StatelessWidget {
-  const BrandMark({required this.theme, super.key});
-  final WalletTheme theme;
+  const BrandMark({super.key});
+
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => Image.asset(
+    'assets/brand/asterkeel.png',
     width: 40,
     height: 40,
-    decoration: BoxDecoration(
-      color: theme.primary,
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: const Icon(
-      Icons.account_balance_wallet_rounded,
-      color: Colors.white,
-      size: 22,
-    ),
+    color: Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFEDF0F4)
+        : const Color(0xFF20252C),
+    excludeFromSemantics: true,
   );
 }
 

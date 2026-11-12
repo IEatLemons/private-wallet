@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 
 enum AppLanguage { system, zhHans, zhHant, en }
 
+enum AppAppearance { system, light, dark }
+
 enum WalletPage { assets, settings }
 
 enum AssetCategory { stablecoins, tokens, nft, rwa }
@@ -28,6 +30,7 @@ const availableAssetCategories = [
 class AppPreferences {
   const AppPreferences({
     this.language = AppLanguage.system,
+    this.appearance = AppAppearance.system,
     this.category = AssetCategory.stablecoins,
     this.family = 'USDT',
     this.view = AssetView.overview,
@@ -42,6 +45,7 @@ class AppPreferences {
     this.selectedAssetId = 'usdt',
   });
   final AppLanguage language;
+  final AppAppearance appearance;
   final AssetCategory category;
   final String family;
   final AssetView view;
@@ -56,6 +60,7 @@ class AppPreferences {
   final String selectedAssetId;
   AppPreferences copyWith({
     AppLanguage? language,
+    AppAppearance? appearance,
     AssetCategory? category,
     String? family,
     AssetView? view,
@@ -70,6 +75,7 @@ class AppPreferences {
     String? selectedAssetId,
   }) => AppPreferences(
     language: language ?? this.language,
+    appearance: appearance ?? this.appearance,
     category: category ?? this.category,
     family: family ?? this.family,
     view: view ?? this.view,
@@ -86,6 +92,7 @@ class AppPreferences {
   Map<String, Object> toJson() => {
     'version': 1,
     'language': language.name,
+    'appearance': appearance.name,
     'category': category.name,
     'family': family,
     'view': view.name,
@@ -109,6 +116,11 @@ class AppPreferences {
           values.where((v) => v.name == json[key]).firstOrNull ?? fallback;
       return AppPreferences(
         language: pick('language', AppLanguage.values, AppLanguage.system),
+        appearance: pick(
+          'appearance',
+          AppAppearance.values,
+          AppAppearance.system,
+        ),
         category: pick(
           'category',
           availableAssetCategories,
@@ -165,6 +177,7 @@ class PreferencesController extends ChangeNotifier {
 
   void update({
     AppLanguage? language,
+    AppAppearance? appearance,
     AssetCategory? category,
     String? family,
     AssetView? view,
@@ -180,6 +193,7 @@ class PreferencesController extends ChangeNotifier {
   }) {
     value = value.copyWith(
       language: language,
+      appearance: appearance,
       category: category,
       family: family,
       view: view,

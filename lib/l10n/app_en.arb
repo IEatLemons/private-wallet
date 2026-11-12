@@ -1,5 +1,6 @@
 {
   "@@locale": "en",
+  "appName": "Asterkeel Wallet",
   "msgSyncing": "Syncing…",
   "msgRefreshAssets": "Refresh assets",
   "msgManageNetworks": "Manage networks",
@@ -42,7 +43,7 @@
   "msgRecoveryCredentialsStayInThisDeviceSSecure": "Recovery credentials stay in this device’s secure storage.",
   "msgChooseYourNetworks": "Choose your networks",
   "msgRpcConnectionsStartOnlyAfterYouEnableA": "RPC connections start only after you enable a network.",
-  "msgGetStartedWithStoneWallet": "Get started with Stone Wallet",
+  "msgGetStartedWithWallet": "Get started with Asterkeel Wallet",
   "msgChooseHowToGetStarted": "Choose how to get started",
   "msgCreateWallet": "Create wallet",
   "msgImportRecoveryPhrase": "Import recovery phrase",

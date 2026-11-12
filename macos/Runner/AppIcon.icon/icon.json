@@ -1,0 +1,29 @@
+{
+  "fill-specializations": [
+    { "value": { "solid": "srgb:0.94902,0.95686,0.96863,1.00000" } },
+    { "appearance": "dark", "value": { "solid": "srgb:0.09020,0.10588,0.13333,1.00000" } }
+  ],
+  "groups": [
+    {
+      "layers": [
+        {
+          "image-name-specializations": [
+            { "value": "chain-light.png" },
+            { "appearance": "dark", "value": "chain-dark.png" }
+          ],
+          "name": "Chain",
+          "glass": false,
+          "hidden": false,
+          "position": { "scale": 1, "translation-in-points": [0, 0] }
+        }
+      ],
+      "shadow": { "kind": "neutral", "opacity": 0 },
+      "specular": false,
+      "translucency": { "enabled": false, "value": 0 }
+    }
+  ],
+  "supported-platforms": {
+    "circles": [],
+    "squares": "shared"
+  }
+}

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <mask id="under-link" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect x="0" y="0" width="1024" height="1024" fill="white"/>
+      <path d="M505 497c37 37 86 59 139 59 31 0 61-7 87-20" fill="none" stroke="black" stroke-width="137"/>
+    </mask>
+    <mask id="under-block" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect x="0" y="0" width="1024" height="1024" fill="white"/>
+      <path d="M319 463l37-37c28-28 73-28 101 0l53 53" fill="none" stroke="black" stroke-width="137"/>
+    </mask>
+  </defs>
+  <g transform="translate(512 512) scale(.88) translate(-527 -480)" fill="none" stroke-width="79">
+    <path d="M356 426c28-28 73-28 101 0l124 124c28 28 28 73 0 101L457 775c-28 28-73 28-101 0L232 651c-28-28-28-73 0-101Z" stroke="#fff" mask="url(#under-link)"/>
+    <circle cx="644" cy="360" r="196" stroke="#fff" mask="url(#under-block)"/>
+  </g>
+</svg>

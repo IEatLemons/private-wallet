@@ -92,7 +92,7 @@ class OnboardingPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          tr(context, MessageCode.msgGetStartedWithStoneWallet),
+          tr(context, MessageCode.msgGetStartedWithWallet),
           style: TextStyle(
             color: theme.text,
             fontSize: mobile ? 20 : 22,
@@ -197,11 +197,11 @@ class OnboardingPage extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        BrandMark(theme: theme),
+                        const BrandMark(),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Stone Wallet',
+                            AppLocalizations.of(context).appName,
                             style: TextStyle(
                               color: theme.text,
                               fontWeight: FontWeight.w700,

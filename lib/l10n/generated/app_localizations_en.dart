@@ -9,6 +9,9 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get appName => 'Asterkeel Wallet';
+
+  @override
   String get msgSyncing => 'Syncing…';
 
   @override
@@ -120,7 +123,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'RPC connections start only after you enable a network.';
 
   @override
-  String get msgGetStartedWithStoneWallet => 'Get started with Stone Wallet';
+  String get msgGetStartedWithWallet => 'Get started with Asterkeel Wallet';
 
   @override
   String get msgChooseHowToGetStarted => 'Choose how to get started';

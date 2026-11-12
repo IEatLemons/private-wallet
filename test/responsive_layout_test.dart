@@ -236,6 +236,91 @@ void main() {
     }
   });
 
+  for (final dark in [false, true]) {
+    for (final keyboard in [0.0, 300.0]) {
+      testWidgets(
+        'bottom sheet paints iPhone safe area dark=$dark keyboard=$keyboard',
+        (tester) async {
+          await viewport(tester, const Size(402, 874));
+          tester.view.viewPadding = const FakeViewPadding(top: 59, bottom: 34);
+          tester.view.padding = FakeViewPadding(
+            top: 59,
+            bottom: keyboard == 0 ? 34 : 0,
+          );
+          tester.view.viewInsets = FakeViewPadding(bottom: keyboard);
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          addTearDown(tester.view.resetViewPadding);
+          addTearDown(tester.view.resetPadding);
+          addTearDown(tester.view.resetViewInsets);
+          final theme = dark ? WalletTheme.dark : WalletTheme.light;
+          await tester.pumpWidget(
+            RepaintBoundary(
+              key: captureKey,
+              child: MaterialApp(
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+                locale: const Locale('zh'),
+                theme: ThemeData(
+                  brightness: dark ? Brightness.dark : Brightness.light,
+                  colorScheme: ColorScheme.fromSeed(
+                    seedColor: theme.primary,
+                    brightness: dark ? Brightness.dark : Brightness.light,
+                    surface: theme.surface,
+                  ),
+                ),
+                home: Scaffold(
+                  body: Builder(
+                    builder: (context) => TextButton(
+                      onPressed: () => showWalletPanel<void>(
+                        context: context,
+                        builder: (_) => WalletPanel(
+                          theme: theme,
+                          title: '钱包管理',
+                          footer: FilledButton(
+                            onPressed: () {},
+                            child: const Text('safe-area-action'),
+                          ),
+                          child: const Text('safe-area-body'),
+                        ),
+                      ),
+                      child: const Text('open'),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.tap(find.text('open'));
+          await tester.pumpAndSettle();
+          final paintedSurface = find
+              .ancestor(
+                of: find.byType(WalletPanel),
+                matching: find.byType(Material),
+              )
+              .first;
+          expect(
+            tester.getRect(paintedSurface).bottom,
+            closeTo(874 - keyboard, .01),
+            reason:
+                'The sheet background must cover the home-indicator area rather than expose the modal barrier',
+          );
+          expect(
+            tester
+                .getRect(find.widgetWithText(FilledButton, 'safe-area-action'))
+                .bottom,
+            lessThanOrEqualTo(874 - keyboard - (keyboard == 0 ? 34 : 0)),
+          );
+          expect(tester.takeException(), isNull);
+          await capture(
+            tester,
+            'safe-area-${dark ? 'dark' : 'light'}-${keyboard.toInt()}',
+          );
+        },
+      );
+    }
+  }
+
   testWidgets('100 wallets and import errors scroll without moving footer', (
     tester,
   ) async {

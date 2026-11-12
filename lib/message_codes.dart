@@ -34,7 +34,7 @@ enum MessageCode {
   msgRecoveryCredentialsStayInThisDeviceSSecure,
   msgChooseYourNetworks,
   msgRpcConnectionsStartOnlyAfterYouEnableA,
-  msgGetStartedWithStoneWallet,
+  msgGetStartedWithWallet,
   msgChooseHowToGetStarted,
   msgCreateWallet,
   msgImportRecoveryPhrase,

@@ -99,6 +99,12 @@ abstract class AppLocalizations {
     Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
   ];
 
+  /// No description provided for @appName.
+  ///
+  /// In en, this message translates to:
+  /// **'Asterkeel Wallet'**
+  String get appName;
+
   /// No description provided for @msgSyncing.
   ///
   /// In en, this message translates to:
@@ -303,11 +309,11 @@ abstract class AppLocalizations {
   /// **'RPC connections start only after you enable a network.'**
   String get msgRpcConnectionsStartOnlyAfterYouEnableA;
 
-  /// No description provided for @msgGetStartedWithStoneWallet.
+  /// No description provided for @msgGetStartedWithWallet.
   ///
   /// In en, this message translates to:
-  /// **'Get started with Stone Wallet'**
-  String get msgGetStartedWithStoneWallet;
+  /// **'Get started with Asterkeel Wallet'**
+  String get msgGetStartedWithWallet;
 
   /// No description provided for @msgChooseHowToGetStarted.
   ///

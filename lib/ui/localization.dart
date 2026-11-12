@@ -51,8 +51,7 @@ String tr(
     MessageCode.msgChooseYourNetworks => strings.msgChooseYourNetworks,
     MessageCode.msgRpcConnectionsStartOnlyAfterYouEnableA =>
       strings.msgRpcConnectionsStartOnlyAfterYouEnableA,
-    MessageCode.msgGetStartedWithStoneWallet =>
-      strings.msgGetStartedWithStoneWallet,
+    MessageCode.msgGetStartedWithWallet => strings.msgGetStartedWithWallet,
     MessageCode.msgChooseHowToGetStarted => strings.msgChooseHowToGetStarted,
     MessageCode.msgCreateWallet => strings.msgCreateWallet,
     MessageCode.msgImportRecoveryPhrase => strings.msgImportRecoveryPhrase,

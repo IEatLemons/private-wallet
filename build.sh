@@ -159,5 +159,5 @@ elif [[ "$platform" == ios ]]; then
 else
   "$flutter_bin" build macos "--$mode" ${extra[@]+"${extra[@]}"}
   case "$mode" in debug) mode_directory=Debug ;; profile) mode_directory=Profile ;; release) mode_directory=Release ;; esac
-  echo "macOS 应用：$PWD/build/macos/Build/Products/$mode_directory/stone_wallet.app"
+  echo "macOS 应用：$PWD/build/macos/Build/Products/$mode_directory/Asterkeel Wallet.app"
 fi
