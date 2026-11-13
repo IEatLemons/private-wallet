@@ -137,8 +137,8 @@ class BrandMark extends StatelessWidget {
     width: 40,
     height: 40,
     color: Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFFEDF0F4)
-        : const Color(0xFF20252C),
+        ? const Color(0xFFF5F4F0)
+        : const Color(0xFF1A1C20),
     excludeFromSemantics: true,
   );
 }
