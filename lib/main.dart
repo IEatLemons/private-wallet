@@ -29,6 +29,7 @@ part 'ui/asset_data.dart';
 part 'ui/wallet_balances.dart';
 part 'ui/wallet_manager.dart';
 part 'ui/omnivault_import.dart';
+part 'ui/platform_address_pool.dart';
 part 'ui/transfers.dart';
 part 'ui/stablecoins.dart';
 part 'ui/app_settings.dart';
@@ -1059,6 +1060,16 @@ class _WalletShellState extends State<WalletShell> {
     unawaited(refreshQuotes());
   }
 
+  void _openOmniPools() {
+    unawaited(
+      showWalletPanel<void>(
+        context: context,
+        width: 840,
+        builder: (_) => _OmniPoolPanel(OmniAddressPools(vault)),
+      ),
+    );
+  }
+
   void _openSettings({
     SettingsDestination initial = SettingsDestination.directory,
   }) {
@@ -1371,6 +1382,9 @@ class _WalletShellState extends State<WalletShell> {
             onImportPrivateKey: _importPrivateKey,
             onBatchImport: _importBatchWallets,
             supportsOmniVault: vault.supportsOmniVaultImport,
+            onAddressPool: vault.supportsOmniVaultImport
+                ? _openOmniPools
+                : null,
             onToggleStyle: widget.onToggleStyle,
           ),
         ),

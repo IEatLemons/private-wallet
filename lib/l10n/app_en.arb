@@ -871,5 +871,51 @@
         "type": "int"
       }
     }
+  },
+  "omniPoolTitle": "OmniVault address pools",
+  "omniPoolSetupHelp": "Register this device in OmniVault under Address pools → Inventory and devices, then grant access to its platforms. Check the server fingerprint through a separate trusted channel.",
+  "omniPoolDevice": "Device ID",
+  "omniPoolFingerprint": "SHA-256 fingerprint",
+  "omniPoolCopyPublicKey": "Copy device public key",
+  "omniPoolServerKey": "Server public key (PEM)",
+  "omniPoolConnect": "Connect",
+  "omniPoolConnection": "Connection settings",
+  "omniPoolNoPlatforms": "This device has no platform grants.",
+  "omniPoolRefreshPlatforms": "Refresh platforms",
+  "omniPoolCreate": "Create platform recovery phrase",
+  "omniPoolWriteWords": "Keep these words offline and enter words 3 and 18 to continue.",
+  "omniPoolWord": "Word {index}",
+  "omniPoolCount": "Count (1–1,000)",
+  "omniPoolGenerate": "Generate addresses",
+  "omniPoolUpload": "Upload",
+  "omniPoolUploaded": "Uploaded",
+  "omniPoolReady": "Ready to upload",
+  "omniPoolBatches": "Local batches",
+  "omniPoolNeedsBackup": "Verified backup required",
+  "omniPoolBackup": "Create encrypted backup",
+  "omniPoolRestore": "Restore encrypted backup",
+  "omniPoolPassphrase": "Backup passphrase (12+ characters)",
+  "omniPoolConfirmPassphrase": "Confirm backup passphrase",
+  "omniPoolContinue": "Continue",
+  "omniPoolSync": "Sync inventory and addresses",
+  "omniPoolAvailable": "Available",
+  "omniPoolAllocated": "Allocated",
+  "omniPoolDisabled": "Disabled",
+  "omniPoolThreshold": "Alert threshold",
+  "omniPoolOrder": "Order",
+  "omniPoolRetry": "Retry",
+  "omniPoolConnectionError": "Check the HTTPS address, public key and verified fingerprint.",
+  "omniPoolAccessError": "Check the device registration and platform grant in OmniVault.",
+  "omniPoolNetworkError": "OmniVault could not be reached. Try again.",
+  "omniPoolVerificationError": "OmniVault data could not be verified. The saved records are intact.",
+  "omniPoolBackupError": "Backup verification failed. Check the file, passphrase and selected platform.",
+  "omniPoolInputError": "Check the recovery phrase or enter a count from 1 to 1,000.",
+  "omniPoolError": "The address pool operation failed. Check the connection or local storage and retry.",
+  "@omniPoolWord": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
   }
 }

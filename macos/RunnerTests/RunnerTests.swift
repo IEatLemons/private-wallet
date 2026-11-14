@@ -1,4 +1,5 @@
 import Foundation
+import FlutterMacOS
 import Security
 import XCTest
 @testable import Asterkeel_Wallet
@@ -87,6 +88,61 @@ final class RunnerTests: XCTestCase {
             XCTAssertNil(bytes.range(of: secret))
             XCTAssertFalse(bytes.starts(with: Data("SQLite format 3".utf8)))
         }
+    }
+
+    func testPlatformPoolsUseIndependentIndicesAndPersistentDeviceKey() throws {
+        let token = UUID().uuidString
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("asterkeel-pools-" + token)
+        let service = "com.example.stoneWallet.wallet-database.test." + token
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+            for account in ["wallet-database-v1", "omni-pool-device-rsa"] {
+                SecItemDelete([
+                    kSecClass as String: kSecClassGenericPassword,
+                    kSecAttrService as String: service,
+                    kSecAttrAccount as String: account,
+                    kSecAttrSynchronizable as String: false,
+                ] as CFDictionary)
+            }
+        }
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+        let scope: [String: Any] = ["service": "https://example.test", "platform": "shop"]
+        let sibling: [String: Any] = ["service": "https://example.test", "platform": "other"]
+        var database: MacWalletDatabase? = MacWalletDatabase(directory: directory, keychainService: service)
+        let create: [String: Any] = [
+            "id": "seed", "mnemonic": mnemonic, "identity": "synthetic-identity",
+            "bsc_next": 0, "tron_next": 0,
+        ]
+        _ = try database!.call("pool.create", scope.merging(create) { _, b in b })
+        XCTAssertThrowsError(try database!.call("pool.create", sibling.merging(create) { _, b in b }))
+        XCTAssertEqual(try database!.call("pool.hasSeed", sibling) as? Bool, false)
+        let batch = scope.merging([
+            "id": "batch", "seed": "seed", "chain": "bsc", "first_index": 0,
+            "count": 2, "payload": "{\"addresses\":[]}",
+        ]) { _, b in b }
+        _ = try database!.call("pool.generate", batch)
+        XCTAssertThrowsError(try database!.call("pool.generate", batch))
+        let collision = batch.merging(["first_index": 2]) { _, b in b }
+        XCTAssertThrowsError(try database!.call("pool.generate", collision))
+        let active = try XCTUnwrap(database!.call("pool.active", scope) as? [String: Any])
+        XCTAssertEqual(active["bsc_next"] as? Int, 2)
+        XCTAssertEqual(active["tron_next"] as? Int, 0)
+        let publicKey = try XCTUnwrap(database!.call("pool.device", [:]) as? FlutterStandardTypedData)
+        let input = FlutterStandardTypedData(bytes: Data("synthetic request".utf8))
+        let proof = try XCTUnwrap(database!.call("pool.sign", ["message": input]) as? FlutterStandardTypedData)
+        XCTAssertEqual(try database!.call("pool.verify", [
+            "key": publicKey, "message": input, "signature": proof,
+        ]) as? Bool, true)
+        database = nil
+        database = MacWalletDatabase(directory: directory, keychainService: service)
+        let reopened = try XCTUnwrap(database!.call("pool.device", [:]) as? FlutterStandardTypedData)
+        XCTAssertEqual(reopened.data, publicKey.data)
+        let list = try XCTUnwrap(database!.call("pool.list", scope) as? [[String: Any]])
+        XCTAssertEqual(list.first?["backed_up"] as? Int, 0)
+        XCTAssertEqual(list.count, 1)
+        let bytes = try Data(contentsOf: directory.appendingPathComponent("wallet.db"))
+        XCTAssertNil(bytes.range(of: Data(mnemonic.utf8)))
+        XCTAssertFalse(bytes.starts(with: Data("SQLite format 3".utf8)))
     }
 
     private func row(_ line: Int, _ platform: String, _ uid: String, network: Int = 56) -> [String: Any] {

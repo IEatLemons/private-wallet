@@ -1563,6 +1563,126 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get walletBalancesEmpty => '没有可查询的钱包。';
+
+  @override
+  String get omniPoolTitle => 'OmniVault 地址库';
+
+  @override
+  String get omniPoolSetupHelp =>
+      '在 OmniVault「地址库 → 库存与设备」登记此设备并授权平台。通过独立可信渠道核对服务端指纹。';
+
+  @override
+  String get omniPoolDevice => '设备 ID';
+
+  @override
+  String get omniPoolFingerprint => 'SHA-256 指纹';
+
+  @override
+  String get omniPoolCopyPublicKey => '复制设备公钥';
+
+  @override
+  String get omniPoolServerKey => '服务端公钥（PEM）';
+
+  @override
+  String get omniPoolConnect => '连接';
+
+  @override
+  String get omniPoolConnection => '连接设置';
+
+  @override
+  String get omniPoolNoPlatforms => '此设备尚未获得平台授权。';
+
+  @override
+  String get omniPoolRefreshPlatforms => '刷新平台';
+
+  @override
+  String get omniPoolCreate => '创建平台助记词';
+
+  @override
+  String get omniPoolWriteWords => '请离线保存这些助记词，并填写第 3 和第 18 个词。';
+
+  @override
+  String omniPoolWord(int index) {
+    return '第 $index 个词';
+  }
+
+  @override
+  String get omniPoolCount => '数量（1–1,000）';
+
+  @override
+  String get omniPoolGenerate => '生成地址';
+
+  @override
+  String get omniPoolUpload => '上传';
+
+  @override
+  String get omniPoolUploaded => '已上传';
+
+  @override
+  String get omniPoolReady => '待上传';
+
+  @override
+  String get omniPoolBatches => '本地批次';
+
+  @override
+  String get omniPoolNeedsBackup => '需要已验证的备份';
+
+  @override
+  String get omniPoolBackup => '创建加密备份';
+
+  @override
+  String get omniPoolRestore => '恢复加密备份';
+
+  @override
+  String get omniPoolPassphrase => '备份口令（至少 12 个字符）';
+
+  @override
+  String get omniPoolConfirmPassphrase => '确认备份口令';
+
+  @override
+  String get omniPoolContinue => '继续';
+
+  @override
+  String get omniPoolSync => '同步库存和地址';
+
+  @override
+  String get omniPoolAvailable => '可用';
+
+  @override
+  String get omniPoolAllocated => '已分配';
+
+  @override
+  String get omniPoolDisabled => '已停用';
+
+  @override
+  String get omniPoolThreshold => '告警阈值';
+
+  @override
+  String get omniPoolOrder => '订单';
+
+  @override
+  String get omniPoolRetry => '重试';
+
+  @override
+  String get omniPoolConnectionError => '请检查 HTTPS 地址、公钥和核对后的指纹。';
+
+  @override
+  String get omniPoolAccessError => '请在 OmniVault 检查设备登记和平台授权。';
+
+  @override
+  String get omniPoolNetworkError => '无法连接 OmniVault，请重试。';
+
+  @override
+  String get omniPoolVerificationError => 'OmniVault 数据校验失败，已保存的记录仍保留。';
+
+  @override
+  String get omniPoolBackupError => '备份校验失败，请检查文件、口令和所选平台。';
+
+  @override
+  String get omniPoolInputError => '请检查助记词，或输入 1 至 1,000 的生成数量。';
+
+  @override
+  String get omniPoolError => '地址库操作失败。请检查连接或本地存储后重试。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -3124,4 +3244,124 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get walletBalancesEmpty => '沒有可查詢的錢包。';
+
+  @override
+  String get omniPoolTitle => 'OmniVault 地址庫';
+
+  @override
+  String get omniPoolSetupHelp =>
+      '在 OmniVault「地址庫 → 庫存與裝置」登記此裝置並授權平台。透過獨立可信管道核對伺服器指紋。';
+
+  @override
+  String get omniPoolDevice => '裝置 ID';
+
+  @override
+  String get omniPoolFingerprint => 'SHA-256 指紋';
+
+  @override
+  String get omniPoolCopyPublicKey => '複製裝置公鑰';
+
+  @override
+  String get omniPoolServerKey => '伺服器公鑰（PEM）';
+
+  @override
+  String get omniPoolConnect => '連線';
+
+  @override
+  String get omniPoolConnection => '連線設定';
+
+  @override
+  String get omniPoolNoPlatforms => '此裝置尚未取得平台授權。';
+
+  @override
+  String get omniPoolRefreshPlatforms => '重新整理平台';
+
+  @override
+  String get omniPoolCreate => '建立平台助記詞';
+
+  @override
+  String get omniPoolWriteWords => '請離線保存這些助記詞，並填寫第 3 和第 18 個詞。';
+
+  @override
+  String omniPoolWord(int index) {
+    return '第 $index 個詞';
+  }
+
+  @override
+  String get omniPoolCount => '數量（1–1,000）';
+
+  @override
+  String get omniPoolGenerate => '產生地址';
+
+  @override
+  String get omniPoolUpload => '上傳';
+
+  @override
+  String get omniPoolUploaded => '已上傳';
+
+  @override
+  String get omniPoolReady => '待上傳';
+
+  @override
+  String get omniPoolBatches => '本機批次';
+
+  @override
+  String get omniPoolNeedsBackup => '需要已驗證的備份';
+
+  @override
+  String get omniPoolBackup => '建立加密備份';
+
+  @override
+  String get omniPoolRestore => '還原加密備份';
+
+  @override
+  String get omniPoolPassphrase => '備份密碼（至少 12 個字元）';
+
+  @override
+  String get omniPoolConfirmPassphrase => '確認備份密碼';
+
+  @override
+  String get omniPoolContinue => '繼續';
+
+  @override
+  String get omniPoolSync => '同步庫存與地址';
+
+  @override
+  String get omniPoolAvailable => '可用';
+
+  @override
+  String get omniPoolAllocated => '已分配';
+
+  @override
+  String get omniPoolDisabled => '已停用';
+
+  @override
+  String get omniPoolThreshold => '警示門檻';
+
+  @override
+  String get omniPoolOrder => '訂單';
+
+  @override
+  String get omniPoolRetry => '重試';
+
+  @override
+  String get omniPoolConnectionError => '請檢查 HTTPS 位址、公鑰與核對後的指紋。';
+
+  @override
+  String get omniPoolAccessError => '請在 OmniVault 檢查裝置登記與平台授權。';
+
+  @override
+  String get omniPoolNetworkError => '無法連線至 OmniVault，請重試。';
+
+  @override
+  String get omniPoolVerificationError => 'OmniVault 資料驗證失敗，已儲存的紀錄仍保留。';
+
+  @override
+  String get omniPoolBackupError => '備份驗證失敗，請檢查檔案、密碼與選定的平台。';
+
+  @override
+  String get omniPoolInputError => '請檢查助記詞，或輸入 1 至 1,000 的產生數量。';
+
+  @override
+  String get omniPoolError => '地址庫操作失敗。請檢查連線或本機儲存後重試。';
 }

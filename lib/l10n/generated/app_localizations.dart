@@ -2908,6 +2908,240 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No wallets to check.'**
   String get walletBalancesEmpty;
+
+  /// No description provided for @omniPoolTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'OmniVault address pools'**
+  String get omniPoolTitle;
+
+  /// No description provided for @omniPoolSetupHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Register this device in OmniVault under Address pools → Inventory and devices, then grant access to its platforms. Check the server fingerprint through a separate trusted channel.'**
+  String get omniPoolSetupHelp;
+
+  /// No description provided for @omniPoolDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Device ID'**
+  String get omniPoolDevice;
+
+  /// No description provided for @omniPoolFingerprint.
+  ///
+  /// In en, this message translates to:
+  /// **'SHA-256 fingerprint'**
+  String get omniPoolFingerprint;
+
+  /// No description provided for @omniPoolCopyPublicKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy device public key'**
+  String get omniPoolCopyPublicKey;
+
+  /// No description provided for @omniPoolServerKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Server public key (PEM)'**
+  String get omniPoolServerKey;
+
+  /// No description provided for @omniPoolConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get omniPoolConnect;
+
+  /// No description provided for @omniPoolConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection settings'**
+  String get omniPoolConnection;
+
+  /// No description provided for @omniPoolNoPlatforms.
+  ///
+  /// In en, this message translates to:
+  /// **'This device has no platform grants.'**
+  String get omniPoolNoPlatforms;
+
+  /// No description provided for @omniPoolRefreshPlatforms.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh platforms'**
+  String get omniPoolRefreshPlatforms;
+
+  /// No description provided for @omniPoolCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create platform recovery phrase'**
+  String get omniPoolCreate;
+
+  /// No description provided for @omniPoolWriteWords.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep these words offline and enter words 3 and 18 to continue.'**
+  String get omniPoolWriteWords;
+
+  /// No description provided for @omniPoolWord.
+  ///
+  /// In en, this message translates to:
+  /// **'Word {index}'**
+  String omniPoolWord(int index);
+
+  /// No description provided for @omniPoolCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Count (1–1,000)'**
+  String get omniPoolCount;
+
+  /// No description provided for @omniPoolGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate addresses'**
+  String get omniPoolGenerate;
+
+  /// No description provided for @omniPoolUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload'**
+  String get omniPoolUpload;
+
+  /// No description provided for @omniPoolUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded'**
+  String get omniPoolUploaded;
+
+  /// No description provided for @omniPoolReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to upload'**
+  String get omniPoolReady;
+
+  /// No description provided for @omniPoolBatches.
+  ///
+  /// In en, this message translates to:
+  /// **'Local batches'**
+  String get omniPoolBatches;
+
+  /// No description provided for @omniPoolNeedsBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified backup required'**
+  String get omniPoolNeedsBackup;
+
+  /// No description provided for @omniPoolBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Create encrypted backup'**
+  String get omniPoolBackup;
+
+  /// No description provided for @omniPoolRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore encrypted backup'**
+  String get omniPoolRestore;
+
+  /// No description provided for @omniPoolPassphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup passphrase (12+ characters)'**
+  String get omniPoolPassphrase;
+
+  /// No description provided for @omniPoolConfirmPassphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm backup passphrase'**
+  String get omniPoolConfirmPassphrase;
+
+  /// No description provided for @omniPoolContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get omniPoolContinue;
+
+  /// No description provided for @omniPoolSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync inventory and addresses'**
+  String get omniPoolSync;
+
+  /// No description provided for @omniPoolAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get omniPoolAvailable;
+
+  /// No description provided for @omniPoolAllocated.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocated'**
+  String get omniPoolAllocated;
+
+  /// No description provided for @omniPoolDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get omniPoolDisabled;
+
+  /// No description provided for @omniPoolThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert threshold'**
+  String get omniPoolThreshold;
+
+  /// No description provided for @omniPoolOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Order'**
+  String get omniPoolOrder;
+
+  /// No description provided for @omniPoolRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get omniPoolRetry;
+
+  /// No description provided for @omniPoolConnectionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the HTTPS address, public key and verified fingerprint.'**
+  String get omniPoolConnectionError;
+
+  /// No description provided for @omniPoolAccessError.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the device registration and platform grant in OmniVault.'**
+  String get omniPoolAccessError;
+
+  /// No description provided for @omniPoolNetworkError.
+  ///
+  /// In en, this message translates to:
+  /// **'OmniVault could not be reached. Try again.'**
+  String get omniPoolNetworkError;
+
+  /// No description provided for @omniPoolVerificationError.
+  ///
+  /// In en, this message translates to:
+  /// **'OmniVault data could not be verified. The saved records are intact.'**
+  String get omniPoolVerificationError;
+
+  /// No description provided for @omniPoolBackupError.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup verification failed. Check the file, passphrase and selected platform.'**
+  String get omniPoolBackupError;
+
+  /// No description provided for @omniPoolInputError.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the recovery phrase or enter a count from 1 to 1,000.'**
+  String get omniPoolInputError;
+
+  /// No description provided for @omniPoolError.
+  ///
+  /// In en, this message translates to:
+  /// **'The address pool operation failed. Check the connection or local storage and retry.'**
+  String get omniPoolError;
 }
 
 class _AppLocalizationsDelegate

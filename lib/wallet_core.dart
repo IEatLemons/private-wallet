@@ -12,9 +12,18 @@ import 'package:bip32/bip32.dart';
 import 'package:bip39/bip39.dart' as bip39;
 import 'package:bs58check/bs58check.dart' as base58;
 import 'package:crypto/crypto.dart' as hashes;
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/services.dart' show MethodChannel, PlatformException;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:pointycastle/export.dart'
+    show
+        AEADParameters,
+        AESEngine,
+        Argon2BytesGenerator,
+        Argon2Parameters,
+        GCMBlockCipher,
+        KeyParameter;
 import 'package:web3dart/web3dart.dart';
 import 'package:web3dart/crypto.dart' show bytesToHex, keccak256;
 import 'package:web3dart/crypto.dart' as ec;
@@ -23,6 +32,7 @@ import 'package:web3dart/json_rpc.dart' show RPCError;
 part 'wallet_book.dart';
 part 'mac_wallet_book.dart';
 part 'omnivault_import.dart';
+part 'platform_address_pool.dart';
 part 'tron.dart';
 part 'tokens.dart';
 part 'transfers.dart';

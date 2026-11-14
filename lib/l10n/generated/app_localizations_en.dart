@@ -1742,4 +1742,132 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walletBalancesEmpty => 'No wallets to check.';
+
+  @override
+  String get omniPoolTitle => 'OmniVault address pools';
+
+  @override
+  String get omniPoolSetupHelp =>
+      'Register this device in OmniVault under Address pools → Inventory and devices, then grant access to its platforms. Check the server fingerprint through a separate trusted channel.';
+
+  @override
+  String get omniPoolDevice => 'Device ID';
+
+  @override
+  String get omniPoolFingerprint => 'SHA-256 fingerprint';
+
+  @override
+  String get omniPoolCopyPublicKey => 'Copy device public key';
+
+  @override
+  String get omniPoolServerKey => 'Server public key (PEM)';
+
+  @override
+  String get omniPoolConnect => 'Connect';
+
+  @override
+  String get omniPoolConnection => 'Connection settings';
+
+  @override
+  String get omniPoolNoPlatforms => 'This device has no platform grants.';
+
+  @override
+  String get omniPoolRefreshPlatforms => 'Refresh platforms';
+
+  @override
+  String get omniPoolCreate => 'Create platform recovery phrase';
+
+  @override
+  String get omniPoolWriteWords =>
+      'Keep these words offline and enter words 3 and 18 to continue.';
+
+  @override
+  String omniPoolWord(int index) {
+    return 'Word $index';
+  }
+
+  @override
+  String get omniPoolCount => 'Count (1–1,000)';
+
+  @override
+  String get omniPoolGenerate => 'Generate addresses';
+
+  @override
+  String get omniPoolUpload => 'Upload';
+
+  @override
+  String get omniPoolUploaded => 'Uploaded';
+
+  @override
+  String get omniPoolReady => 'Ready to upload';
+
+  @override
+  String get omniPoolBatches => 'Local batches';
+
+  @override
+  String get omniPoolNeedsBackup => 'Verified backup required';
+
+  @override
+  String get omniPoolBackup => 'Create encrypted backup';
+
+  @override
+  String get omniPoolRestore => 'Restore encrypted backup';
+
+  @override
+  String get omniPoolPassphrase => 'Backup passphrase (12+ characters)';
+
+  @override
+  String get omniPoolConfirmPassphrase => 'Confirm backup passphrase';
+
+  @override
+  String get omniPoolContinue => 'Continue';
+
+  @override
+  String get omniPoolSync => 'Sync inventory and addresses';
+
+  @override
+  String get omniPoolAvailable => 'Available';
+
+  @override
+  String get omniPoolAllocated => 'Allocated';
+
+  @override
+  String get omniPoolDisabled => 'Disabled';
+
+  @override
+  String get omniPoolThreshold => 'Alert threshold';
+
+  @override
+  String get omniPoolOrder => 'Order';
+
+  @override
+  String get omniPoolRetry => 'Retry';
+
+  @override
+  String get omniPoolConnectionError =>
+      'Check the HTTPS address, public key and verified fingerprint.';
+
+  @override
+  String get omniPoolAccessError =>
+      'Check the device registration and platform grant in OmniVault.';
+
+  @override
+  String get omniPoolNetworkError =>
+      'OmniVault could not be reached. Try again.';
+
+  @override
+  String get omniPoolVerificationError =>
+      'OmniVault data could not be verified. The saved records are intact.';
+
+  @override
+  String get omniPoolBackupError =>
+      'Backup verification failed. Check the file, passphrase and selected platform.';
+
+  @override
+  String get omniPoolInputError =>
+      'Check the recovery phrase or enter a count from 1 to 1,000.';
+
+  @override
+  String get omniPoolError =>
+      'The address pool operation failed. Check the connection or local storage and retry.';
 }

@@ -825,5 +825,51 @@
   },
   "@walletBalancesIncompleteCount": {
     "placeholders": {"count": {"type": "int"}}
+  },
+  "omniPoolTitle": "OmniVault 地址庫",
+  "omniPoolSetupHelp": "在 OmniVault「地址庫 → 庫存與裝置」登記此裝置並授權平台。透過獨立可信管道核對伺服器指紋。",
+  "omniPoolDevice": "裝置 ID",
+  "omniPoolFingerprint": "SHA-256 指紋",
+  "omniPoolCopyPublicKey": "複製裝置公鑰",
+  "omniPoolServerKey": "伺服器公鑰（PEM）",
+  "omniPoolConnect": "連線",
+  "omniPoolConnection": "連線設定",
+  "omniPoolNoPlatforms": "此裝置尚未取得平台授權。",
+  "omniPoolRefreshPlatforms": "重新整理平台",
+  "omniPoolCreate": "建立平台助記詞",
+  "omniPoolWriteWords": "請離線保存這些助記詞，並填寫第 3 和第 18 個詞。",
+  "omniPoolWord": "第 {index} 個詞",
+  "omniPoolCount": "數量（1–1,000）",
+  "omniPoolGenerate": "產生地址",
+  "omniPoolUpload": "上傳",
+  "omniPoolUploaded": "已上傳",
+  "omniPoolReady": "待上傳",
+  "omniPoolBatches": "本機批次",
+  "omniPoolNeedsBackup": "需要已驗證的備份",
+  "omniPoolBackup": "建立加密備份",
+  "omniPoolRestore": "還原加密備份",
+  "omniPoolPassphrase": "備份密碼（至少 12 個字元）",
+  "omniPoolConfirmPassphrase": "確認備份密碼",
+  "omniPoolContinue": "繼續",
+  "omniPoolSync": "同步庫存與地址",
+  "omniPoolAvailable": "可用",
+  "omniPoolAllocated": "已分配",
+  "omniPoolDisabled": "已停用",
+  "omniPoolThreshold": "警示門檻",
+  "omniPoolOrder": "訂單",
+  "omniPoolRetry": "重試",
+  "omniPoolConnectionError": "請檢查 HTTPS 位址、公鑰與核對後的指紋。",
+  "omniPoolAccessError": "請在 OmniVault 檢查裝置登記與平台授權。",
+  "omniPoolNetworkError": "無法連線至 OmniVault，請重試。",
+  "omniPoolVerificationError": "OmniVault 資料驗證失敗，已儲存的紀錄仍保留。",
+  "omniPoolBackupError": "備份驗證失敗，請檢查檔案、密碼與選定的平台。",
+  "omniPoolInputError": "請檢查助記詞，或輸入 1 至 1,000 的產生數量。",
+  "omniPoolError": "地址庫操作失敗。請檢查連線或本機儲存後重試。",
+  "@omniPoolWord": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
   }
 }

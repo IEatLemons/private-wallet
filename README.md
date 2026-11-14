@@ -357,6 +357,19 @@ duplicate imports stay in the form for correction. Existing mnemonic and importe
 accounts remain available in the wallet picker as **主钱包** and **私钥账户**.
 Single and batch imports share the same storage, including existing batch data.
 
+### macOS 上管理 OmniVault 平台地址库
+
+从欢迎页或「设置 → 钱包 → OmniVault 地址库」进入。在 OmniVault 的
+「地址库 → 库存与设备」登记设备公钥和指纹，选择「平台专属地址库」并授权平台。
+钱包填写 HTTPS 服务地址、服务器通信公钥和独立核对的 SHA‑256 指纹。
+
+选择平台后创建或导入 BIP‑39 助记词，按 BSC 或 TRON 生成 1–1,000 个地址。
+先保存并验证 `.akpool` 加密备份，再上传批次。同步可查看库存、阈值和已分配地址。
+新地址库使用 `m/44'/60'/2'/0/i`（BSC）和 `m/44'/195'/2'/0/i`（TRON）。
+助记词保存在本机 SQLCipher 钱包簿，线上只接收公开地址。导入助记词用于新建
+地址库；已有批次和索引用 `.akpool` 恢复。换机时重新登记设备，恢复后的历史
+地址仍使用原助记词，新增地址从新助记词派生。
+
 ### macOS 上导入 OmniVault 私钥
 
 在欢迎页或「设置 → 钱包 → 导入钱包」中选择「批量导入私钥表格」，打开
