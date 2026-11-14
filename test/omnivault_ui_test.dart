@@ -50,6 +50,78 @@ Future<void> _pumpUntil(WidgetTester tester, Finder finder) async {
 }
 
 void main() {
+  for (final width in [1200.0, 640.0]) {
+    testWidgets('macOS address pools open directly at width $width', (
+      tester,
+    ) async {
+      const key =
+          '0000000000000000000000000000000000000000000000000000000000000001';
+      final messenger = tester.binding.defaultBinaryMessenger;
+      var deviceCalls = 0;
+      messenger.setMockMethodCallHandler(_database, (call) async {
+        switch (call.method) {
+          case 'needsMigration':
+            return false;
+          case 'initialNetwork':
+            return null;
+          case 'summary':
+            return {
+              'groups_count': 1,
+              'accounts_count': 1,
+              'active_id': 'test:0',
+              'selected': {
+                'id': 'test:0',
+                'group_id': 'test',
+                'group_name': 'Fixture',
+                'group_count': 1,
+                'kind': 'privateKey',
+                'network_id': 56,
+                'name': 'Account 1',
+                'account_index': 0,
+                'evm': _address,
+                'tron': 'TMVQGm1qAQYVdetCeGRRkTWYYrLXuHK2HC',
+                'secret': key,
+              },
+            };
+          case 'pool.device':
+            deviceCalls++;
+            return Uint8List.fromList([1, 2, 3]);
+          default:
+            throw StateError(call.method);
+        }
+      });
+      addTearDown(() => messenger.setMockMethodCallHandler(_database, null));
+      final vault = WalletVault(
+        store: MapSecretStore({}),
+        useMacWalletDatabase: true,
+      );
+      await start(tester, vault, RpcFixture(), size: Size(width, 800));
+      final navigationKey = width >= 760
+          ? 'wallet-nav-addressPool'
+          : 'open-address-pool';
+      expect(deviceCalls, 0);
+      await tester.tap(find.byKey(ValueKey(navigationKey)));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const PageStorageKey('omni-pool-page')),
+        findsOneWidget,
+      );
+      expect(find.byType(Dialog), findsNothing);
+      expect(find.text('HTTPS URL'), findsOneWidget);
+      expect(deviceCalls, 1);
+      if (width >= 760) {
+        await tester.tap(find.byKey(const ValueKey('wallet-nav-assets')));
+      } else {
+        await tester.tap(find.byType(BackButton));
+      }
+      await tester.pumpAndSettle();
+      expect(find.byKey(const PageStorageKey('omni-pool-page')), findsNothing);
+      await tester.tap(find.byKey(ValueKey(navigationKey)));
+      await tester.pumpAndSettle();
+      expect(deviceCalls, 1);
+    });
+  }
+
   testWidgets(
     'OmniVault file import previews before confirmation and displays aliases',
     (tester) async {

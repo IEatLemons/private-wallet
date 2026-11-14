@@ -304,6 +304,7 @@ class _WalletShellState extends State<WalletShell> {
   final assetScroll = ScrollController();
   final _settingsHub = GlobalKey<_SettingsHubState>();
   SettingsDestination? _settingsDestination;
+  bool _addressPoolOpen = false;
   void _updateView(VoidCallback fn) {
     setState(fn);
     viewRevision.value++;
@@ -1054,20 +1055,22 @@ class _WalletShellState extends State<WalletShell> {
   }
 
   void _goToAssets() {
-    if (_settingsDestination == null) return;
+    if (_settingsDestination == null && !_addressPoolOpen) return;
     FocusManager.instance.primaryFocus?.unfocus();
-    setState(() => _settingsDestination = null);
+    setState(() {
+      _settingsDestination = null;
+      _addressPoolOpen = false;
+    });
     unawaited(refreshQuotes());
   }
 
   void _openOmniPools() {
-    unawaited(
-      showWalletPanel<void>(
-        context: context,
-        width: 840,
-        builder: (_) => _OmniPoolPanel(OmniAddressPools(vault)),
-      ),
-    );
+    if (!vault.supportsOmniVaultImport || _addressPoolOpen) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _settingsDestination = null;
+      _addressPoolOpen = true;
+    });
   }
 
   void _openSettings({
@@ -1075,7 +1078,10 @@ class _WalletShellState extends State<WalletShell> {
   }) {
     if (_settingsDestination != null) return;
     FocusManager.instance.primaryFocus?.unfocus();
-    setState(() => _settingsDestination = initial);
+    setState(() {
+      _addressPoolOpen = false;
+      _settingsDestination = initial;
+    });
   }
 
   Future<void> _showAssetDetails(AssetRow asset) async {
@@ -1371,6 +1377,19 @@ class _WalletShellState extends State<WalletShell> {
         body: Center(child: CircularProgressIndicator(color: theme.primary)),
       );
     }
+    if (account == null && _addressPoolOpen) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _goToAssets();
+        },
+        child: Scaffold(
+          body: SafeArea(
+            child: _OmniPoolPage(vault: vault, onBack: _goToAssets),
+          ),
+        ),
+      );
+    }
     if (account == null) {
       return Scaffold(
         body: SafeArea(
@@ -1392,10 +1411,20 @@ class _WalletShellState extends State<WalletShell> {
     }
     final layout = WalletLayout.of(context);
     final settings = _settingsDestination;
+    final page = _addressPoolOpen
+        ? WalletPage.addressPool
+        : settings == null
+        ? WalletPage.assets
+        : WalletPage.settings;
     return PopScope(
-      canPop: settings == null,
+      canPop: page == WalletPage.assets,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _settingsHub.currentState?.back();
+        if (didPop) return;
+        if (_addressPoolOpen) {
+          _goToAssets();
+        } else {
+          _settingsHub.currentState?.back();
+        }
       },
       child: Scaffold(
         body: SafeArea(
@@ -1405,14 +1434,16 @@ class _WalletShellState extends State<WalletShell> {
               if (!layout.mobile)
                 WalletRail(
                   theme: theme,
-                  selected: settings == null
-                      ? WalletPage.assets
-                      : WalletPage.settings,
+                  selected: page,
+                  supportsAddressPool: vault.supportsOmniVaultImport,
                   onSelect: (page) {
-                    if (page == WalletPage.settings) {
-                      _openSettings();
-                    } else {
-                      _goToAssets();
+                    switch (page) {
+                      case WalletPage.assets:
+                        _goToAssets();
+                      case WalletPage.addressPool:
+                        _openOmniPools();
+                      case WalletPage.settings:
+                        _openSettings();
                     }
                   },
                 )
@@ -1420,13 +1451,21 @@ class _WalletShellState extends State<WalletShell> {
                 const SizedBox.shrink(),
               Expanded(
                 child: IndexedStack(
-                  index: settings == null ? 0 : 1,
+                  index: page.index,
                   sizing: StackFit.expand,
                   children: [
                     ExcludeFocus(
-                      excluding: settings != null,
+                      excluding: page != WalletPage.assets,
                       child: _buildAssets(layout),
                     ),
+                    if (vault.supportsOmniVaultImport)
+                      _OmniPoolPage(
+                        vault: vault,
+                        active: _addressPoolOpen,
+                        onBack: layout.mobile ? _goToAssets : null,
+                      )
+                    else
+                      const SizedBox.shrink(),
                     if (settings != null)
                       _SettingsHub(
                         key: _settingsHub,
@@ -1462,6 +1501,9 @@ class _WalletShellState extends State<WalletShell> {
                 theme: theme,
                 walletName: walletName,
                 address: account!.addressFor(selectedNetwork),
+                onAddressPool: layout.mobile && vault.supportsOmniVaultImport
+                    ? _openOmniPools
+                    : null,
                 linkedAddresses: [
                   account!.checksumAddress,
                   account!.tronAddress,

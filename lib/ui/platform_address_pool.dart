@@ -1,15 +1,18 @@
 part of '../main.dart';
 
-class _OmniPoolPanel extends StatefulWidget {
-  const _OmniPoolPanel(this.pools);
-  final OmniAddressPools pools;
+class _OmniPoolPage extends StatefulWidget {
+  const _OmniPoolPage({required this.vault, this.active = true, this.onBack});
+  final WalletVault vault;
+  final bool active;
+  final VoidCallback? onBack;
 
   @override
-  State<_OmniPoolPanel> createState() => _OmniPoolPanelState();
+  State<_OmniPoolPage> createState() => _OmniPoolPageState();
 }
 
-class _OmniPoolPanelState extends State<_OmniPoolPanel> {
-  OmniAddressPools get pools => widget.pools;
+class _OmniPoolPageState extends State<_OmniPoolPage> {
+  late final pools = OmniAddressPools(widget.vault);
+  bool started = false;
   AppLocalizations get strings => AppLocalizations.of(context);
   OmniPoolConnection? connection;
   OmniPoolDevice? device;
@@ -17,8 +20,13 @@ class _OmniPoolPanelState extends State<_OmniPoolPanel> {
   List<Map<String, Object?>> batches = [];
   Map<String, Object?> snapshot = {};
   String? platform;
-  String chain = 'bsc';
+  String chain = '';
+  String generationChain = 'bsc';
   String filter = '';
+  String search = '';
+  bool showBatches = false;
+  int batchPage = 0;
+  final addressSearch = TextEditingController();
   int page = 0;
   bool hasSeed = false;
   bool busy = false;
@@ -32,14 +40,26 @@ class _OmniPoolPanelState extends State<_OmniPoolPanel> {
   @override
   void initState() {
     super.initState();
+    startWhenVisible();
+  }
+
+  @override
+  void didUpdateWidget(covariant _OmniPoolPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    startWhenVisible();
+  }
+
+  void startWhenVisible() {
+    if (!widget.active || started) return;
+    started = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) run(load);
+      if (mounted) unawaited(run(load));
     });
   }
 
   @override
   void dispose() {
-    for (final field in [url, key, fingerprint, count]) {
+    for (final field in [url, key, fingerprint, count, addressSearch]) {
       field.dispose();
     }
     super.dispose();
@@ -81,9 +101,34 @@ class _OmniPoolPanelState extends State<_OmniPoolPanel> {
     if (!mounted) return;
     platforms = result;
     if (!platforms.any((row) => row['code'] == platform)) {
-      platform = platforms.firstOrNull?['code'] as String?;
+      selectPlatform(platforms.firstOrNull?['code'] as String?);
     }
     await readLocal();
+    await syncIfNeeded();
+  }
+
+  void selectPlatform(String? value) {
+    platform = value;
+    hasSeed = false;
+    batches = [];
+    snapshot = {};
+    search = '';
+    addressSearch.clear();
+    page = 0;
+    batchPage = 0;
+    showBatches = false;
+  }
+
+  Future<void> syncIfNeeded() async {
+    final c = connection, p = platform;
+    if (!mounted || c == null || p == null || snapshot.isNotEmpty) return;
+    await sync(c, p);
+  }
+
+  Future<void> sync(OmniPoolConnection c, String p) async {
+    await pools.sync(c, p);
+    await readLocal();
+    page = 0;
   }
 
   Future<void> readLocal() async {
@@ -111,7 +156,7 @@ class _OmniPoolPanelState extends State<_OmniPoolPanel> {
     if (!mounted) return;
     connection = next;
     setup = false;
-    platform = null;
+    selectPlatform(null);
     await loadPlatforms(next);
   });
 
@@ -227,51 +272,80 @@ class _OmniPoolPanelState extends State<_OmniPoolPanel> {
 
   Widget platformView() {
     final c = connection, p = platform;
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Wrap(
-          spacing: 12,
+          spacing: 8,
           runSpacing: 8,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             if (platforms.isNotEmpty)
-              DropdownButton<String>(
-                value: platform,
-                items: [
-                  for (final item in platforms)
-                    DropdownMenuItem(
-                      value: item['code'] as String,
-                      child: Text("${item['name']} · ${item['code']}"),
-                    ),
-                ],
-                onChanged: busy
-                    ? null
-                    : (value) => run(() async {
-                        platform = value;
-                        hasSeed = false;
-                        batches = [];
-                        snapshot = {};
-                        page = 0;
-                        await readLocal();
-                      }),
+              SizedBox(
+                width: 280,
+                child: DropdownButtonFormField<String>(
+                  key: ValueKey(('omni-platform', platform)),
+                  initialValue: platform,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: strings.omniPoolPlatform,
+                  ),
+                  items: [
+                    for (final item in platforms)
+                      DropdownMenuItem(
+                        value: item['code'] as String,
+                        child: Text(
+                          "${item['name']} · ${item['code']}",
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  onChanged: busy
+                      ? null
+                      : (value) => run(() async {
+                          if (value == platform) return;
+                          selectPlatform(value);
+                          await readLocal();
+                          await syncIfNeeded();
+                        }),
+                ),
               )
             else
               Text(strings.omniPoolNoPlatforms),
-            OutlinedButton(
-              onPressed: busy || c == null
-                  ? null
-                  : () => run(() => loadPlatforms(c)),
-              child: Text(strings.omniPoolRefreshPlatforms),
-            ),
-            TextButton(
-              onPressed: busy ? null : () => setState(() => setup = true),
-              child: Text(strings.omniPoolConnection),
-            ),
+            if (c != null && p != null)
+              OutlinedButton.icon(
+                onPressed: busy ? null : () => run(() => sync(c, p)),
+                icon: const Icon(Icons.sync),
+                label: Text(strings.omniPoolSync),
+              ),
+            if (c != null)
+              PopupMenuButton<String>(
+                tooltip: MaterialLocalizations.of(context).showMenuTooltip,
+                enabled: !busy,
+                onSelected: (action) {
+                  if (action == 'connect') {
+                    setState(() => setup = true);
+                  } else {
+                    unawaited(run(() => loadPlatforms(c)));
+                  }
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: 'refresh',
+                    child: Text(strings.omniPoolRefreshPlatforms),
+                  ),
+                  PopupMenuItem(
+                    value: 'connect',
+                    child: Text(strings.omniPoolConnection),
+                  ),
+                ],
+              ),
           ],
         ),
         if (c != null && p != null) ...[
-          const SizedBox(height: 12),
+          ...inventorySummary(),
+          const SizedBox(height: 20),
           if (!hasSeed)
             Wrap(
               spacing: 8,
@@ -291,27 +365,31 @@ class _OmniPoolPanelState extends State<_OmniPoolPanel> {
                 ),
               ],
             )
-          else ...[
+          else
             Wrap(
               spacing: 8,
               runSpacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                DropdownButton<String>(
-                  value: chain,
-                  items: const [
-                    DropdownMenuItem(value: 'bsc', child: Text('BSC')),
-                    DropdownMenuItem(value: 'tron', child: Text('TRON')),
-                  ],
-                  onChanged: busy
-                      ? null
-                      : (value) => setState(() {
-                          chain = value!;
-                          page = 0;
-                        }),
+                SizedBox(
+                  width: 120,
+                  child: DropdownButtonFormField<String>(
+                    key: ValueKey(('omni-batch-chain', generationChain)),
+                    initialValue: generationChain,
+                    decoration: InputDecoration(
+                      labelText: strings.omniPoolChain,
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'bsc', child: Text('BSC')),
+                      DropdownMenuItem(value: 'tron', child: Text('TRON')),
+                    ],
+                    onChanged: busy
+                        ? null
+                        : (value) => setState(() => generationChain = value!),
+                  ),
                 ),
                 SizedBox(
-                  width: 116,
+                  width: 132,
                   child: TextField(
                     controller: count,
                     enabled: !busy,
@@ -329,9 +407,11 @@ class _OmniPoolPanelState extends State<_OmniPoolPanel> {
                           await pools.generate(
                             c,
                             p,
-                            chain,
+                            generationChain,
                             int.tryParse(count.text) ?? 0,
                           );
+                          showBatches = true;
+                          batchPage = 0;
                           await readLocal();
                         }),
                   child: Text(strings.omniPoolGenerate),
@@ -342,80 +422,150 @@ class _OmniPoolPanelState extends State<_OmniPoolPanel> {
                 ),
               ],
             ),
-            if (batches.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              ExpansionTile(
-                tilePadding: EdgeInsets.zero,
-                title: Text(strings.omniPoolBatches),
-                initiallyExpanded: true,
-                children: [
-                  for (final item in batches)
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        "${item['chain'].toString().toUpperCase()} · ${(item['id'] as String).substring(0, 12)}",
-                      ),
-                      subtitle: Text(
-                        item['uploaded'] == 1
-                            ? strings.omniPoolUploaded
-                            : item['backed_up'] == 1
-                            ? strings.omniPoolReady
-                            : strings.omniPoolNeedsBackup,
-                      ),
-                      trailing: item['uploaded'] == 1
-                          ? null
-                          : TextButton(
-                              onPressed: busy || item['backed_up'] != 1
-                                  ? null
-                                  : () => run(() async {
-                                      await pools.upload(
-                                        c,
-                                        p,
-                                        item['id'] as String,
-                                      );
-                                      await readLocal();
-                                      await pools.sync(c, p);
-                                      await readLocal();
-                                    }),
-                              child: Text(strings.omniPoolUpload),
-                            ),
-                    ),
-                ],
-              ),
-            ],
-          ],
-          const Divider(),
+          const SizedBox(height: 20),
           Align(
             alignment: AlignmentDirectional.centerStart,
-            child: OutlinedButton.icon(
-              onPressed: busy
-                  ? null
-                  : () => run(() async {
-                      await pools.sync(c, p);
-                      await readLocal();
-                      page = 0;
-                    }),
-              icon: const Icon(Icons.sync),
-              label: Text(strings.omniPoolSync),
+            child: SegmentedButton<bool>(
+              showSelectedIcon: false,
+              segments: [
+                ButtonSegment(
+                  value: false,
+                  icon: const Icon(Icons.list_alt_outlined),
+                  label: Text(strings.omniPoolAddresses),
+                ),
+                ButtonSegment(
+                  value: true,
+                  icon: const Icon(Icons.layers_outlined),
+                  label: Text(strings.omniPoolBatches),
+                ),
+              ],
+              selected: {showBatches},
+              onSelectionChanged: (value) =>
+                  setState(() => showBatches = value.single),
             ),
           ),
-          ...inventory(),
-        ],
+          const SizedBox(height: 12),
+          if (showBatches) ...batchList(c, p) else ...inventory(),
+        ] else if (!busy)
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Text(
+              strings.omniPoolSetupHelp,
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
       ],
     );
   }
 
+  List<Widget> inventorySummary() {
+    final rows = (snapshot['inventory'] as List?)?.cast<Map>() ?? [];
+    final theme = Theme.of(context);
+    return [
+      const SizedBox(height: 16),
+      for (final chain in ['bsc', 'tron'])
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Builder(
+            builder: (_) {
+              final item = rows
+                  .where((row) => row['chain'] == chain)
+                  .firstOrNull;
+              final low =
+                  item != null &&
+                  (item['available'] as int) < (item['threshold'] as int);
+              return Text(
+                "${chain.toUpperCase()} · ${strings.omniPoolAvailable} ${item?['available'] ?? '—'} · ${strings.omniPoolAllocated} ${item?['allocated'] ?? '—'} · ${strings.omniPoolThreshold} ${item?['threshold'] ?? '—'}",
+                style: low
+                    ? TextStyle(color: theme.colorScheme.error)
+                    : theme.textTheme.bodyMedium,
+              );
+            },
+          ),
+        ),
+    ];
+  }
+
+  List<Widget> batchList(OmniPoolConnection c, String p) {
+    if (batches.isEmpty) return [Text(strings.omniNoRows)];
+    const perPage = 20;
+    return [
+      pagination(
+        batchPage,
+        batches.length,
+        perPage,
+        (next) => batchPage = next,
+      ),
+      for (final item in batches.skip(batchPage * perPage).take(perPage))
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            "${item['chain'].toString().toUpperCase()} · ${(item['id'] as String).substring(0, 12)}",
+          ),
+          subtitle: Text(
+            item['uploaded'] == 1
+                ? strings.omniPoolUploaded
+                : item['backed_up'] == 1
+                ? strings.omniPoolReady
+                : strings.omniPoolNeedsBackup,
+          ),
+          trailing: item['uploaded'] == 1
+              ? null
+              : TextButton(
+                  onPressed: busy || item['backed_up'] != 1
+                      ? null
+                      : () => run(() async {
+                          await pools.upload(c, p, item['id'] as String);
+                          await readLocal();
+                          await sync(c, p);
+                        }),
+                  child: Text(strings.omniPoolUpload),
+                ),
+        ),
+    ];
+  }
+
+  Widget pagination(
+    int current,
+    int length,
+    int pageSize,
+    ValueChanged<int> change,
+  ) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Text('$length'),
+      IconButton(
+        tooltip: strings.omniPreviousPage,
+        onPressed: current == 0
+            ? null
+            : () => setState(() => change(current - 1)),
+        icon: const Icon(Icons.navigate_before),
+      ),
+      IconButton(
+        tooltip: strings.omniNextPage,
+        onPressed: (current + 1) * pageSize >= length
+            ? null
+            : () => setState(() => change(current + 1)),
+        icon: const Icon(Icons.navigate_next),
+      ),
+    ],
+  );
+
   List<Widget> inventory() {
     const pageSize = 40;
-    final items = (snapshot['inventory'] as List?)?.cast<Map>() ?? [];
     final addresses = ((snapshot['addresses'] as List?)?.cast<Map>() ?? [])
         .where(
           (row) =>
-              row['chain'] == chain &&
-              (filter.isEmpty || row['state'] == filter),
+              (chain.isEmpty || row['chain'] == chain) &&
+              (filter.isEmpty || row['state'] == filter) &&
+              (search.isEmpty ||
+                  ['address', 'owner'].any(
+                    (field) => (row[field] as String? ?? '')
+                        .toLowerCase()
+                        .contains(search),
+                  )),
         )
         .toList();
-    if (items.isEmpty) return [];
     String stateLabel(String state) => switch (state) {
       'available' => strings.omniPoolAvailable,
       'allocated' => strings.omniPoolAllocated,
@@ -423,21 +573,28 @@ class _OmniPoolPanelState extends State<_OmniPoolPanel> {
       _ => strings.omniAllRows,
     };
     return [
-      const SizedBox(height: 8),
-      for (final item in items)
-        Text(
-          "${item['chain'].toString().toUpperCase()} · ${strings.omniPoolAvailable} ${item['available']} · ${strings.omniPoolAllocated} ${item['allocated']} · ${strings.omniPoolThreshold} ${item['threshold']}",
-          style: (item['available'] as int) < (item['threshold'] as int)
-              ? TextStyle(color: Theme.of(context).colorScheme.error)
-              : null,
+      TextField(
+        controller: addressSearch,
+        onChanged: (value) => setState(() {
+          search = value.trim().toLowerCase();
+          page = 0;
+        }),
+        decoration: InputDecoration(
+          prefixIcon: const Icon(Icons.search),
+          hintText: strings.omniPoolSearchAddress,
         ),
+      ),
       Wrap(
         spacing: 12,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           DropdownButton<String>(
             value: chain,
-            items: const [
+            items: [
+              DropdownMenuItem(
+                value: '',
+                child: Text(strings.omniPoolAllChains),
+              ),
               DropdownMenuItem(value: 'bsc', child: Text('BSC')),
               DropdownMenuItem(value: 'tron', child: Text('TRON')),
             ],
@@ -464,27 +621,17 @@ class _OmniPoolPanelState extends State<_OmniPoolPanel> {
                     filter = value!;
                   }),
           ),
-          Text('${addresses.length}'),
-          IconButton(
-            tooltip: strings.omniPreviousPage,
-            onPressed: page == 0 ? null : () => setState(() => page--),
-            icon: const Icon(Icons.navigate_before),
-          ),
-          IconButton(
-            tooltip: strings.omniNextPage,
-            onPressed: (page + 1) * pageSize >= addresses.length
-                ? null
-                : () => setState(() => page++),
-            icon: const Icon(Icons.navigate_next),
-          ),
+          pagination(page, addresses.length, pageSize, (next) => page = next),
         ],
       ),
+      if (addresses.isEmpty) Text(strings.omniNoRows),
       for (final row in addresses.skip(page * pageSize).take(pageSize))
         ListTile(
           contentPadding: EdgeInsets.zero,
           title: SelectableText(row['address'] as String),
           subtitle: Text(
             [
+              (row['chain'] as String).toUpperCase(),
               stateLabel(row['state'] as String),
               if ((row['owner'] as String? ?? '').isNotEmpty)
                 "${row['kind'] == 'collection_order' || (row['owner'] as String).startsWith('payment_order:') ? strings.omniPoolOrder : 'UID'} · ${row['owner']}",
@@ -495,49 +642,58 @@ class _OmniPoolPanelState extends State<_OmniPoolPanel> {
   }
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 630,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ListTile(
-          title: Text(
-            strings.omniPoolTitle,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          trailing: IconButton(
-            tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.close),
-          ),
-        ),
-        if (busy) const LinearProgressIndicator(minHeight: 2),
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-            children: [
-              if (error case final failure?) ...[
-                Text(
-                  errorText(failure),
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+  Widget build(BuildContext context) {
+    final gutter = WalletLayout.of(context).gutter;
+    return ExcludeFocus(
+      excluding: !widget.active,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(gutter, gutter, gutter, 8),
+            child: Row(
+              children: [
+                if (widget.onBack != null) BackButton(onPressed: widget.onBack),
+                Flexible(
+                  child: Text(
+                    strings.omniPoolTitle,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
                 ),
-                const SizedBox(height: 12),
               ],
-              if (device == null)
-                OutlinedButton(
-                  onPressed: busy ? null : () => run(load),
-                  child: Text(strings.omniPoolRetry),
-                )
-              else if (setup)
-                connectionForm()
-              else
-                platformView(),
-            ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+          if (busy) const LinearProgressIndicator(minHeight: 2),
+          Expanded(
+            child: ListView(
+              key: const PageStorageKey('omni-pool-page'),
+              padding: EdgeInsets.fromLTRB(gutter, 12, gutter, gutter),
+              children: [
+                if (error case final failure?) ...[
+                  Text(
+                    errorText(failure),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                if (device == null)
+                  OutlinedButton(
+                    onPressed: busy ? null : () => run(load),
+                    child: Text(strings.omniPoolRetry),
+                  )
+                else if (setup)
+                  connectionForm()
+                else
+                  platformView(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _OmniPoolSecretDialog extends StatefulWidget {

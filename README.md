@@ -359,7 +359,7 @@ Single and batch imports share the same storage, including existing batch data.
 
 ### macOS 上管理 OmniVault 平台地址库
 
-从欢迎页或「设置 → 钱包 → OmniVault 地址库」进入。在 OmniVault 的
+从 macOS 主导航的「OmniVault 地址库」进入，窄窗口可用资产页右上角的地址库图标。欢迎页也提供直接入口。在 OmniVault 的
 「地址库 → 库存与设备」登记设备公钥和指纹，选择「平台专属地址库」并授权平台。
 钱包填写 HTTPS 服务地址、服务器通信公钥和独立核对的 SHA‑256 指纹。
 
@@ -481,8 +481,7 @@ flutter test test/responsive_layout_test.dart \
 ```
 
 Previews are saved under `build/layout-previews/` using synthetic test wallet data.
-The macOS sandbox permits outbound RPC connections and read-only access to files
-explicitly selected by the user.
+The macOS sandbox permits outbound RPC connections and access to user-selected files for imports and encrypted backup export.
 
 macOS standalone builds use the local login Keychain through
 `MacOsOptions(usesDataProtectionKeychain: false)`. This supports local ad-hoc

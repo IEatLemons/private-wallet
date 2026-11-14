@@ -5,10 +5,12 @@ class WalletRail extends StatelessWidget {
     required this.theme,
     required this.selected,
     required this.onSelect,
+    this.supportsAddressPool = false,
     super.key,
   });
   final WalletTheme theme;
   final WalletPage selected;
+  final bool supportsAddressPool;
   final ValueChanged<WalletPage> onSelect;
 
   @override
@@ -53,25 +55,31 @@ class WalletRail extends StatelessWidget {
               tr(context, MessageCode.msgAssets),
               WalletPage.assets,
             ),
+            if (supportsAddressPool)
+              (
+                Icons.inventory_2_outlined,
+                AppLocalizations.of(context).omniPoolTitle,
+                WalletPage.addressPool,
+              ),
             (
               Icons.settings_outlined,
               tr(context, MessageCode.msgSettings),
               WalletPage.settings,
             ),
-          ].asMap().entries)
+          ])
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Tooltip(
-                message: item.value.$2,
+                message: item.$2,
                 child: Material(
-                  color: selected == item.value.$3
+                  color: selected == item.$3
                       ? theme.surfaceStrong
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
                   child: InkWell(
-                    key: ValueKey('wallet-nav-${item.value.$3.name}'),
+                    key: ValueKey('wallet-nav-${item.$3.name}'),
                     borderRadius: BorderRadius.circular(10),
-                    onTap: () => onSelect(item.value.$3),
+                    onTap: () => onSelect(item.$3),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                         vertical: 14,
@@ -83,9 +91,9 @@ class WalletRail extends StatelessWidget {
                             : MainAxisAlignment.center,
                         children: [
                           Icon(
-                            item.value.$1,
+                            item.$1,
                             size: 20,
-                            color: selected == item.value.$3
+                            color: selected == item.$3
                                 ? theme.primary
                                 : theme.muted,
                           ),
@@ -93,11 +101,11 @@ class WalletRail extends StatelessWidget {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                localized(context, item.value.$2),
+                                item.$2,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,
-                                  color: selected == item.value.$3
+                                  color: selected == item.$3
                                       ? theme.primary
                                       : theme.muted,
                                 ),
@@ -155,12 +163,13 @@ class WalletHeader extends StatelessWidget {
     required this.networkLabel,
     this.linkedAddresses,
     this.onNetworkTap,
+    this.onAddressPool,
     super.key,
   });
   final WalletTheme theme;
   final String walletName, address, pageTitle, networkLabel;
   final VoidCallback onWalletTap, onSettings;
-  final VoidCallback? onNetworkTap;
+  final VoidCallback? onNetworkTap, onAddressPool;
   final List<String>? linkedAddresses;
 
   @override
@@ -230,6 +239,13 @@ class WalletHeader extends StatelessWidget {
               Expanded(
                 child: Align(alignment: Alignment.centerLeft, child: wallet),
               ),
+              if (onAddressPool != null)
+                IconButton(
+                  key: const ValueKey('open-address-pool'),
+                  tooltip: AppLocalizations.of(context).omniPoolTitle,
+                  onPressed: onAddressPool,
+                  icon: Icon(Icons.inventory_2_outlined, color: theme.muted),
+                ),
               IconButton(
                 key: const ValueKey('open-settings'),
                 tooltip: tr(context, MessageCode.msgSettings),

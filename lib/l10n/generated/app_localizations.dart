@@ -3142,6 +3142,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The address pool operation failed. Check the connection or local storage and retry.'**
   String get omniPoolError;
+
+  /// No description provided for @omniPoolPlatform.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform'**
+  String get omniPoolPlatform;
+
+  /// No description provided for @omniPoolChain.
+  ///
+  /// In en, this message translates to:
+  /// **'Chain'**
+  String get omniPoolChain;
+
+  /// No description provided for @omniPoolAddresses.
+  ///
+  /// In en, this message translates to:
+  /// **'Addresses'**
+  String get omniPoolAddresses;
+
+  /// No description provided for @omniPoolAllChains.
+  ///
+  /// In en, this message translates to:
+  /// **'All chains'**
+  String get omniPoolAllChains;
+
+  /// No description provided for @omniPoolSearchAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Search address, UID or order'**
+  String get omniPoolSearchAddress;
 }
 
 class _AppLocalizationsDelegate

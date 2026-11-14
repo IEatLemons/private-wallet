@@ -871,5 +871,10 @@
         "type": "int"
       }
     }
-  }
+  },
+  "omniPoolPlatform": "平台",
+  "omniPoolChain": "鏈",
+  "omniPoolAddresses": "地址",
+  "omniPoolAllChains": "全部鏈",
+  "omniPoolSearchAddress": "搜尋地址、UID 或訂單"
 }

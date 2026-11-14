@@ -1870,4 +1870,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get omniPoolError =>
       'The address pool operation failed. Check the connection or local storage and retry.';
+
+  @override
+  String get omniPoolPlatform => 'Platform';
+
+  @override
+  String get omniPoolChain => 'Chain';
+
+  @override
+  String get omniPoolAddresses => 'Addresses';
+
+  @override
+  String get omniPoolAllChains => 'All chains';
+
+  @override
+  String get omniPoolSearchAddress => 'Search address, UID or order';
 }

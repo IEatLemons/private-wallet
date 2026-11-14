@@ -1683,6 +1683,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get omniPoolError => '地址库操作失败。请检查连接或本地存储后重试。';
+
+  @override
+  String get omniPoolPlatform => '平台';
+
+  @override
+  String get omniPoolChain => '链';
+
+  @override
+  String get omniPoolAddresses => '地址';
+
+  @override
+  String get omniPoolAllChains => '全部链';
+
+  @override
+  String get omniPoolSearchAddress => '搜索地址、UID 或订单';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -3364,4 +3379,19 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get omniPoolError => '地址庫操作失敗。請檢查連線或本機儲存後重試。';
+
+  @override
+  String get omniPoolPlatform => '平台';
+
+  @override
+  String get omniPoolChain => '鏈';
+
+  @override
+  String get omniPoolAddresses => '地址';
+
+  @override
+  String get omniPoolAllChains => '全部鏈';
+
+  @override
+  String get omniPoolSearchAddress => '搜尋地址、UID 或訂單';
 }
