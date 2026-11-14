@@ -30,6 +30,70 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
   bool busy = false;
   String query = '';
   WalletMessage? error;
+  final _cursors = <WalletPageCursor?>[null];
+  WalletGroupPage? _page;
+  Timer? _searchTimer;
+  int _pageRequest = 0;
+  bool _loading = false;
+
+  bool get _paged => widget.vault.supportsOmniVaultImport;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_paged) unawaited(_loadPage());
+  }
+
+  @override
+  void dispose() {
+    _searchTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadPage() async {
+    _searchTimer?.cancel();
+    final request = ++_pageRequest;
+    setState(() => _loading = true);
+    try {
+      final page = await widget.vault.loadWalletPage(
+        query: query,
+        after: _cursors.last,
+      );
+      if (!mounted || _pageRequest != request) return;
+      setState(() => _page = page);
+    } catch (e) {
+      if (mounted && _pageRequest == request) {
+        setState(() {
+          _page = null;
+          error = walletMessage(e);
+        });
+      }
+    } finally {
+      if (mounted && _pageRequest == request) setState(() => _loading = false);
+    }
+  }
+
+  void _search(String value) {
+    setState(() => query = value);
+    if (!_paged) return;
+    _searchTimer?.cancel();
+    _cursors.removeRange(1, _cursors.length);
+    _pageRequest++;
+    setState(() {
+      _loading = true;
+      error = null;
+    });
+    _searchTimer = Timer(const Duration(milliseconds: 150), _loadPage);
+  }
+
+  Future<void> _showAliases(WalletGroup group) => showWalletPanel<void>(
+    context: context,
+    builder: (_) => _WalletAliasesPanel(
+      theme: widget.theme,
+      vault: widget.vault,
+      group: group,
+    ),
+  );
 
   Future<void> _change(
     Future<WalletPortfolio> Function() operation, {
@@ -47,7 +111,12 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
         portfolio = result;
         busy = false;
       });
-      if (close) closeWalletPanel(context, WalletManagerAction.selected);
+      if (close) {
+        closeWalletPanel(context, WalletManagerAction.selected);
+      } else if (_paged) {
+        _cursors.removeRange(1, _cursors.length);
+        await _loadPage();
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -82,6 +151,13 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
 
   Widget _group(WalletGroup group, List<WalletEntry> accounts) {
     final theme = widget.theme;
+    final network = !_paged
+        ? widget.network
+        : group.preferredNetworkId == tronMainnetNetwork.id
+        ? tronMainnetNetwork
+        : group.preferredNetworkId == 56
+        ? bnbSmartChainNetwork
+        : widget.network;
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: WalletCard(
@@ -111,7 +187,9 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                           ? null
                           : () => _change(
                               () => widget.vault.selectAccount(
-                                group.accounts.first.id,
+                                _paged
+                                    ? '${group.id}:0'
+                                    : group.accounts.first.id,
                               ),
                               close: true,
                             ),
@@ -138,7 +216,7 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                                       context,
                                       MessageCode.msgPrivateKeyWallet,
                                     ),
-                              group.accounts.length,
+                              group.accounts.first.groupAccountCount,
                             ]),
                             style: TextStyle(color: theme.muted, fontSize: 12),
                           ),
@@ -146,6 +224,12 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                       ),
                     ),
                   ),
+                  if (group.hasAliases)
+                    IconButton(
+                      tooltip: AppLocalizations.of(context).omniWalletAliases,
+                      onPressed: busy ? null : () => _showAliases(group),
+                      icon: Icon(Icons.badge_outlined, color: theme.muted),
+                    ),
                   IconButton(
                     key: ValueKey('rename-wallet-${group.id}'),
                     tooltip: tr(context, MessageCode.msgRenameWallet),
@@ -192,7 +276,7 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                   subtitle: Text(
                     localized(
                       context,
-                      '${shortAddress(entry.account.addressFor(widget.network))}${entry.derivationPathFor(widget.network) == null ? '' : '\n${entry.derivationPathFor(widget.network)}'}',
+                      '${shortAddress(entry.addressFor(network))}${entry.derivationPathFor(network) == null ? '' : '\n${entry.derivationPathFor(network)}'}',
                     ),
                     style: TextStyle(
                       color: theme.muted,
@@ -206,9 +290,7 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                       IconButton(
                         tooltip: tr(context, MessageCode.msgCopyAccountAddress),
                         onPressed: () => Clipboard.setData(
-                          ClipboardData(
-                            text: entry.account.addressFor(widget.network),
-                          ),
+                          ClipboardData(text: entry.addressFor(network)),
                         ),
                         icon: Icon(
                           Icons.copy_outlined,
@@ -242,10 +324,15 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                           () => widget.vault.addDerivedAccount(
                             group.id,
                             name: tr(context, MessageCode.msgAccountMore, [
-                              group.accounts
-                                      .map((a) => a.index)
-                                      .fold<int>(0, (a, b) => a > b ? a : b) +
-                                  2,
+                              _paged
+                                  ? group.accounts.first.groupAccountCount + 1
+                                  : group.accounts
+                                            .map((a) => a.index)
+                                            .fold<int>(
+                                              0,
+                                              (a, b) => a > b ? a : b,
+                                            ) +
+                                        2,
                             ]),
                           ),
                         ),
@@ -263,11 +350,13 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
   Widget build(BuildContext context) {
     final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
     final visible = <(WalletGroup, List<WalletEntry>)>[];
-    for (final group in portfolio.groups) {
+    for (final group
+        in _paged ? _page?.groups ?? const <WalletGroup>[] : portfolio.groups) {
       final entries = group.accounts
           .where(
             (a) =>
-                '${group.name} ${a.name} ${a.account.addressFor(widget.network)}'
+                _paged ||
+                '${group.name} ${a.name} ${a.addressFor(widget.network)}'
                     .toLowerCase()
                     .contains(query.toLowerCase()),
           )
@@ -310,8 +399,8 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
           children: [
             Text(
               tr(context, MessageCode.walletAndAccountCount, [
-                portfolio.groups.length,
-                portfolio.accounts.length,
+                portfolio.groupCount,
+                portfolio.accountCount,
               ]),
               style: TextStyle(color: widget.theme.muted, fontSize: 13),
             ),
@@ -332,13 +421,15 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
             const SizedBox(height: 12),
             TextField(
               key: const ValueKey('wallet-search'),
-              onChanged: (s) => setState(() => query = s),
+              onChanged: _search,
               decoration: InputDecoration(
                 prefixIcon: Icon(Icons.search),
-                hintText: tr(
-                  context,
-                  MessageCode.msgSearchWalletsAccountsOrAddresses,
-                ),
+                hintText: _paged
+                    ? AppLocalizations.of(context).omniSearchHint
+                    : tr(
+                        context,
+                        MessageCode.msgSearchWalletsAccountsOrAddresses,
+                      ),
               ),
             ),
             if (error != null)
@@ -353,7 +444,9 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
             Flexible(
               child: SizedBox(
                 height: 420,
-                child: visible.isEmpty
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : visible.isEmpty
                     ? Center(
                         child: Text(
                           tr(
@@ -371,6 +464,21 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                       ),
               ),
             ),
+            if (_paged)
+              _WalletPageButtons(
+                previous: _cursors.length > 1 && !_loading && !busy
+                    ? () {
+                        _cursors.removeLast();
+                        unawaited(_loadPage());
+                      }
+                    : null,
+                next: _page?.next != null && !_loading && !busy
+                    ? () {
+                        _cursors.add(_page!.next);
+                        unawaited(_loadPage());
+                      }
+                    : null,
+              ),
           ],
         ),
       ),
@@ -379,8 +487,13 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
 }
 
 class WalletImportOptions extends StatelessWidget {
-  const WalletImportOptions({required this.theme, super.key});
+  const WalletImportOptions({
+    required this.theme,
+    this.supportsOmniVault = false,
+    super.key,
+  });
   final WalletTheme theme;
+  final bool supportsOmniVault;
   @override
   Widget build(BuildContext context) => WalletPanel(
     theme: theme,
@@ -406,7 +519,9 @@ class WalletImportOptions extends StatelessWidget {
             WalletManagerAction.batchImport,
             Icons.upload_file_outlined,
             tr(context, MessageCode.msgImportPrivateKeyFile),
-            tr(context, MessageCode.msgImportMultipleAccountsFromCsvTsv),
+            supportsOmniVault
+                ? AppLocalizations.of(context).omniFileHint
+                : tr(context, MessageCode.msgImportMultipleAccountsFromCsvTsv),
           ),
         ])
           ListTile(

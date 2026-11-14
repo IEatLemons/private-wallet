@@ -783,5 +783,93 @@
   "settingsNetworkEnabled": "Enabled",
   "settingsNetworkState": "Enable network",
   "settingsBackupHint": "Keep recovery credentials safely offline. Cloud backup is not available yet.",
-  "settingsMatchedOption": "Setting located"
+  "settingsMatchedOption": "Setting located",
+  "omniImportTitle": "Preview OmniVault import",
+  "omniImportResult": "OmniVault import results",
+  "omniReading": "Checking {count} rows…",
+  "@omniReading": {"placeholders": {"count": {"type": "int"}}},
+  "omniConfirm": "Confirm import",
+  "omniNewWallet": "New wallets",
+  "omniAliasesAdded": "New aliases",
+  "omniDuplicates": "Duplicates",
+  "omniSkipped": "Skipped",
+  "omniFailed": "Failed",
+  "omniAllRows": "All rows",
+  "omniNoRows": "No rows in this category",
+  "omniLine": "Line {line}",
+  "@omniLine": {"placeholders": {"line": {"type": "int"}}},
+  "omniPreviousPage": "Previous page",
+  "omniNextPage": "Next page",
+  "omniWalletAliases": "Wallet aliases",
+  "omniHeader": "The OmniVault CSV must include all seven required columns without duplicate headers.",
+  "omniInvalidEncoding": "The file must use UTF-8 encoding.",
+  "omniMalformedCsv": "Invalid CSV quoting at line {line}.",
+  "@omniMalformedCsv": {"placeholders": {"line": {"type": "int"}}},
+  "omniColumnCount": "The number of columns does not match the header.",
+  "omniInvalidStatus": "Unrecognized private-key export status.",
+  "omniInvalidIdentity": "Platform and UID must each contain 1–256 characters without control characters.",
+  "omniInvalidAddress": "The source address is invalid for this chain.",
+  "omniAddressMismatch": "The private key derives a different address.",
+  "omniWalletChanged": "The wallet book changed. Reopen the file and check it again.",
+  "omniStorageError": "The encrypted wallet database could not complete this operation.",
+  "omniRecordTooLarge": "A CSV record exceeds the supported size.",
+  "omniSearchHint": "Search wallet, platform, UID, or address prefix",
+  "omniFileHint": "OmniVault CSV or a chain and private key CSV/TSV",
+  "transferChooseAsset": "Choose an asset to send",
+  "transferReview": "Review transfer",
+  "transferEdit": "Edit transfer",
+  "transferSender": "From address",
+  "transferContract": "Token contract",
+  "transferFee": "Estimated network fee",
+  "transferTronFeeNote": "The TRX cost may change with available Energy and Bandwidth.",
+  "transferViewTransaction": "View transaction",
+  "transferInvalidRecipient": "Enter a valid recipient address for this network.",
+  "transferAmountTooLarge": "The amount is too large for this network.",
+  "transferSimulationFailed": "The network rejected the transfer simulation. Check the amount and recipient.",
+  "transferTokenDecimalsChanged": "The token contract reports a different precision. Refresh its details before sending.",
+  "transferFeeUnavailable": "The network fee could not be estimated. Try again or check the RPC endpoint.",
+  "transferInsufficientFee": "The native balance is too low to cover this transfer and its network fee.",
+  "transferReviewExpired": "Review the transfer again before signing.",
+  "walletBalancesTitle": "All wallet balances",
+  "walletBalancesStarted": "Scan started {time}",
+  "@walletBalancesStarted": {
+    "placeholders": {"time": {"type": "String"}}
+  },
+  "walletBalancesChecking": "Checking",
+  "walletBalancesPaused": "Paused",
+  "walletBalancesFinished": "Complete",
+  "walletBalancesLoadFailed": "Wallet list could not be loaded",
+  "walletBalancesProgress": "{state} · {checked} / {total} accounts",
+  "walletBalancesScope": "Ranked by estimated USD value. Chain-specific wallets use their source chain. Other wallets use enabled networks. Checks native coins, built-in and watched tokens, and configured token discovery. Testnet assets are excluded from USD totals.",
+  "walletBalancesIncompleteCount": "{count} accounts with incomplete results",
+  "walletBalancesPause": "Pause",
+  "walletBalancesResume": "Resume",
+  "walletBalancesBackground": "Continue in background",
+  "walletBalancesNoNetwork": "No networks to check",
+  "walletBalancesQueryIncomplete": "Balance or token discovery incomplete",
+  "walletBalancesTokenListError": "Saved token list unavailable",
+  "walletBalancesMissingPrices": "Prices missing",
+  "walletBalancesNoHoldings": "No balances in the checked assets.",
+  "walletBalancesWaiting": "Waiting for the first result…",
+  "walletBalancesEmpty": "No wallets to check.",
+  "@walletBalancesProgress": {
+    "placeholders": {
+      "state": {
+        "type": "String"
+      },
+      "checked": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@walletBalancesIncompleteCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

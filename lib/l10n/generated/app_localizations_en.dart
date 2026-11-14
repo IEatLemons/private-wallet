@@ -1526,4 +1526,220 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsMatchedOption => 'Setting located';
+
+  @override
+  String get omniImportTitle => 'Preview OmniVault import';
+
+  @override
+  String get omniImportResult => 'OmniVault import results';
+
+  @override
+  String omniReading(int count) {
+    return 'Checking $count rows…';
+  }
+
+  @override
+  String get omniConfirm => 'Confirm import';
+
+  @override
+  String get omniNewWallet => 'New wallets';
+
+  @override
+  String get omniAliasesAdded => 'New aliases';
+
+  @override
+  String get omniDuplicates => 'Duplicates';
+
+  @override
+  String get omniSkipped => 'Skipped';
+
+  @override
+  String get omniFailed => 'Failed';
+
+  @override
+  String get omniAllRows => 'All rows';
+
+  @override
+  String get omniNoRows => 'No rows in this category';
+
+  @override
+  String omniLine(int line) {
+    return 'Line $line';
+  }
+
+  @override
+  String get omniPreviousPage => 'Previous page';
+
+  @override
+  String get omniNextPage => 'Next page';
+
+  @override
+  String get omniWalletAliases => 'Wallet aliases';
+
+  @override
+  String get omniHeader =>
+      'The OmniVault CSV must include all seven required columns without duplicate headers.';
+
+  @override
+  String get omniInvalidEncoding => 'The file must use UTF-8 encoding.';
+
+  @override
+  String omniMalformedCsv(int line) {
+    return 'Invalid CSV quoting at line $line.';
+  }
+
+  @override
+  String get omniColumnCount =>
+      'The number of columns does not match the header.';
+
+  @override
+  String get omniInvalidStatus => 'Unrecognized private-key export status.';
+
+  @override
+  String get omniInvalidIdentity =>
+      'Platform and UID must each contain 1–256 characters without control characters.';
+
+  @override
+  String get omniInvalidAddress =>
+      'The source address is invalid for this chain.';
+
+  @override
+  String get omniAddressMismatch =>
+      'The private key derives a different address.';
+
+  @override
+  String get omniWalletChanged =>
+      'The wallet book changed. Reopen the file and check it again.';
+
+  @override
+  String get omniStorageError =>
+      'The encrypted wallet database could not complete this operation.';
+
+  @override
+  String get omniRecordTooLarge => 'A CSV record exceeds the supported size.';
+
+  @override
+  String get omniSearchHint =>
+      'Search wallet, platform, UID, or address prefix';
+
+  @override
+  String get omniFileHint => 'OmniVault CSV or a chain and private key CSV/TSV';
+
+  @override
+  String get transferChooseAsset => 'Choose an asset to send';
+
+  @override
+  String get transferReview => 'Review transfer';
+
+  @override
+  String get transferEdit => 'Edit transfer';
+
+  @override
+  String get transferSender => 'From address';
+
+  @override
+  String get transferContract => 'Token contract';
+
+  @override
+  String get transferFee => 'Estimated network fee';
+
+  @override
+  String get transferTronFeeNote =>
+      'The TRX cost may change with available Energy and Bandwidth.';
+
+  @override
+  String get transferViewTransaction => 'View transaction';
+
+  @override
+  String get transferInvalidRecipient =>
+      'Enter a valid recipient address for this network.';
+
+  @override
+  String get transferAmountTooLarge =>
+      'The amount is too large for this network.';
+
+  @override
+  String get transferSimulationFailed =>
+      'The network rejected the transfer simulation. Check the amount and recipient.';
+
+  @override
+  String get transferTokenDecimalsChanged =>
+      'The token contract reports a different precision. Refresh its details before sending.';
+
+  @override
+  String get transferFeeUnavailable =>
+      'The network fee could not be estimated. Try again or check the RPC endpoint.';
+
+  @override
+  String get transferInsufficientFee =>
+      'The native balance is too low to cover this transfer and its network fee.';
+
+  @override
+  String get transferReviewExpired =>
+      'Review the transfer again before signing.';
+
+  @override
+  String get walletBalancesTitle => 'All wallet balances';
+
+  @override
+  String walletBalancesStarted(String time) {
+    return 'Scan started $time';
+  }
+
+  @override
+  String get walletBalancesChecking => 'Checking';
+
+  @override
+  String get walletBalancesPaused => 'Paused';
+
+  @override
+  String get walletBalancesFinished => 'Complete';
+
+  @override
+  String get walletBalancesLoadFailed => 'Wallet list could not be loaded';
+
+  @override
+  String walletBalancesProgress(String state, int checked, int total) {
+    return '$state · $checked / $total accounts';
+  }
+
+  @override
+  String get walletBalancesScope =>
+      'Ranked by estimated USD value. Chain-specific wallets use their source chain. Other wallets use enabled networks. Checks native coins, built-in and watched tokens, and configured token discovery. Testnet assets are excluded from USD totals.';
+
+  @override
+  String walletBalancesIncompleteCount(int count) {
+    return '$count accounts with incomplete results';
+  }
+
+  @override
+  String get walletBalancesPause => 'Pause';
+
+  @override
+  String get walletBalancesResume => 'Resume';
+
+  @override
+  String get walletBalancesBackground => 'Continue in background';
+
+  @override
+  String get walletBalancesNoNetwork => 'No networks to check';
+
+  @override
+  String get walletBalancesQueryIncomplete =>
+      'Balance or token discovery incomplete';
+
+  @override
+  String get walletBalancesTokenListError => 'Saved token list unavailable';
+
+  @override
+  String get walletBalancesMissingPrices => 'Prices missing';
+
+  @override
+  String get walletBalancesNoHoldings => 'No balances in the checked assets.';
+
+  @override
+  String get walletBalancesWaiting => 'Waiting for the first result…';
+
+  @override
+  String get walletBalancesEmpty => 'No wallets to check.';
 }

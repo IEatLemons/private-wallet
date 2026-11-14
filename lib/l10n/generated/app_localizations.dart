@@ -2536,6 +2536,378 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Setting located'**
   String get settingsMatchedOption;
+
+  /// No description provided for @omniImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview OmniVault import'**
+  String get omniImportTitle;
+
+  /// No description provided for @omniImportResult.
+  ///
+  /// In en, this message translates to:
+  /// **'OmniVault import results'**
+  String get omniImportResult;
+
+  /// No description provided for @omniReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking {count} rows…'**
+  String omniReading(int count);
+
+  /// No description provided for @omniConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm import'**
+  String get omniConfirm;
+
+  /// No description provided for @omniNewWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'New wallets'**
+  String get omniNewWallet;
+
+  /// No description provided for @omniAliasesAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'New aliases'**
+  String get omniAliasesAdded;
+
+  /// No description provided for @omniDuplicates.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicates'**
+  String get omniDuplicates;
+
+  /// No description provided for @omniSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get omniSkipped;
+
+  /// No description provided for @omniFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get omniFailed;
+
+  /// No description provided for @omniAllRows.
+  ///
+  /// In en, this message translates to:
+  /// **'All rows'**
+  String get omniAllRows;
+
+  /// No description provided for @omniNoRows.
+  ///
+  /// In en, this message translates to:
+  /// **'No rows in this category'**
+  String get omniNoRows;
+
+  /// No description provided for @omniLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}'**
+  String omniLine(int line);
+
+  /// No description provided for @omniPreviousPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous page'**
+  String get omniPreviousPage;
+
+  /// No description provided for @omniNextPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Next page'**
+  String get omniNextPage;
+
+  /// No description provided for @omniWalletAliases.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet aliases'**
+  String get omniWalletAliases;
+
+  /// No description provided for @omniHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'The OmniVault CSV must include all seven required columns without duplicate headers.'**
+  String get omniHeader;
+
+  /// No description provided for @omniInvalidEncoding.
+  ///
+  /// In en, this message translates to:
+  /// **'The file must use UTF-8 encoding.'**
+  String get omniInvalidEncoding;
+
+  /// No description provided for @omniMalformedCsv.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid CSV quoting at line {line}.'**
+  String omniMalformedCsv(int line);
+
+  /// No description provided for @omniColumnCount.
+  ///
+  /// In en, this message translates to:
+  /// **'The number of columns does not match the header.'**
+  String get omniColumnCount;
+
+  /// No description provided for @omniInvalidStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Unrecognized private-key export status.'**
+  String get omniInvalidStatus;
+
+  /// No description provided for @omniInvalidIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform and UID must each contain 1–256 characters without control characters.'**
+  String get omniInvalidIdentity;
+
+  /// No description provided for @omniInvalidAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'The source address is invalid for this chain.'**
+  String get omniInvalidAddress;
+
+  /// No description provided for @omniAddressMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The private key derives a different address.'**
+  String get omniAddressMismatch;
+
+  /// No description provided for @omniWalletChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The wallet book changed. Reopen the file and check it again.'**
+  String get omniWalletChanged;
+
+  /// No description provided for @omniStorageError.
+  ///
+  /// In en, this message translates to:
+  /// **'The encrypted wallet database could not complete this operation.'**
+  String get omniStorageError;
+
+  /// No description provided for @omniRecordTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'A CSV record exceeds the supported size.'**
+  String get omniRecordTooLarge;
+
+  /// No description provided for @omniSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search wallet, platform, UID, or address prefix'**
+  String get omniSearchHint;
+
+  /// No description provided for @omniFileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'OmniVault CSV or a chain and private key CSV/TSV'**
+  String get omniFileHint;
+
+  /// No description provided for @transferChooseAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an asset to send'**
+  String get transferChooseAsset;
+
+  /// No description provided for @transferReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review transfer'**
+  String get transferReview;
+
+  /// No description provided for @transferEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit transfer'**
+  String get transferEdit;
+
+  /// No description provided for @transferSender.
+  ///
+  /// In en, this message translates to:
+  /// **'From address'**
+  String get transferSender;
+
+  /// No description provided for @transferContract.
+  ///
+  /// In en, this message translates to:
+  /// **'Token contract'**
+  String get transferContract;
+
+  /// No description provided for @transferFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated network fee'**
+  String get transferFee;
+
+  /// No description provided for @transferTronFeeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The TRX cost may change with available Energy and Bandwidth.'**
+  String get transferTronFeeNote;
+
+  /// No description provided for @transferViewTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'View transaction'**
+  String get transferViewTransaction;
+
+  /// No description provided for @transferInvalidRecipient.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid recipient address for this network.'**
+  String get transferInvalidRecipient;
+
+  /// No description provided for @transferAmountTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'The amount is too large for this network.'**
+  String get transferAmountTooLarge;
+
+  /// No description provided for @transferSimulationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The network rejected the transfer simulation. Check the amount and recipient.'**
+  String get transferSimulationFailed;
+
+  /// No description provided for @transferTokenDecimalsChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The token contract reports a different precision. Refresh its details before sending.'**
+  String get transferTokenDecimalsChanged;
+
+  /// No description provided for @transferFeeUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The network fee could not be estimated. Try again or check the RPC endpoint.'**
+  String get transferFeeUnavailable;
+
+  /// No description provided for @transferInsufficientFee.
+  ///
+  /// In en, this message translates to:
+  /// **'The native balance is too low to cover this transfer and its network fee.'**
+  String get transferInsufficientFee;
+
+  /// No description provided for @transferReviewExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the transfer again before signing.'**
+  String get transferReviewExpired;
+
+  /// No description provided for @walletBalancesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'All wallet balances'**
+  String get walletBalancesTitle;
+
+  /// No description provided for @walletBalancesStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan started {time}'**
+  String walletBalancesStarted(String time);
+
+  /// No description provided for @walletBalancesChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking'**
+  String get walletBalancesChecking;
+
+  /// No description provided for @walletBalancesPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get walletBalancesPaused;
+
+  /// No description provided for @walletBalancesFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get walletBalancesFinished;
+
+  /// No description provided for @walletBalancesLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet list could not be loaded'**
+  String get walletBalancesLoadFailed;
+
+  /// No description provided for @walletBalancesProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{state} · {checked} / {total} accounts'**
+  String walletBalancesProgress(String state, int checked, int total);
+
+  /// No description provided for @walletBalancesScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Ranked by estimated USD value. Chain-specific wallets use their source chain. Other wallets use enabled networks. Checks native coins, built-in and watched tokens, and configured token discovery. Testnet assets are excluded from USD totals.'**
+  String get walletBalancesScope;
+
+  /// No description provided for @walletBalancesIncompleteCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} accounts with incomplete results'**
+  String walletBalancesIncompleteCount(int count);
+
+  /// No description provided for @walletBalancesPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get walletBalancesPause;
+
+  /// No description provided for @walletBalancesResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get walletBalancesResume;
+
+  /// No description provided for @walletBalancesBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue in background'**
+  String get walletBalancesBackground;
+
+  /// No description provided for @walletBalancesNoNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'No networks to check'**
+  String get walletBalancesNoNetwork;
+
+  /// No description provided for @walletBalancesQueryIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance or token discovery incomplete'**
+  String get walletBalancesQueryIncomplete;
+
+  /// No description provided for @walletBalancesTokenListError.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved token list unavailable'**
+  String get walletBalancesTokenListError;
+
+  /// No description provided for @walletBalancesMissingPrices.
+  ///
+  /// In en, this message translates to:
+  /// **'Prices missing'**
+  String get walletBalancesMissingPrices;
+
+  /// No description provided for @walletBalancesNoHoldings.
+  ///
+  /// In en, this message translates to:
+  /// **'No balances in the checked assets.'**
+  String get walletBalancesNoHoldings;
+
+  /// No description provided for @walletBalancesWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the first result…'**
+  String get walletBalancesWaiting;
+
+  /// No description provided for @walletBalancesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No wallets to check.'**
+  String get walletBalancesEmpty;
 }
 
 class _AppLocalizationsDelegate

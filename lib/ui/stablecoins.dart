@@ -7,6 +7,7 @@ class TokenDetailsPanel extends StatefulWidget {
     required this.address,
     required this.onRefresh,
     this.onWatch,
+    this.onSend,
     super.key,
   });
   final WalletTheme theme;
@@ -14,6 +15,7 @@ class TokenDetailsPanel extends StatefulWidget {
   final String address;
   final Future<TokenHolding> Function() onRefresh;
   final Future<void> Function()? onWatch;
+  final VoidCallback? onSend;
   @override
   State<TokenDetailsPanel> createState() => _TokenDetailsPanelState();
 }
@@ -70,12 +72,21 @@ class _TokenDetailsPanelState extends State<TokenDetailsPanel> {
             ),
           ),
 
-        FilledButton.icon(
+        if (widget.onSend != null)
+          FilledButton.icon(
+            onPressed: busy ? null : widget.onSend,
+            icon: const Icon(Icons.north_east, size: 18),
+            label: Text(tr(context, MessageCode.msgSend)),
+          ),
+        OutlinedButton.icon(
           onPressed: () =>
               Clipboard.setData(ClipboardData(text: widget.address)),
           icon: const Icon(Icons.copy, size: 16),
           label: Text(tr(context, MessageCode.msgCopyReceiveAddress)),
         ),
+        if (holding.network.explorerAddress(widget.address)
+            case final explorer?)
+          _AddressExplorerButton(url: explorer),
         OutlinedButton(
           onPressed: busy || holding.state == TokenState.disabled
               ? null

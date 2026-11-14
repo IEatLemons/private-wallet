@@ -603,6 +603,27 @@ String tr(
     MessageCode.portfolioBalanceStatus => strings.portfolioBalanceStatus,
     MessageCode.portfolioSpam => strings.portfolioSpam,
     MessageCode.portfolioNoCoin => strings.portfolioNoCoin,
+    MessageCode.omniHeader => strings.omniHeader,
+    MessageCode.omniInvalidEncoding => strings.omniInvalidEncoding,
+    MessageCode.omniMalformedCsv => strings.omniMalformedCsv(
+      arguments[0] as int,
+    ),
+    MessageCode.omniColumnCount => strings.omniColumnCount,
+    MessageCode.omniInvalidStatus => strings.omniInvalidStatus,
+    MessageCode.omniInvalidIdentity => strings.omniInvalidIdentity,
+    MessageCode.omniInvalidAddress => strings.omniInvalidAddress,
+    MessageCode.omniAddressMismatch => strings.omniAddressMismatch,
+    MessageCode.omniWalletChanged => strings.omniWalletChanged,
+    MessageCode.omniStorageError => strings.omniStorageError,
+    MessageCode.omniRecordTooLarge => strings.omniRecordTooLarge,
+    MessageCode.transferInvalidRecipient => strings.transferInvalidRecipient,
+    MessageCode.transferAmountTooLarge => strings.transferAmountTooLarge,
+    MessageCode.transferSimulationFailed => strings.transferSimulationFailed,
+    MessageCode.transferTokenDecimalsChanged =>
+      strings.transferTokenDecimalsChanged,
+    MessageCode.transferFeeUnavailable => strings.transferFeeUnavailable,
+    MessageCode.transferInsufficientFee => strings.transferInsufficientFee,
+    MessageCode.transferReviewExpired => strings.transferReviewExpired,
     MessageCode.discoveryNotConfiguredShort =>
       strings.discoveryNotConfiguredShort,
   };

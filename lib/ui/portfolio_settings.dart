@@ -117,7 +117,11 @@ class AssetDisplayControls extends StatelessWidget {
   }
 }
 
-Future<void> openServiceLink(BuildContext context, String url) async {
+Future<void> openServiceLink(
+  BuildContext context,
+  String url, {
+  MessageCode copiedMessage = MessageCode.discoveryLinkCopied,
+}) async {
   try {
     if (await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) {
       return;
@@ -128,8 +132,7 @@ Future<void> openServiceLink(BuildContext context, String url) async {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Builder(
-          builder: (context) =>
-              Text(tr(context, MessageCode.discoveryLinkCopied)),
+          builder: (context) => Text(tr(context, copiedMessage)),
         ),
       ),
     );

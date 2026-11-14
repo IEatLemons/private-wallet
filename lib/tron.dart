@@ -18,7 +18,7 @@ Uint8List decodeTronAddress(String address) {
   }
 }
 
-// Only TransferContract is supported. Encoding follows tronprotocol/protocol;
+// Transaction encoding follows tronprotocol/protocol;
 // all recipient/amount bytes are constructed locally, never trusted to an RPC.
 List<int> _varint(BigInt value) {
   final bytes = <int>[];
@@ -30,9 +30,12 @@ List<int> _varint(BigInt value) {
   return bytes;
 }
 
-List<int> _protoInt(int field, BigInt value) => [field << 3, ..._varint(value)];
+List<int> _protoInt(int field, BigInt value) => [
+  ..._varint(BigInt.from(field << 3)),
+  ..._varint(value),
+];
 List<int> _protoBytes(int field, List<int> value) => [
-  (field << 3) | 2,
+  ..._varint(BigInt.from((field << 3) | 2)),
   ..._varint(BigInt.from(value.length)),
   ...value,
 ];
@@ -92,7 +95,7 @@ class TronNetworkService extends EvmNetworkService {
         _activeIndex = index;
         return value;
       } catch (e) {
-        if (_disposed) rethrow;
+        if (_disposed || e is _TransferRejected) rethrow;
         lastError = e;
       }
     }
@@ -137,10 +140,12 @@ class TronNetworkService extends EvmNetworkService {
   });
 
   @override
-  Future<EtherAmount> getNativeBalance(
-    WalletAccount account,
-  ) => _withTronFailover((index) async {
-    final address = account.tronAddress;
+  Future<EtherAmount> getNativeBalanceForAddress(String address) async {
+    decodeTronAddress(address);
+    return _withTronFailover((index) => _tronBalance(index, address));
+  }
+
+  Future<EtherAmount> _tronBalance(int index, String address) async {
     final result = await _post(index, 'wallet/getaccount', {
       'address': address,
       'visible': true,
@@ -162,7 +167,7 @@ class TronNetworkService extends EvmNetworkService {
     }
     // Compatibility container: getInWei carries atomic SUN here, not ETH Wei.
     return EtherAmount.inWei(BigInt.from(balance));
-  });
+  }
 
   @override
   Future<String> sendNative({
@@ -176,7 +181,182 @@ class TronNetworkService extends EvmNetworkService {
         amountWei > BigInt.parse('9223372036854775807')) {
       throw const WalletInputException(MessageCode.msgTrxAmountIsOutOfRange);
     }
+    return _sendTron(account, _nativeContract(owner, to, amountWei));
+  }
+
+  @override
+  Future<PreparedWalletTransfer> prepareTransfer({
+    required WalletAccount account,
+    required String recipient,
+    required BigInt amount,
+    TokenDefinition? token,
+  }) async {
+    final address = account.tronAddress;
+    final owner = decodeTronAddress(address);
+    final to = decodeTronAddress(recipient);
+    _validateTransfer(network, token, amount);
+    final nativeValue = token == null ? amount : BigInt.zero;
+    final (contract, feeLimit, fee) = await _withTronFailover((index) async {
+      final balance = (await _tronBalance(index, address)).getInWei;
+      _requireBalance(balance, nativeValue);
+      final params = await _tronFeeParameters(index);
+      final resources = await _post(index, 'wallet/getaccountresource', {
+        'address': address,
+        'visible': true,
+      });
+      BigInt remaining(String limit, String used) {
+        final available =
+            _tronResource(resources[limit]) - _tronResource(resources[used]);
+        return available < BigInt.zero ? BigInt.zero : available;
+      }
+
+      final staked = remaining('NetLimit', 'NetUsed');
+      final free = remaining('freeNetLimit', 'freeNetUsed');
+      // Covers the encoded transfer, signature and transaction result.
+      final bandwidth = BigInt.from(350);
+      final bandwidthBurn = staked >= bandwidth || free >= bandwidth
+          ? BigInt.zero
+          : bandwidth * _tronParameter(params, 'getTransactionFee');
+      if (token == null) {
+        final recipientAccount = await _post(index, 'wallet/getaccount', {
+          'address': recipient,
+          'visible': true,
+        });
+        final creationBurn = recipientAccount.isNotEmpty
+            ? bandwidthBurn
+            : _tronParameter(params, 'getCreateNewAccountFeeInSystemContract') +
+                  (staked >=
+                          bandwidth *
+                              _tronParameter(
+                                params,
+                                'getCreateNewAccountBandwidthRate',
+                              )
+                      ? BigInt.zero
+                      : _tronParameter(params, 'getCreateAccountFee'));
+        _requireFeeBalance(balance, nativeValue, creationBurn);
+        return (_nativeContract(owner, to, amount), BigInt.zero, creationBurn);
+      }
+
+      final contractAddress = decodeTronAddress(token.contract);
+      final decimals = await _tronTokenCall(
+        index,
+        address,
+        token.contract,
+        'decimals()',
+        '',
+      );
+      _requireTokenDecimals(token, decimals.$1);
+      final tokenBalance = await _tronTokenCall(
+        index,
+        address,
+        token.contract,
+        'balanceOf(address)',
+        bytesToHex(_addressWord(owner.sublist(1))),
+      );
+      _requireBalance(decodeTokenUint(tokenBalance.$1), amount);
+      final data = _transferData(to.sublist(1), amount);
+      final (result, energy) = await _tronTokenCall(
+        index,
+        address,
+        token.contract,
+        _transferSignature,
+        bytesToHex(data.sublist(4)),
+      );
+      _requireTransferSuccess(result);
+      if (energy <= BigInt.zero) {
+        throw const WalletInputException(MessageCode.transferFeeUnavailable);
+      }
+      final energyPrice = _tronParameter(params, 'getEnergyFee');
+      // Leave room for Energy to increase between review and execution.
+      final budget =
+          (energy * BigInt.from(12) + BigInt.from(9)) ~/ BigInt.from(10);
+      final feeLimit = budget * energyPrice;
+      if (energyPrice <= BigInt.zero ||
+          feeLimit > _int64Max ||
+          feeLimit > _tronParameter(params, 'getMaxFeeLimit')) {
+        throw const WalletInputException(MessageCode.transferFeeUnavailable);
+      }
+      final energyAvailable = remaining('EnergyLimit', 'EnergyUsed');
+      final energyBurn = budget > energyAvailable
+          ? (budget - energyAvailable) * energyPrice
+          : BigInt.zero;
+      final fee = energyBurn + bandwidthBurn;
+      _requireFeeBalance(balance, BigInt.zero, fee);
+      return (_tokenContract(owner, contractAddress, data), feeLimit, fee);
+    });
+    return PreparedWalletTransfer._(
+      fee: fee,
+      send: () => _sendTron(
+        account,
+        contract,
+        feeLimit: feeLimit,
+        reviewedCost: nativeValue + fee,
+      ),
+    );
+  }
+
+  Future<(String, BigInt)> _tronTokenCall(
+    int index,
+    String owner,
+    String contract,
+    String selector,
+    String parameter,
+  ) async {
+    final response = await _post(index, 'wallet/triggerconstantcontract', {
+      'owner_address': owner,
+      'contract_address': contract,
+      'function_selector': selector,
+      'parameter': parameter,
+      'visible': true,
+    });
+    final result = response['result'];
+    final values = response['constant_result'];
+    if (result is! Map || result['result'] != true) {
+      if (selector == _transferSignature) {
+        throw const _TransferRejected(MessageCode.transferSimulationFailed);
+      }
+      throw const WalletInputException(
+        MessageCode.msgTrcQueryFailedCheckTheContractAndEndpoint,
+      );
+    }
+    if (selector == _transferSignature &&
+        (values == null || values is List && values.isEmpty)) {
+      return ('', _tronResource(response['energy_used']));
+    }
+    if (values is! List || values.length != 1 || values.single is! String) {
+      throw const WalletInputException(
+        MessageCode.msgTrcQueryFailedCheckTheContractAndEndpoint,
+      );
+    }
+    return (values.single as String, _tronResource(response['energy_used']));
+  }
+
+  Future<Map<String, Object?>> _tronFeeParameters(int index) async {
+    final result = await _post(index, 'wallet/getchainparameters', {});
+    final items = result['chainParameter'];
+    if (items is! List) {
+      throw const WalletInputException(MessageCode.transferFeeUnavailable);
+    }
+    return {
+      for (final item in items.whereType<Map>())
+        if (item['key'] is String) item['key'] as String: item['value'] ?? 0,
+    };
+  }
+
+  Future<String> _sendTron(
+    WalletAccount account,
+    _TronContract contract, {
+    BigInt? feeLimit,
+    BigInt? reviewedCost,
+  }) async {
     final (blockId, timestamp) = await _withTronFailover((index) async {
+      if (reviewedCost != null) {
+        final balance = (await _tronBalance(
+          index,
+          account.tronAddress,
+        )).getInWei;
+        _requireFeeBalance(balance, reviewedCost, BigInt.zero);
+      }
       final block = await _post(index, 'wallet/getnowblock', {});
       final blockId = block['blockID'] as String? ?? '';
       final header = (block['block_header'] as Map?)?['raw_data'] as Map?;
@@ -196,17 +376,12 @@ class TronNetworkService extends EvmNetworkService {
       return (blockId, timestamp);
     });
     final expiration = timestamp + const Duration(minutes: 10).inMilliseconds;
-    final transfer = [
-      ..._protoBytes(1, owner),
-      ..._protoBytes(2, to),
-      ..._protoInt(3, amountWei),
-    ];
-    const typeUrl = 'type.googleapis.com/protocol.TransferContract';
-    final contract = [
-      ..._protoInt(1, BigInt.one),
+    final typeUrl = 'type.googleapis.com/protocol.${contract.name}';
+    final encodedContract = [
+      ..._protoInt(1, BigInt.from(contract.type)),
       ..._protoBytes(2, [
         ..._protoBytes(1, utf8.encode(typeUrl)),
-        ..._protoBytes(2, transfer),
+        ..._protoBytes(2, contract.bytes),
       ]),
     ];
     final refBytes = blockId.substring(12, 16);
@@ -215,8 +390,10 @@ class TronNetworkService extends EvmNetworkService {
       ..._protoBytes(1, ec.hexToBytes(refBytes)),
       ..._protoBytes(4, ec.hexToBytes(refHash)),
       ..._protoInt(8, BigInt.from(expiration)),
-      ..._protoBytes(11, contract),
+      ..._protoBytes(11, encodedContract),
       ..._protoInt(14, BigInt.from(timestamp)),
+      if (feeLimit != null && feeLimit > BigInt.zero)
+        ..._protoInt(18, feeLimit),
     ]);
     final digest = Uint8List.fromList(hashes.sha256.convert(raw).bytes);
     final hash = bytesToHex(digest);
@@ -233,17 +410,12 @@ class TronNetworkService extends EvmNetworkService {
         'ref_block_hash': refHash,
         'expiration': expiration,
         'timestamp': timestamp,
+        if (feeLimit != null && feeLimit > BigInt.zero)
+          'fee_limit': feeLimit.toInt(),
         'contract': [
           {
-            'type': 'TransferContract',
-            'parameter': {
-              'type_url': typeUrl,
-              'value': {
-                'owner_address': bytesToHex(owner),
-                'to_address': bytesToHex(to),
-                'amount': amountWei.toInt(),
-              },
-            },
+            'type': contract.name,
+            'parameter': {'type_url': typeUrl, 'value': contract.value},
           },
         ],
       },
@@ -259,7 +431,8 @@ class TronNetworkService extends EvmNetworkService {
           'wallet/broadcasttransaction',
           signed,
         );
-        if (result['result'] != true || result['txid'] != hash) {
+        if (result['result'] != true ||
+            (result['txid'] != null && result['txid'] != hash)) {
           throw const WalletInputException(
             MessageCode.msgTheTronEndpointDidNotConfirmTheBroadcast,
           );
@@ -271,4 +444,65 @@ class TronNetworkService extends EvmNetworkService {
       rethrow;
     }
   }
+}
+
+class _TronContract {
+  const _TronContract(this.type, this.name, this.bytes, this.value);
+  final int type;
+  final String name;
+  final List<int> bytes;
+  final Map<String, Object> value;
+}
+
+_TronContract _nativeContract(
+  List<int> owner,
+  List<int> recipient,
+  BigInt amount,
+) => _TronContract(
+  1,
+  'TransferContract',
+  [
+    ..._protoBytes(1, owner),
+    ..._protoBytes(2, recipient),
+    ..._protoInt(3, amount),
+  ],
+  {
+    'owner_address': bytesToHex(owner),
+    'to_address': bytesToHex(recipient),
+    'amount': amount.toInt(),
+  },
+);
+
+_TronContract _tokenContract(
+  List<int> owner,
+  List<int> contract,
+  List<int> data,
+) => _TronContract(
+  31,
+  'TriggerSmartContract',
+  [
+    ..._protoBytes(1, owner),
+    ..._protoBytes(2, contract),
+    ..._protoBytes(4, data),
+  ],
+  {
+    'owner_address': bytesToHex(owner),
+    'contract_address': bytesToHex(contract),
+    'data': bytesToHex(data),
+  },
+);
+
+BigInt _tronResource(Object? value) {
+  if (value == null) return BigInt.zero;
+  if (value is! int || value < 0) {
+    throw const WalletInputException(MessageCode.transferFeeUnavailable);
+  }
+  return BigInt.from(value);
+}
+
+BigInt _tronParameter(Map<String, Object?> params, String key) {
+  if (!params.containsKey(key)) {
+    throw const WalletInputException(MessageCode.transferFeeUnavailable);
+  }
+  return _tronResource(params[key]);
 }

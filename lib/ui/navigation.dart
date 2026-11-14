@@ -69,6 +69,7 @@ class WalletRail extends StatelessWidget {
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
                   child: InkWell(
+                    key: ValueKey('wallet-nav-${item.value.$3.name}'),
                     borderRadius: BorderRadius.circular(10),
                     onTap: () => onSelect(item.value.$3),
                     child: Padding(

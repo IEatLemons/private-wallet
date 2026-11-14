@@ -208,6 +208,33 @@ class DiscoveryPage {
   final int invalidCount;
 }
 
+/// Merges supported, consistent token records and reports incomplete data.
+bool mergeDiscoveredTokens(
+  EvmNetwork network,
+  DiscoveryPage page,
+  Map<String, DiscoveredToken> tokens,
+) {
+  var invalid = page.invalidCount > 0 || page.tokens.length > 100;
+  for (final t in page.tokens.take(100)) {
+    try {
+      t.token.validate(network);
+      if (t.units < BigInt.zero || t.units >= BigInt.one << 256) {
+        throw const FormatException();
+      }
+      final prior = tokens[t.token.key];
+      if (prior != null &&
+          (prior.token.decimals != t.token.decimals ||
+              prior.token.symbol != t.token.symbol)) {
+        throw const FormatException();
+      }
+      tokens[t.token.key] = t;
+    } catch (_) {
+      invalid = true;
+    }
+  }
+  return invalid;
+}
+
 abstract class AssetDiscoveryService {
   Future<DiscoveryPage> discover(
     EvmNetwork network,

@@ -11,6 +11,7 @@ import 'wallet_core.dart';
 import 'preferences.dart';
 import 'quotes.dart';
 import 'portfolio_assets.dart';
+import 'wallet_balances.dart';
 import 'asset_discovery.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
@@ -25,7 +26,10 @@ part 'ui/network_editor.dart';
 part 'ui/assets.dart';
 part 'ui/portfolio_settings.dart';
 part 'ui/asset_data.dart';
+part 'ui/wallet_balances.dart';
 part 'ui/wallet_manager.dart';
+part 'ui/omnivault_import.dart';
+part 'ui/transfers.dart';
 part 'ui/stablecoins.dart';
 part 'ui/app_settings.dart';
 part 'ui/settings.dart';
@@ -287,6 +291,7 @@ class WalletShell extends StatefulWidget {
 class _WalletShellState extends State<WalletShell> {
   late final QuoteService quoteService;
   late final IndexerSettings indexerSettings;
+  WalletBalanceScan? _walletBalanceScan;
   final Map<QuoteAsset, PriceQuote> quotes = {};
   final Map<int, DiscoverySnapshot> discoverySnapshots = {};
   final Map<int, AssetDiscoveryService> discoveryClients = {};
@@ -296,7 +301,8 @@ class _WalletShellState extends State<WalletShell> {
   String indexerSignature = '[]';
   final viewRevision = ValueNotifier<int>(0);
   final assetScroll = ScrollController();
-  bool settingsOpen = false;
+  final _settingsHub = GlobalKey<_SettingsHubState>();
+  SettingsDestination? _settingsDestination;
   void _updateView(VoidCallback fn) {
     setState(fn);
     viewRevision.value++;
@@ -347,11 +353,12 @@ class _WalletShellState extends State<WalletShell> {
   int balanceRequest = 0;
   WalletMessage? walletError;
   String? lastTxHash;
+  EvmNetwork? lastTxNetwork;
+  bool lastTxUncertain = false;
   DateTime? lastSyncedAt;
 
   late final WalletVault vault;
   final Map<int, EvmNetworkService> networkServices = {};
-  EvmNetworkService? networkService;
 
   List<AssetRow> get assets {
     if (enabledNetworks.isEmpty) {
@@ -414,6 +421,7 @@ class _WalletShellState extends State<WalletShell> {
 
   @override
   void dispose() {
+    _walletBalanceScan?.dispose();
     clearDiscovery();
     indexerSettings.removeListener(onIndexerSettingsChanged);
     indexerSettings.dispose();
@@ -429,7 +437,7 @@ class _WalletShellState extends State<WalletShell> {
   Future<void> _loadWallet() async {
     try {
       await indexerSettings.load();
-      final loaded = await vault.loadPortfolio();
+      final loaded = await vault.loadWalletSummary();
       allNetworks = await vault.loadNetworks();
       try {
         watchedTokens = await vault.loadTokens();
@@ -438,11 +446,12 @@ class _WalletShellState extends State<WalletShell> {
         watchedTokens = [];
       }
       final selectedIds = await vault.loadSelectedNetworkIds();
-      final currentId = await vault.loadSelectedNetworkId();
-      final loadedNetworks = selectedIds
-          .map(_networkForId)
-          .whereType<EvmNetwork>()
-          .toList();
+      final pendingImportId = await vault.loadPendingImportNetwork();
+      final currentId = pendingImportId ?? await vault.loadSelectedNetworkId();
+      final loadedNetworks = {
+        ...selectedIds,
+        ?pendingImportId,
+      }.map(_networkForId).whereType<EvmNetwork>().toList();
       final loadedNetwork =
           _networkForId(currentId) ??
           (loadedNetworks.isEmpty ? null : loadedNetworks.first);
@@ -457,6 +466,18 @@ class _WalletShellState extends State<WalletShell> {
         isLoadingWallet = false;
       });
       if (account != null && loadedNetworks.isNotEmpty) {
+        if (pendingImportId != null && loadedNetwork != null) {
+          try {
+            await vault.saveSelectedNetworks(
+              loadedNetworks,
+              current: loadedNetwork,
+            );
+            await vault.acknowledgeImportNetwork(pendingImportId);
+          } catch (error) {
+            if (mounted) _showMessage(walletMessage(error));
+          }
+          if (!mounted) return;
+        }
         _configureNetworks(loadedNetworks, current: loadedNetwork);
         await _refreshBalance();
       }
@@ -642,7 +663,6 @@ class _WalletShellState extends State<WalletShell> {
       networkServices.putIfAbsent(network.id, () => _makeService(network));
     }
     final nextCurrent = byId[current?.id] ?? byId.values.firstOrNull;
-    networkService = networkServices[nextCurrent?.id];
     if (!mounted) return;
     _updateView(() {
       enabledNetworks = List.unmodifiable(byId.values);
@@ -657,6 +677,8 @@ class _WalletShellState extends State<WalletShell> {
       isRefreshing = false;
       balanceWei = balancesByNetwork[nextCurrent?.id];
       lastTxHash = null;
+      lastTxNetwork = null;
+      lastTxUncertain = false;
       walletError = null;
     });
   }
@@ -689,14 +711,9 @@ class _WalletShellState extends State<WalletShell> {
 
   Future<void> _clearNetwork() => _selectNetworks(const []);
 
-  String _newMnemonicName() {
-    final count = portfolio.groups
-        .where((g) => g.kind == WalletKind.mnemonic)
-        .length;
-    return count == 0
-        ? tr(context, MessageCode.msgMainWallet)
-        : tr(context, MessageCode.msgWalletMore, [count + 1]);
-  }
+  String _newMnemonicName(int number) => number == 1
+      ? tr(context, MessageCode.msgMainWallet)
+      : tr(context, MessageCode.msgWalletMore, [number]);
 
   String _newPrivateKeyName(int number) =>
       tr(context, MessageCode.msgPrivateKeyAccount, [number]);
@@ -706,7 +723,7 @@ class _WalletShellState extends State<WalletShell> {
     try {
       final creation = await vault.prepareNewWallet();
       if (!mounted) return;
-      final allowCancel = portfolio.groups.isNotEmpty;
+      final allowCancel = portfolio.groupCount > 0;
       final confirmed = await showWalletPanel<bool>(
         context: context,
         width: 640,
@@ -721,7 +738,7 @@ class _WalletShellState extends State<WalletShell> {
       if (confirmed != true) return;
       await vault.saveRecoveryPhrase(
         creation.mnemonic,
-        name: _newMnemonicName(),
+        nameForWallet: _newMnemonicName,
         accountName: _firstAccountName,
       );
       await _reloadPortfolio(showAssets: true);
@@ -740,7 +757,7 @@ class _WalletShellState extends State<WalletShell> {
     try {
       await vault.importWallet(
         mnemonic,
-        name: _newMnemonicName(),
+        nameForWallet: _newMnemonicName,
         accountName: _firstAccountName,
       );
       await _reloadPortfolio(showAssets: true);
@@ -780,15 +797,34 @@ class _WalletShellState extends State<WalletShell> {
     }
   }
 
+  bool _batchImportOpen = false;
+
   Future<void> _importBatchWallets() async {
+    if (_batchImportOpen) return;
+    _batchImportOpen = true;
     try {
       final picked = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['csv', 'tsv', 'txt'],
-        withData: true,
+        withData: !vault.supportsOmniVaultImport,
       );
       if (!mounted || picked == null || picked.files.isEmpty) return;
       final file = picked.files.single;
+      if (vault.supportsOmniVaultImport && file.path != null) {
+        final result = await showWalletPanel<_OmniPanelResult>(
+          context: context,
+          width: 760,
+          dismissible: false,
+          builder: (_) => _OmniVaultImportPanel(
+            theme: theme,
+            vault: vault,
+            path: file.path!,
+            accountName: _firstAccountName,
+            onCommitted: _applyOmniImport,
+          ),
+        );
+        if (!mounted || result != _OmniPanelResult.legacy) return;
+      }
       final content = file.bytes == null
           ? (file.path == null ? null : await File(file.path!).readAsString())
           : utf8.decode(file.bytes!);
@@ -811,7 +847,7 @@ class _WalletShellState extends State<WalletShell> {
         nameForWallet: _newPrivateKeyName,
         accountName: _firstAccountName,
       );
-      final loaded = await vault.loadPortfolio();
+      final loaded = await vault.loadWalletSummary();
       if (!mounted) return;
       _applyPortfolio(loaded);
       final failures = result.errors.length;
@@ -849,6 +885,26 @@ class _WalletShellState extends State<WalletShell> {
       }
     } catch (error) {
       if (mounted) _showMessage(walletMessage(error));
+    } finally {
+      _batchImportOpen = false;
+    }
+  }
+
+  Future<void> _applyOmniImport(OmniImportCommit result) async {
+    if (result.initialNetworkId case final id?) {
+      _applyPortfolio(result.portfolio);
+      final network = _networkForId(id);
+      if (network == null) return;
+      // Select the chain without an RPC request. Normal asset refresh remains available.
+      final networks = {
+        for (final enabled in [...enabledNetworks, network])
+          enabled.id: enabled,
+      }.values.toList();
+      _configureNetworks(networks, current: network);
+      await vault.saveSelectedNetworks(networks, current: network);
+      await vault.acknowledgeImportNetwork(id);
+    } else {
+      _updateView(() => portfolio = result.portfolio);
     }
   }
 
@@ -872,7 +928,13 @@ class _WalletShellState extends State<WalletShell> {
       'chainid',
       'chain id',
     ]);
-    final keyIndex = findColumn(['私钥', 'privatekey', 'private key', 'key']);
+    final keyIndex = findColumn([
+      '私钥',
+      'privatekey',
+      'private key',
+      if (vault.supportsOmniVaultImport) 'private_key',
+      'key',
+    ]);
     final start = chainIndex >= 0 && keyIndex >= 0 ? 1 : 0;
     if (chainIndex < 0 || keyIndex < 0) return const [];
     final rows = <WalletImportRow>[];
@@ -991,26 +1053,18 @@ class _WalletShellState extends State<WalletShell> {
   }
 
   void _goToAssets() {
+    if (_settingsDestination == null) return;
     FocusManager.instance.primaryFocus?.unfocus();
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    setState(() => _settingsDestination = null);
+    unawaited(refreshQuotes());
   }
 
-  Future<void> _openSettings({
+  void _openSettings({
     SettingsDestination initial = SettingsDestination.directory,
-  }) async {
-    if (settingsOpen) return;
-    settingsOpen = true;
-    try {
-      await Navigator.of(context).push<void>(
-        MaterialPageRoute(
-          settings: const RouteSettings(name: '/settings'),
-          builder: (_) => _SettingsHub(shell: this, initial: initial),
-        ),
-      );
-    } finally {
-      settingsOpen = false;
-      if (mounted) unawaited(refreshQuotes());
-    }
+  }) {
+    if (_settingsDestination != null) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() => _settingsDestination = initial);
   }
 
   Future<void> _showAssetDetails(AssetRow asset) async {
@@ -1019,14 +1073,15 @@ class _WalletShellState extends State<WalletShell> {
       await _showNetworkSelector();
       return;
     }
-    await showWalletPanel<void>(
+    final originalAccount = account!;
+    final action = await showWalletPanel<WalletAction>(
       context: context,
       width: 560,
       builder: (panelContext) => AssetDetailsPanel(
         theme: theme,
         asset: asset,
         network: network,
-        address: account!.addressFor(network),
+        address: originalAccount.addressFor(network),
         onRefresh: () async {
           await _refreshBalance();
           return assets.firstWhere((a) => a.networkId == network.id);
@@ -1035,27 +1090,31 @@ class _WalletShellState extends State<WalletShell> {
           Navigator.pop(panelContext);
           await _selectNetworks(enabledNetworks, current: network);
         },
-        onAction: (action) async {
-          final originalAccount = account;
-          Navigator.pop(panelContext);
-          await _selectNetworks(
-            enabledNetworks,
-            current: network,
-            waitForBalance: false,
-          );
-          if (mounted &&
-              account == originalAccount &&
-              selectedNetwork?.id == network.id) {
-            showAction(action);
-          }
-        },
+        onAction: (action) async => closeWalletPanel(panelContext, action),
       ),
     );
+    if (!mounted || action == null || account != originalAccount) return;
+    if (action == WalletAction.send) {
+      await _showSendSheet(network: network);
+    } else {
+      await _selectNetworks(
+        enabledNetworks,
+        current: network,
+        waitForBalance: false,
+      );
+      if (!mounted ||
+          account != originalAccount ||
+          selectedNetwork?.id != network.id) {
+        return;
+      }
+      showAction(action, network: network);
+    }
   }
 
-  void showAction(WalletAction action) {
+  void showAction(WalletAction action, {EvmNetwork? network}) {
+    final chain = network ?? selectedNetwork;
     if (action == WalletAction.send) {
-      _showSendSheet();
+      unawaited(_showSendSheet(network: chain));
       return;
     }
     if (action == WalletAction.swap) {
@@ -1070,16 +1129,14 @@ class _WalletShellState extends State<WalletShell> {
         action: action,
         theme: theme,
         walletName: walletName,
-        network: selectedNetwork,
+        network: chain,
         address:
-            account?.addressFor(selectedNetwork) ??
+            account?.addressFor(chain) ??
             tr(context, MessageCode.msgUnavailable),
         onConfirm: () {
           Navigator.of(context).pop();
           if (action == WalletAction.receive && account != null) {
-            Clipboard.setData(
-              ClipboardData(text: account!.addressFor(selectedNetwork)),
-            );
+            Clipboard.setData(ClipboardData(text: account!.addressFor(chain)));
             _showMessage(WalletMessage(MessageCode.msgAddressCopied));
           }
         },
@@ -1087,36 +1144,98 @@ class _WalletShellState extends State<WalletShell> {
     );
   }
 
-  Future<void> _showSendSheet() async {
+  Future<void> _chooseSendAsset() async {
+    if (enabledNetworks.isEmpty) {
+      await _showNetworkSelector();
+      if (!mounted || enabledNetworks.isEmpty) return;
+    }
+    final holdings =
+        portfolioPositions.where((holding) => !holding.spam).toList()
+          ..sort((a, b) {
+            final aFunded = a.known && a.units! > BigInt.zero;
+            final bFunded = b.known && b.units! > BigInt.zero;
+            if (aFunded != bFunded) return aFunded ? -1 : 1;
+            final chain = a.network.name.compareTo(b.network.name);
+            if (chain != 0) return chain;
+            return a.symbol.compareTo(b.symbol);
+          });
+    final holding = await showWalletPanel<PortfolioHolding>(
+      context: context,
+      width: 520,
+      builder: (_) => _SendAssetPanel(theme: theme, holdings: holdings),
+    );
+    if (!mounted ||
+        holding == null ||
+        account?.addressFor(holding.network) != holding.address) {
+      return;
+    }
+    await _showSendSheet(network: holding.network, token: holding.token);
+  }
+
+  Future<void> _showSendSheet({
+    required EvmNetwork? network,
+    TokenDefinition? token,
+  }) async {
     final currentAccount = account;
     if (currentAccount == null) return;
-    final network = selectedNetwork;
-    final service = networkService;
+    final service = networkServices[network?.id];
     if (network == null || service == null) {
       _showMessage(WalletMessage(MessageCode.msgSelectANetworkBeforeSending));
       return;
     }
+    void checkAccountAndNetwork() {
+      if (account != currentAccount || networkServices[network.id] != service) {
+        throw const WalletInputException(
+          MessageCode.msgTheAccountHasChangedReopenThisAsset,
+        );
+      }
+    }
+
     final txHash = await showWalletPanel<String>(
       context: context,
+      dismissible: false,
       builder: (context) => SendSheet(
         theme: theme,
         network: network,
-        balanceWei: balanceWei,
-        onSend: (recipient, amount) => service.sendNative(
-          account: currentAccount,
-          recipient: recipient,
-          amountWei: network.parseAmount(amount),
-        ),
+        token: token,
+        fromAddress: currentAccount.addressFor(network),
+        balanceWei: token == null
+            ? balancesByNetwork[network.id]
+            : tokenUnits[token.key],
+        onPrepare: (recipient, amount) {
+          checkAccountAndNetwork();
+          return service.prepareTransfer(
+            account: currentAccount,
+            recipient: recipient,
+            amount: amount,
+            token: token,
+          );
+        },
+        onConfirmTransfer: (transfer) async {
+          checkAccountAndNetwork();
+          try {
+            return await transfer.broadcast();
+          } on RpcBroadcastException catch (error) {
+            if (mounted && account == currentAccount) {
+              _updateView(() {
+                lastTxHash = error.transactionHash;
+                lastTxNetwork = network;
+                lastTxUncertain = true;
+              });
+            }
+            rethrow;
+          }
+        },
       ),
     );
-    if (!mounted || txHash == null) return;
-    _updateView(() => lastTxHash = txHash);
-    await _refreshBalance();
-    if (mounted) {
-      _showMessage(
-        WalletMessage(MessageCode.msgTransactionBroadcast, [txHash]),
-      );
-    }
+    if (!mounted || txHash == null || account != currentAccount) return;
+    _updateView(() {
+      lastTxHash = txHash;
+      lastTxNetwork = network;
+      lastTxUncertain = false;
+    });
+    _showMessage(WalletMessage(MessageCode.msgTransactionBroadcast, [txHash]));
+    unawaited(_refreshBalance());
   }
 
   void _applyPortfolio(WalletPortfolio loaded, {bool showAssets = false}) {
@@ -1141,6 +1260,8 @@ class _WalletShellState extends State<WalletShell> {
       pendingTokens.clear();
       isRefreshing = false;
       lastTxHash = null;
+      lastTxNetwork = null;
+      lastTxUncertain = false;
       walletError = null;
     });
     if (showAssets) _goToAssets();
@@ -1150,7 +1271,7 @@ class _WalletShellState extends State<WalletShell> {
     bool showAssets = false,
     bool useAccountNetwork = false,
   }) async {
-    final loaded = await vault.loadPortfolio();
+    final loaded = await vault.loadWalletSummary();
     if (!mounted) return;
     _applyPortfolio(loaded, showAssets: showAssets);
     final network = useAccountNetwork
@@ -1182,7 +1303,10 @@ class _WalletShellState extends State<WalletShell> {
       case WalletManagerAction.importOptions:
         final choice = await showWalletPanel<WalletManagerAction>(
           context: context,
-          builder: (_) => WalletImportOptions(theme: theme),
+          builder: (_) => WalletImportOptions(
+            theme: theme,
+            supportsOmniVault: vault.supportsOmniVaultImport,
+          ),
         );
         if (mounted && choice != null) await _runWalletAction(choice);
       case WalletManagerAction.selected:
@@ -1246,138 +1370,174 @@ class _WalletShellState extends State<WalletShell> {
             onImport: _importWallet,
             onImportPrivateKey: _importPrivateKey,
             onBatchImport: _importBatchWallets,
+            supportsOmniVault: vault.supportsOmniVaultImport,
             onToggleStyle: widget.onToggleStyle,
           ),
         ),
       );
     }
     final layout = WalletLayout.of(context);
-    return Scaffold(
-      body: SafeArea(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (!layout.mobile)
-              WalletRail(
-                theme: theme,
-                selected: WalletPage.assets,
-                onSelect: (page) {
-                  if (page == WalletPage.settings) _openSettings();
-                },
-              ),
-            Expanded(
-              child: Column(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      layout.gutter,
-                      layout.gutter,
-                      layout.gutter,
-                      0,
+    final settings = _settingsDestination;
+    return PopScope(
+      canPop: settings == null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _settingsHub.currentState?.back();
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (!layout.mobile)
+                WalletRail(
+                  theme: theme,
+                  selected: settings == null
+                      ? WalletPage.assets
+                      : WalletPage.settings,
+                  onSelect: (page) {
+                    if (page == WalletPage.settings) {
+                      _openSettings();
+                    } else {
+                      _goToAssets();
+                    }
+                  },
+                )
+              else
+                const SizedBox.shrink(),
+              Expanded(
+                child: IndexedStack(
+                  index: settings == null ? 0 : 1,
+                  sizing: StackFit.expand,
+                  children: [
+                    ExcludeFocus(
+                      excluding: settings != null,
+                      child: _buildAssets(layout),
                     ),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1280),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: WalletHeader(
-                            theme: theme,
-                            walletName: walletName,
-                            address: account!.addressFor(selectedNetwork),
-                            linkedAddresses: [
-                              account!.checksumAddress,
-                              account!.tronAddress,
-                            ],
-                            pageTitle: tr(context, MessageCode.msgAssets),
-                            networkLabel:
-                                selectedNetwork?.name ??
-                                tr(context, MessageCode.msgChooseNetwork),
-                            onWalletTap: selectWallet,
-                            onSettings: _openSettings,
-                          ),
-                        ),
+                    if (settings != null)
+                      _SettingsHub(
+                        key: _settingsHub,
+                        shell: this,
+                        initial: settings,
+                        onExit: _goToAssets,
                       ),
-                    ),
-                  ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      controller: assetScroll,
-                      padding: EdgeInsets.all(layout.gutter),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1280),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              if (AppSettingsScope.of(context).saveFailed)
-                                Padding(
-                                  padding: EdgeInsets.only(bottom: 12),
-                                  child: Text(
-                                    tr(
-                                      context,
-                                      MessageCode
-                                          .msgPreferencesCouldNotBeSavedPreviousSettingsMay,
-                                    ),
-                                  ),
-                                ),
-                              if (lastTxHash != null)
-                                WalletCard(
-                                  theme: theme,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        tr(
-                                          context,
-                                          MessageCode
-                                              .msgMostRecentlyBroadcastTransaction,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      SelectableText(
-                                        localized(context, lastTxHash!),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              AssetsPage(
-                                theme: theme,
-                                positions: portfolioPositions,
-                                quotes: effectiveQuotes,
-                                networks: enabledNetworks,
-                                addresses: {
-                                  AddressScope.evm: account!.checksumAddress,
-                                  AddressScope.tron: account!.tronAddress,
-                                },
-                                refreshing: isRefreshing || quoteLoading,
-                                onRefresh: refreshAllAssets,
-                                onHoldingTap: showPortfolioHolding,
-                                onManageNetworks: _showNetworkSelector,
-                                onManageTokens: _manageTokens,
-                                onDiscovery: openIndexerServices,
-                                onDisplaySettings: () => _openSettings(
-                                  initial: SettingsDestination.display,
-                                ),
-                                discovery: discoverySnapshots,
-                                discoveryConfigured: enabledNetworks.any(
-                                  (n) =>
-                                      indexerSettings.forNetwork(n.id) != null,
-                                ),
-                                onContinueDiscovery: continueDiscovery,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+
+  Widget _buildAssets(WalletLayout layout) => Column(
+    children: [
+      Padding(
+        padding: EdgeInsets.fromLTRB(
+          layout.gutter,
+          layout.gutter,
+          layout.gutter,
+          0,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1280),
+            child: SizedBox(
+              width: double.infinity,
+              child: WalletHeader(
+                theme: theme,
+                walletName: walletName,
+                address: account!.addressFor(selectedNetwork),
+                linkedAddresses: [
+                  account!.checksumAddress,
+                  account!.tronAddress,
+                ],
+                pageTitle: tr(context, MessageCode.msgAssets),
+                networkLabel:
+                    selectedNetwork?.name ??
+                    tr(context, MessageCode.msgChooseNetwork),
+                onWalletTap: selectWallet,
+                onSettings: _openSettings,
+              ),
+            ),
+          ),
+        ),
+      ),
+      Expanded(
+        child: SingleChildScrollView(
+          controller: assetScroll,
+          padding: EdgeInsets.all(layout.gutter),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1280),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (AppSettingsScope.of(context).saveFailed)
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        tr(
+                          context,
+                          MessageCode
+                              .msgPreferencesCouldNotBeSavedPreviousSettingsMay,
+                        ),
+                      ),
+                    ),
+                  if (lastTxHash != null)
+                    WalletCard(
+                      theme: theme,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            tr(
+                              context,
+                              lastTxUncertain
+                                  ? MessageCode
+                                        .msgBroadcastStatusIsUncertainCheckTheTransactionHash
+                                  : MessageCode
+                                        .msgMostRecentlyBroadcastTransaction,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          SelectableText(lastTxHash!),
+                          if (lastTxNetwork case final chain?)
+                            _TransactionLink(network: chain, hash: lastTxHash!),
+                        ],
+                      ),
+                    ),
+                  AssetsPage(
+                    theme: theme,
+                    positions: portfolioPositions,
+                    quotes: effectiveQuotes,
+                    networks: enabledNetworks,
+                    addresses: {
+                      AddressScope.evm: account!.checksumAddress,
+                      AddressScope.tron: account!.tronAddress,
+                    },
+                    refreshing: isRefreshing || quoteLoading,
+                    onRefresh: refreshAllAssets,
+                    onHoldingTap: showPortfolioHolding,
+                    onSend: _chooseSendAsset,
+                    onWalletBalances: _showWalletBalances,
+                    onManageNetworks: _showNetworkSelector,
+                    onManageTokens: _manageTokens,
+                    onDiscovery: openIndexerServices,
+                    onDisplaySettings: () =>
+                        _openSettings(initial: SettingsDestination.display),
+                    discovery: discoverySnapshots,
+                    discoveryConfigured: enabledNetworks.any(
+                      (n) => indexerSettings.forNetwork(n.id) != null,
+                    ),
+                    onContinueDiscovery: continueDiscovery,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
 }

@@ -10,6 +10,8 @@ class AssetsPage extends StatefulWidget {
     required this.refreshing,
     required this.onRefresh,
     required this.onHoldingTap,
+    required this.onSend,
+    required this.onWalletBalances,
     required this.onManageNetworks,
     required this.onManageTokens,
     required this.onDiscovery,
@@ -28,7 +30,9 @@ class AssetsPage extends StatefulWidget {
   final Map<int, DiscoverySnapshot> discovery;
   final Future<void> Function() onRefresh, onContinueDiscovery;
   final ValueChanged<PortfolioHolding> onHoldingTap;
-  final VoidCallback onManageNetworks,
+  final VoidCallback onSend,
+      onWalletBalances,
+      onManageNetworks,
       onManageTokens,
       onDiscovery,
       onDisplaySettings;
@@ -433,6 +437,31 @@ class _AssetsPageState extends State<AssetsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              FilledButton.icon(
+                key: const ValueKey('portfolio-send'),
+                onPressed: widget.onSend,
+                icon: const Icon(Icons.north_east, size: 18),
+                label: Text(tr(context, MessageCode.msgSend)),
+              ),
+              OutlinedButton.icon(
+                key: const ValueKey('portfolio-wallet-balances'),
+                onPressed: widget.onWalletBalances,
+                icon: const Icon(
+                  Icons.account_balance_wallet_outlined,
+                  size: 18,
+                ),
+                label: Text(AppLocalizations.of(context).walletBalancesTitle),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
         scopeSelectors(p, preferences),
         tools(p, preferences),
         if (searchOpen || searchController.text.isNotEmpty)
@@ -828,85 +857,111 @@ class PortfolioChainRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final h = holding;
+    final explorer = h.network.explorerAddress(h.address);
     return Material(
       color: theme.surface,
-      child: InkWell(
-        key: ValueKey('chain-holding-${h.key}'),
-        onTap: onTap,
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 68),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: theme.border)),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      h.network.name,
-                      style: TextStyle(
-                        color: theme.text,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      h.token == null
-                          ? shortAddress(h.address)
-                          : tokenRepresentation(context, h.token!),
-                      style: TextStyle(color: theme.muted, fontSize: 11),
-                    ),
-                    if (h.state != TokenState.ready)
-                      Text(
-                        localized(context, h.status),
-                        style: TextStyle(
-                          color: h.state == TokenState.failed
-                              ? theme.danger
-                              : theme.muted,
-                          fontSize: 11,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: theme.border)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: InkWell(
+                key: ValueKey('chain-holding-${h.key}'),
+                onTap: onTap,
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: 68),
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              h.network.name,
+                              style: TextStyle(
+                                color: theme.text,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Text(
+                              h.token == null
+                                  ? shortAddress(h.address)
+                                  : tokenRepresentation(context, h.token!),
+                              style: TextStyle(
+                                color: theme.muted,
+                                fontSize: 11,
+                              ),
+                            ),
+                            if (h.state != TokenState.ready)
+                              Text(
+                                localized(context, h.status),
+                                style: TextStyle(
+                                  color: h.state == TokenState.failed
+                                      ? theme.danger
+                                      : theme.muted,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            if (h.network.isTestnet)
+                              Text(
+                                tr(context, MessageCode.msgTestnet),
+                                style: TextStyle(
+                                  color: theme.warning,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            if (h.spam)
+                              Text(
+                                tr(context, MessageCode.portfolioSpam),
+                                style: TextStyle(
+                                  color: theme.warning,
+                                  fontSize: 11,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                    if (h.network.isTestnet)
-                      Text(
-                        tr(context, MessageCode.msgTestnet),
-                        style: TextStyle(color: theme.warning, fontSize: 11),
+                      const SizedBox(width: 12),
+                      Flexible(
+                        fit: FlexFit.tight,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              displayQuantity(context, h.quantityText),
+                              style: TextStyle(
+                                color: theme.text,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (detailed)
+                              Text(
+                                _usd(context, h.value(quotes)),
+                                style: TextStyle(
+                                  color: theme.muted,
+                                  fontSize: 11,
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
-                    if (h.spam)
-                      Text(
-                        tr(context, MessageCode.portfolioSpam),
-                        style: TextStyle(color: theme.warning, fontSize: 11),
-                      ),
-                  ],
+                      Icon(Icons.chevron_right, color: theme.muted, size: 18),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Flexible(
-                fit: FlexFit.tight,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      displayQuantity(context, h.quantityText),
-                      style: TextStyle(
-                        color: theme.text,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (detailed)
-                      Text(
-                        _usd(context, h.value(quotes)),
-                        style: TextStyle(color: theme.muted, fontSize: 11),
-                      ),
-                  ],
-                ),
+            ),
+            if (explorer != null)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: 4),
+                child: _AddressExplorerButton(url: explorer, compact: true),
               ),
-              Icon(Icons.chevron_right, color: theme.muted, size: 18),
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -966,97 +1021,101 @@ class _AssetDetailsPanelState extends State<AssetDetailsPanel> {
     ),
   );
   @override
-  Widget build(BuildContext context) => WalletPanel(
-    theme: widget.theme,
-    title: tr(context, MessageCode.msgAssetDetails, [asset.symbol]),
-    footer: Wrap(
-      spacing: 12,
-      runSpacing: 8,
-      children: [
-        FilledButton.icon(
-          onPressed: () => widget.onAction(WalletAction.send),
-          icon: const Icon(Icons.north_east, size: 18),
-          label: Text(tr(context, MessageCode.msgSend)),
-        ),
-        OutlinedButton.icon(
-          onPressed: () => widget.onAction(WalletAction.receive),
-          icon: const Icon(Icons.south_west, size: 18),
-          label: Text(tr(context, MessageCode.msgReceive)),
-        ),
-        TextButton(
-          onPressed: widget.onActivate,
-          child: Text(tr(context, MessageCode.msgUseThisNetwork)),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          displayQuantity(context, asset.amount),
-          style: TextStyle(
-            color: widget.theme.text,
-            fontSize: 30,
-            fontWeight: FontWeight.w700,
+  Widget build(BuildContext context) {
+    final explorer = widget.network.explorerAddress(widget.address);
+    return WalletPanel(
+      theme: widget.theme,
+      title: tr(context, MessageCode.msgAssetDetails, [asset.symbol]),
+      footer: Wrap(
+        spacing: 12,
+        runSpacing: 8,
+        children: [
+          FilledButton.icon(
+            onPressed: () => widget.onAction(WalletAction.send),
+            icon: const Icon(Icons.north_east, size: 18),
+            label: Text(tr(context, MessageCode.msgSend)),
           ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          localized(
-            context,
-            refreshing
-                ? tr(context, MessageCode.msgSyncing)
-                : asset.error ?? asset.change,
+          OutlinedButton.icon(
+            onPressed: () => widget.onAction(WalletAction.receive),
+            icon: const Icon(Icons.south_west, size: 18),
+            label: Text(tr(context, MessageCode.msgReceive)),
           ),
-          style: TextStyle(
-            color: asset.error == null
-                ? widget.theme.muted
-                : widget.theme.danger,
-            fontSize: 13,
-          ),
-        ),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton.icon(
-            onPressed: refreshing ? null : _refresh,
-            icon: const Icon(Icons.refresh, size: 16),
-            label: Text(tr(context, MessageCode.msgRefreshBalance)),
-          ),
-        ),
-        _info(
-          tr(context, MessageCode.msgNetwork),
-          '${widget.network.name} · ${widget.network.identifierLabel}',
-        ),
-        _info(tr(context, MessageCode.msgWalletAddress), widget.address),
-        _info(
-          tr(context, MessageCode.msgRpcUrl),
-          widget.network.rpcUrls.join('\n'),
-        ),
-        if (widget.network.explorerUrl.isNotEmpty) ...[
-          _info(
-            tr(context, MessageCode.msgBlockExplorer),
-            widget.network.explorerUrl,
-          ),
-          TextButton.icon(
-            onPressed: () async {
-              final url =
-                  '${widget.network.explorerUrl.replaceFirst(RegExp(r'/$'), '')}/address/${widget.address}';
-              await Clipboard.setData(ClipboardData(text: url));
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      tr(context, MessageCode.msgExplorerLinkCopied),
-                    ),
-                  ),
-                );
-              }
-            },
-            icon: const Icon(Icons.copy, size: 16),
-            label: Text(tr(context, MessageCode.msgCopyExplorerLink)),
+          if (explorer != null) _AddressExplorerButton(url: explorer),
+          TextButton(
+            onPressed: widget.onActivate,
+            child: Text(tr(context, MessageCode.msgUseThisNetwork)),
           ),
         ],
-      ],
-    ),
-  );
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            displayQuantity(context, asset.amount),
+            style: TextStyle(
+              color: widget.theme.text,
+              fontSize: 30,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            localized(
+              context,
+              refreshing
+                  ? tr(context, MessageCode.msgSyncing)
+                  : asset.error ?? asset.change,
+            ),
+            style: TextStyle(
+              color: asset.error == null
+                  ? widget.theme.muted
+                  : widget.theme.danger,
+              fontSize: 13,
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: refreshing ? null : _refresh,
+              icon: const Icon(Icons.refresh, size: 16),
+              label: Text(tr(context, MessageCode.msgRefreshBalance)),
+            ),
+          ),
+          _info(
+            tr(context, MessageCode.msgNetwork),
+            '${widget.network.name} · ${widget.network.identifierLabel}',
+          ),
+          _info(tr(context, MessageCode.msgWalletAddress), widget.address),
+          _info(
+            tr(context, MessageCode.msgRpcUrl),
+            widget.network.rpcUrls.join('\n'),
+          ),
+          if (explorer != null) ...[
+            _info(
+              tr(context, MessageCode.msgBlockExplorer),
+              widget.network.explorerUrl,
+            ),
+            TextButton.icon(
+              onPressed: () async {
+                await Clipboard.setData(
+                  ClipboardData(text: explorer.toString()),
+                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        tr(context, MessageCode.msgExplorerLinkCopied),
+                      ),
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.copy, size: 16),
+              label: Text(tr(context, MessageCode.msgCopyExplorerLink)),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }

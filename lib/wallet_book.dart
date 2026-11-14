@@ -13,15 +13,27 @@ class WalletEntry {
     required this.groupName,
     required this.kind,
     required this.index,
-    required this.account,
+    WalletAccount? account,
+    String? evmAddress,
+    String? tronAddress,
     this.preferredNetworkId,
     required this.groupAccountCount,
-  });
+  }) : _account = account,
+       _evmAddress = evmAddress,
+       _tronAddress = tronAddress;
   final String id, groupId, name, groupName;
   final WalletKind kind;
   final int index, groupAccountCount;
   final int? preferredNetworkId;
-  final WalletAccount account;
+  final WalletAccount? _account;
+  final String? _evmAddress, _tronAddress;
+  WalletAccount get account =>
+      _account ??
+      (throw StateError('Signing material is not loaded for this account'));
+  String addressFor(EvmNetwork? network) => network?.isTron == true
+      ? (_tronAddress ?? account.tronAddress)
+      : (_evmAddress ?? account.checksumAddress);
+
   String get displayName =>
       groupAccountCount == 1 ? groupName : '$groupName · $name';
   String? get derivationPath =>
@@ -40,23 +52,45 @@ class WalletGroup {
     required this.kind,
     required this.accounts,
     this.preferredNetworkId,
+    this.hasAliases = false,
   });
   final String id, name;
   final WalletKind kind;
   final int? preferredNetworkId;
+  final bool hasAliases;
   final List<WalletEntry> accounts;
 }
 
 class WalletPortfolio {
-  const WalletPortfolio({required this.groups, this.activeAccountId});
+  const WalletPortfolio({
+    required this.groups,
+    this.activeAccountId,
+    WalletEntry? selected,
+    int? groupCount,
+    int? accountCount,
+  }) : _selected = selected,
+       _groupCount = groupCount,
+       _accountCount = accountCount;
   final List<WalletGroup> groups;
   final String? activeAccountId;
+  final WalletEntry? _selected;
+  final int? _groupCount, _accountCount;
+  int get groupCount => _groupCount ?? groups.length;
+  int get accountCount =>
+      _accountCount ??
+      groups.fold(0, (sum, group) => sum + group.accounts.length);
   List<WalletEntry> get accounts => [
     for (final group in groups) ...group.accounts,
   ];
-  WalletEntry? get selected =>
-      accounts.where((a) => a.id == activeAccountId).firstOrNull ??
-      accounts.firstOrNull;
+  WalletEntry? get selected {
+    if (_selected != null) return _selected;
+    for (final group in groups) {
+      for (final entry in group.accounts) {
+        if (entry.id == activeAccountId) return entry;
+      }
+    }
+    return groups.firstOrNull?.accounts.firstOrNull;
+  }
 }
 
 class _StoredAccount {
@@ -146,7 +180,7 @@ extension WalletManagement on WalletVault {
     return value;
   }
 
-  Future<_WalletBook> _loadBook() async {
+  Future<_WalletBook> _loadBook({bool persistMigration = true}) async {
     final raw = await _store.read(WalletVault.walletBookKey);
     if (raw != null) {
       try {
@@ -255,7 +289,7 @@ extension WalletManagement on WalletVault {
       groups: groups,
       activeAccountId: selected?.entryId(0),
     );
-    if (groups.isNotEmpty) {
+    if (persistMigration && groups.isNotEmpty) {
       await _store.write(WalletVault.walletBookKey, jsonEncode(book.toJson()));
     }
     return book;
@@ -277,16 +311,66 @@ extension WalletManagement on WalletVault {
     return operation;
   }
 
-  Future<WalletPortfolio> loadPortfolio() =>
-      _changeBook((book) => book.snapshot());
+  Future<WalletPortfolio> loadPortfolio() => _database != null
+      ? _macFullPortfolio()
+      : _changeBook((book) => book.snapshot());
+
+  Future<WalletPortfolio> loadWalletSummary() =>
+      _database != null ? _macSummary() : loadPortfolio();
+
+  /// Reads wallet addresses in book order without selecting or unlocking accounts.
+  Stream<WalletEntry> walletBalanceEntries() async* {
+    if (_database != null) {
+      WalletPageCursor? cursor;
+      do {
+        final page = await loadWalletPage(after: cursor);
+        for (final group in page.groups) {
+          for (final entry in group.accounts) {
+            yield entry;
+          }
+        }
+        cursor = page.next;
+      } while (cursor != null);
+      return;
+    }
+
+    final book = await _changeBook((book) => book);
+    for (final group in book.groups) {
+      for (final account in group.accounts) {
+        final owner = group.account(account.index);
+        yield WalletEntry(
+          id: group.entryId(account.index),
+          groupId: group.id,
+          name: account.name,
+          groupName: group.name,
+          kind: group.kind,
+          index: account.index,
+          evmAddress: owner.checksumAddress,
+          tronAddress: owner.tronAddress,
+          preferredNetworkId: group.networkId,
+          groupAccountCount: group.accounts.length,
+        );
+      }
+    }
+  }
 
   Future<WalletPortfolio> addMnemonicWallet(
     String mnemonic, {
     String? name,
     String? accountName,
+    String Function(int)? nameForWallet,
   }) {
     final phrase = WalletVault._normalizeMnemonic(mnemonic);
     final account = WalletAccount.fromMnemonic(phrase);
+    if (_database != null) {
+      return _macAddMnemonic(
+        phrase,
+        account,
+        name: name,
+        accountName: accountName,
+        nameForWallet: nameForWallet,
+      );
+    }
     return _changeBook((book) {
       final existing = book.groups
           .where(
@@ -303,7 +387,11 @@ extension WalletManagement on WalletVault {
             .length;
         final group = _StoredGroup(
           id: _newWalletId(),
-          name: _checkedName(name ?? (count == 0 ? '主钱包' : '钱包 ${count + 1}')),
+          name: _checkedName(
+            name ??
+                nameForWallet?.call(count + 1) ??
+                (count == 0 ? '主钱包' : '钱包 ${count + 1}'),
+          ),
           kind: WalletKind.mnemonic,
           secret: phrase,
           accounts: [_StoredAccount(0, _checkedName(accountName ?? '账户 1'))],
@@ -322,6 +410,15 @@ extension WalletManagement on WalletVault {
     String? accountName,
   }) async {
     final networks = await loadNetworks();
+    if (_database != null) {
+      return _macImportPrivateRows(
+        rows,
+        networks,
+        selectImported: selectImported,
+        nameForWallet: nameForWallet,
+        accountName: accountName,
+      );
+    }
     return _changeBook((book) {
       final seen = {
         for (final g in book.groups.where(
@@ -373,57 +470,71 @@ extension WalletManagement on WalletVault {
   }
 
   Future<WalletPortfolio> addDerivedAccount(String groupId, {String? name}) =>
-      _changeBook((book) {
-        final group = book.groups.where((g) => g.id == groupId).firstOrNull;
-        if (group == null || group.kind != WalletKind.mnemonic) {
-          throw const WalletInputException(
-            MessageCode.msgOnlyRecoveryPhraseWalletsCanDeriveAdditionalAccounts,
+      _database != null
+      ? _macAddDerived(groupId, name)
+      : _changeBook((book) {
+          final group = book.groups.where((g) => g.id == groupId).firstOrNull;
+          if (group == null || group.kind != WalletKind.mnemonic) {
+            throw const WalletInputException(
+              MessageCode
+                  .msgOnlyRecoveryPhraseWalletsCanDeriveAdditionalAccounts,
+            );
+          }
+          final next =
+              group.accounts
+                  .map((a) => a.index)
+                  .reduce((a, b) => a > b ? a : b) +
+              1;
+          group.account(
+            next,
+          ); // Validate the derivation before changing persisted data.
+          group.accounts.add(
+            _StoredAccount(next, _checkedName(name ?? '账户 ${next + 1}')),
           );
-        }
-        final next =
-            group.accounts.map((a) => a.index).reduce((a, b) => a > b ? a : b) +
-            1;
-        group.account(
-          next,
-        ); // Validate the derivation before changing persisted data.
-        group.accounts.add(
-          _StoredAccount(next, _checkedName(name ?? '账户 ${next + 1}')),
-        );
-        book.activeAccountId = group.entryId(next);
-        return book.snapshot();
-      });
+          book.activeAccountId = group.entryId(next);
+          return book.snapshot();
+        });
 
-  Future<WalletPortfolio> selectAccount(String accountId) =>
-      _changeBook((book) {
-        if (!book.groups.any(
-          (g) => g.accounts.any((a) => g.entryId(a.index) == accountId),
-        )) {
-          throw const WalletInputException(MessageCode.msgAccountNotFound);
-        }
-        book.activeAccountId = accountId;
-        return book.snapshot();
-      });
+  Future<WalletPortfolio> selectAccount(String accountId) => _database != null
+      ? _macSummary('select', {'id': accountId})
+      : _changeBook((book) {
+          if (!book.groups.any(
+            (g) => g.accounts.any((a) => g.entryId(a.index) == accountId),
+          )) {
+            throw const WalletInputException(MessageCode.msgAccountNotFound);
+          }
+          book.activeAccountId = accountId;
+          return book.snapshot();
+        });
 
   Future<WalletPortfolio> renameWallet(String groupId, String name) =>
-      _changeBook((book) {
-        final group = book.groups.where((g) => g.id == groupId).firstOrNull;
-        if (group == null) {
-          throw const WalletInputException(MessageCode.msgWalletNotFound);
-        }
-        group.name = _checkedName(name);
-        return book.snapshot();
-      });
+      _database != null
+      ? _macSummary('rename', {'id': groupId, 'name': _checkedName(name)})
+      : _changeBook((book) {
+          final group = book.groups.where((g) => g.id == groupId).firstOrNull;
+          if (group == null) {
+            throw const WalletInputException(MessageCode.msgWalletNotFound);
+          }
+          group.name = _checkedName(name);
+          return book.snapshot();
+        });
 
   Future<WalletPortfolio> renameAccount(String accountId, String name) =>
-      _changeBook((book) {
-        for (final group in book.groups) {
-          for (final account in group.accounts) {
-            if (group.entryId(account.index) == accountId) {
-              account.name = _checkedName(name);
-              return book.snapshot();
+      _database != null
+      ? _macSummary('rename', {
+          'id': accountId,
+          'name': _checkedName(name),
+          'account': true,
+        })
+      : _changeBook((book) {
+          for (final group in book.groups) {
+            for (final account in group.accounts) {
+              if (group.entryId(account.index) == accountId) {
+                account.name = _checkedName(name);
+                return book.snapshot();
+              }
             }
           }
-        }
-        throw const WalletInputException(MessageCode.msgAccountNotFound);
-      });
+          throw const WalletInputException(MessageCode.msgAccountNotFound);
+        });
 }

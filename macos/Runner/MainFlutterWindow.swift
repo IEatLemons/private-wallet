@@ -12,6 +12,7 @@ class MainFlutterWindow: NSWindow {
     self.center()
 
     RegisterGeneratedPlugins(registry: flutterViewController)
+    MacWalletDatabase.register(with: flutterViewController.engine.binaryMessenger)
 
     super.awakeFromNib()
   }

@@ -146,7 +146,7 @@ final settingsEntries = <SettingsEntry>[
     Icons.upload_file_outlined,
     category: SettingsDestination.wallets,
     action: SettingsAction.importFile,
-    aliases: 'CSV TSV 批量 檔案 文件',
+    aliases: 'OmniVault CSV TSV 批量 檔案 文件',
   ),
   SettingsEntry(
     'display',
@@ -348,9 +348,15 @@ class _SettingsLocation {
 }
 
 class _SettingsHub extends StatefulWidget {
-  const _SettingsHub({required this.shell, required this.initial});
+  const _SettingsHub({
+    required this.shell,
+    required this.initial,
+    required this.onExit,
+    super.key,
+  });
   final _WalletShellState shell;
   final SettingsDestination initial;
+  final VoidCallback onExit;
   @override
   State<_SettingsHub> createState() => _SettingsHubState();
 }
@@ -359,8 +365,8 @@ class _SettingsHubState extends State<_SettingsHub> {
   final navigator = GlobalKey<NavigatorState>();
   final observer = _SettingsObserver();
   _WalletShellState get shell => widget.shell;
-  final location = ValueNotifier<_SettingsLocation>(
-    const _SettingsLocation(SettingsDestination.directory),
+  late final location = ValueNotifier<_SettingsLocation>(
+    _SettingsLocation(widget.initial),
   );
   @override
   void dispose() {
@@ -368,14 +374,37 @@ class _SettingsHubState extends State<_SettingsHub> {
     super.dispose();
   }
 
-  MaterialPageRoute<void> route(_SettingsLocation target) =>
-      MaterialPageRoute<void>(
-        settings: RouteSettings(
-          name: '/settings/${target.destination.name}',
-          arguments: target,
-        ),
-        builder: (_) => _SettingsScreen(hub: this, location: target),
-      );
+  Route<void> route(_SettingsLocation target) {
+    final settings = RouteSettings(
+      name: '/settings/${target.destination.name}',
+      arguments: target,
+    );
+    Widget screen(BuildContext context) =>
+        _SettingsScreen(hub: this, location: target);
+
+    if (WalletLayout.of(context).mobile) {
+      return MaterialPageRoute<void>(settings: settings, builder: screen);
+    }
+    return PageRouteBuilder<void>(
+      settings: settings,
+      transitionDuration: Duration.zero,
+      reverseTransitionDuration: Duration.zero,
+      pageBuilder: (context, _, _) => screen(context),
+    );
+  }
+
+  List<Route<void>> initialRoutes() {
+    final initial = widget.initial;
+    final category = _category(initial);
+    return [
+      route(const _SettingsLocation(SettingsDestination.directory)),
+      if (category != null && category != initial)
+        route(_SettingsLocation(category)),
+      if (initial != SettingsDestination.directory)
+        route(_SettingsLocation(initial)),
+    ];
+  }
+
   void open(_SettingsLocation target) {
     FocusManager.instance.primaryFocus?.unfocus();
     navigator.currentState!.push<void>(route(target));
@@ -384,16 +413,32 @@ class _SettingsHubState extends State<_SettingsHub> {
   void back() {
     FocusManager.instance.primaryFocus?.unfocus();
     if (navigator.currentState!.canPop()) {
-      navigator.currentState!.pop();
+      unawaited(navigator.currentState!.maybePop());
     } else {
-      exit();
+      widget.onExit();
     }
   }
 
-  void exit() => Navigator.of(context).pop();
-  void selectCategory(SettingsEntry entry) {
-    navigator.currentState!.popUntil((r) => r.isFirst);
-    open(_SettingsLocation(entry.destination));
+  void selectSection(SettingsDestination destination) {
+    final nav = navigator.currentState!;
+    final current = observer.topRoute;
+    if (current?.settings.arguments case _SettingsLocation(
+      destination: final active,
+    ) when active == destination) {
+      return;
+    }
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (destination == SettingsDestination.directory) {
+      nav.pushAndRemoveUntil<void>(
+        route(const _SettingsLocation(SettingsDestination.directory)),
+        (_) => false,
+      );
+      return;
+    }
+    nav.pushAndRemoveUntil<void>(
+      route(_SettingsLocation(destination)),
+      (route) => route.isFirst,
+    );
   }
 
   Future<void> openEntry(SettingsEntry entry) async {
@@ -440,83 +485,62 @@ class _SettingsHubState extends State<_SettingsHub> {
           ? WalletTheme.dark
           : WalletTheme.light;
       final layout = WalletLayout.of(context);
-      return Scaffold(
+      return Row(
         key: const ValueKey('settings-hub'),
-        body: SafeArea(
-          child: Row(
-            children: [
-              if (!layout.mobile)
-                WalletRail(
-                  theme: theme,
-                  selected: WalletPage.settings,
-                  onSelect: (page) {
-                    if (page == WalletPage.assets) exit();
-                  },
-                ),
-              if (layout.wide)
-                SizedBox(
-                  width: 224,
-                  child: Material(
-                    color: theme.surface,
-                    child: ListView(
-                      padding: const EdgeInsets.all(12),
-                      children: [
-                        const SizedBox(height: 12),
-                        _SettingsRow(
-                          title: tr(context, MessageCode.msgSettings),
-                          icon: Icons.settings_outlined,
-                          selected:
-                              location.value.destination ==
-                              SettingsDestination.directory,
-                          onTap: () {
-                            navigator.currentState!.popUntil((r) => r.isFirst);
-                            open(
-                              const _SettingsLocation(
-                                SettingsDestination.directory,
-                              ),
-                            );
-                          },
-                        ),
-                        const Divider(),
-                        for (final e in settingsEntries.where(
-                          (e) => e.category == null,
-                        ))
-                          _SettingsRow(
-                            key: ValueKey('settings-nav-${e.id}'),
-                            title: e.title(AppLocalizations.of(context)),
-                            icon: e.icon,
-                            selected:
-                                _category(location.value.destination) ==
-                                e.destination,
-                            onTap: () => selectCategory(e),
-                          ),
-                      ],
+        children: [
+          if (layout.wide)
+            SizedBox(
+              width: 224,
+              child: Material(
+                color: theme.surface,
+                child: ListView(
+                  padding: const EdgeInsets.all(12),
+                  children: [
+                    const SizedBox(height: 12),
+                    _SettingsRow(
+                      key: const ValueKey('settings-nav-directory'),
+                      title: tr(context, MessageCode.msgSettings),
+                      icon: Icons.settings_outlined,
+                      sidebar: true,
+                      selected:
+                          location.value.destination ==
+                          SettingsDestination.directory,
+                      onTap: () => selectSection(SettingsDestination.directory),
                     ),
-                  ),
-                ),
-              Expanded(
-                child: NavigatorPopHandler<void>(
-                  onPopWithResult: (_) => navigator.currentState!.pop(),
-                  child: Navigator(
-                    key: navigator,
-                    observers: [
-                      observer
-                        ..onChanged = (value) {
-                          // Notifications arrive while Navigator is building.
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (mounted) location.value = value;
-                          });
-                        },
-                    ],
-                    onGenerateInitialRoutes: (_, _) => [
-                      route(_SettingsLocation(widget.initial)),
-                    ],
-                  ),
+                    const Divider(),
+                    for (final e in settingsEntries.where(
+                      (e) => e.category == null,
+                    ))
+                      _SettingsRow(
+                        key: ValueKey('settings-nav-${e.id}'),
+                        title: e.title(AppLocalizations.of(context)),
+                        icon: e.icon,
+                        sidebar: true,
+                        selected:
+                            _category(location.value.destination) ==
+                            e.destination,
+                        onTap: () => selectSection(e.destination),
+                      ),
+                  ],
                 ),
               ),
-            ],
+            ),
+          Expanded(
+            child: Navigator(
+              key: navigator,
+              observers: [
+                observer
+                  ..onChanged = (value) {
+                    // Notifications arrive while Navigator is building.
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) location.value = value;
+                    });
+                  },
+              ],
+              onGenerateInitialRoutes: (_, _) => initialRoutes(),
+            ),
           ),
-        ),
+        ],
       );
     },
   );
@@ -524,17 +548,14 @@ class _SettingsHubState extends State<_SettingsHub> {
 
 class _SettingsObserver extends NavigatorObserver {
   void Function(_SettingsLocation)? onChanged;
-  void changed(Route<dynamic>? route) {
-    final target = route?.settings.arguments;
-    if (target is _SettingsLocation) onChanged?.call(target);
-  }
+  Route<dynamic>? topRoute;
 
   @override
-  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) =>
-      changed(route);
-  @override
-  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) =>
-      changed(previousRoute);
+  void didChangeTop(Route<dynamic> topRoute, Route<dynamic>? previousTopRoute) {
+    this.topRoute = topRoute;
+    final target = topRoute.settings.arguments;
+    if (target is _SettingsLocation) onChanged?.call(target);
+  }
 }
 
 SettingsDestination? _category(SettingsDestination destination) =>
@@ -566,12 +587,13 @@ class _SettingsRow extends StatelessWidget {
     this.icon,
     this.selected = false,
     this.selection = false,
+    this.sidebar = false,
     super.key,
   });
   final String title;
   final String? subtitle, value;
   final IconData? icon;
-  final bool selected, selection;
+  final bool selected, selection, sidebar;
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) => Padding(
@@ -579,10 +601,13 @@ class _SettingsRow extends StatelessWidget {
     child: Material(
       color: selected
           ? Theme.of(context).colorScheme.primary.withValues(alpha: .09)
+          : sidebar
+          ? Colors.transparent
           : Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(12),
       child: MergeSemantics(
         child: Semantics(
+          selected: sidebar ? selected : null,
           checked: selection ? selected : null,
           inMutuallyExclusiveGroup: selection ? true : null,
           child: InkWell(
@@ -641,20 +666,24 @@ class _SettingsRow extends StatelessWidget {
                       ),
                     ),
                   ],
-                  const SizedBox(width: 8),
-                  Icon(
-                    selection
-                        ? (selected
-                              ? Icons.radio_button_checked
-                              : Icons.radio_button_unchecked)
-                        : Icons.chevron_right,
-                    size: selection ? 22 : 18,
-                    color: selection
-                        ? (selected
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).colorScheme.onSurfaceVariant)
-                        : null,
-                  ),
+                  if (!sidebar) ...[
+                    const SizedBox(width: 8),
+                    Icon(
+                      selection
+                          ? (selected
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked)
+                          : Icons.chevron_right,
+                      size: selection ? 22 : 18,
+                      color: selection
+                          ? (selected
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant)
+                          : null,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -805,7 +834,11 @@ class _SettingsScreenState extends State<_SettingsScreen> {
     return _SettingsRow(
       key: ValueKey('${search ? 'settings-result' : 'settings-entry'}-$id'),
       title: e.title(s),
-      subtitle: search ? path(e, s) : e.description?.call(s),
+      subtitle: search
+          ? path(e, s)
+          : e.id == 'import-file' && shell.vault.supportsOmniVaultImport
+          ? s.omniFileHint
+          : e.description?.call(s),
       value: currentValue(e, s),
       icon: e.icon,
       onTap: () => widget.hub.openEntry(e),
@@ -892,8 +925,8 @@ class _SettingsScreenState extends State<_SettingsScreen> {
         return [
           Text(
             s.walletAndAccountSummary(
-              shell.portfolio.groups.length,
-              shell.portfolio.accounts.length,
+              shell.portfolio.groupCount,
+              shell.portfolio.accountCount,
             ),
           ),
           const SizedBox(height: 12),

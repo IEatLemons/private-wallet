@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'dart:isolate';
 import 'dart:math' show Random;
 import 'dart:typed_data';
 
@@ -10,7 +12,7 @@ import 'package:bip32/bip32.dart';
 import 'package:bip39/bip39.dart' as bip39;
 import 'package:bs58check/bs58check.dart' as base58;
 import 'package:crypto/crypto.dart' as hashes;
-import 'package:flutter/services.dart' show PlatformException;
+import 'package:flutter/services.dart' show MethodChannel, PlatformException;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:web3dart/web3dart.dart';
@@ -19,8 +21,11 @@ import 'package:web3dart/crypto.dart' as ec;
 import 'package:web3dart/json_rpc.dart' show RPCError;
 
 part 'wallet_book.dart';
+part 'mac_wallet_book.dart';
+part 'omnivault_import.dart';
 part 'tron.dart';
 part 'tokens.dart';
+part 'transfers.dart';
 
 const evmDerivationPath = "m/44'/60'/0'/0/0";
 
@@ -141,6 +146,33 @@ class EvmNetwork {
   List<String> get rpcUrls => List.unmodifiable({rpcUrl, ...fallbackRpcUrls});
   final String explorerUrl;
   final bool isTestnet;
+
+  Uri? explorerAddress(String address) => _explorerLink('address', address);
+
+  Uri? explorerTransaction(String hash) =>
+      _explorerLink(isTron ? 'transaction' : 'tx', hash);
+
+  Uri? _explorerLink(String section, String value) {
+    final base = Uri.tryParse(explorerUrl);
+    if (base == null ||
+        !{'https', 'http'}.contains(base.scheme) ||
+        base.host.isEmpty ||
+        base.userInfo.isNotEmpty ||
+        value.isEmpty) {
+      return null;
+    }
+    final path = base.pathSegments.toList();
+    while (path.isNotEmpty && path.last.isEmpty) {
+      path.removeLast();
+    }
+    return Uri(
+      scheme: base.scheme,
+      host: base.host,
+      port: base.hasPort ? base.port : null,
+      pathSegments: isTron ? ['', ...path, ''] : [...path, section, value],
+      fragment: isTron ? '/$section/${Uri.encodeComponent(value)}' : null,
+    );
+  }
 
   EvmNetwork copyWith({
     String? name,
@@ -288,7 +320,11 @@ class FlutterSecretStore implements SecretStore {
 }
 
 class WalletVault {
-  WalletVault({SecretStore? store}) : _store = store ?? FlutterSecretStore();
+  WalletVault({SecretStore? store, bool? useMacWalletDatabase})
+    : _store = store ?? FlutterSecretStore(),
+      _database = (useMacWalletDatabase ?? (store == null && Platform.isMacOS))
+          ? const MethodChannel('asterkeel/wallet_database')
+          : null;
 
   static const walletBookKey = 'stone_wallet.v2.wallet_book';
   static const assetIndexerConfigsKey = 'stone_wallet.v1.asset_indexer_configs';
@@ -307,9 +343,13 @@ class WalletVault {
   static const networkConfigsKey = 'stone_wallet.v1.network_configs';
 
   final SecretStore _store;
+  final MethodChannel? _database;
+  Future<void>? _databaseReady;
+  bool get supportsOmniVaultImport => _database != null;
+
   Future<void> _mutationTail = Future.value();
 
-  Future<bool> hasWallet() async => (await loadPortfolio()).groups.isNotEmpty;
+  Future<bool> hasWallet() async => (await loadWalletSummary()).groupCount > 0;
 
   Future<WalletAccount> createWallet() async {
     final creation = await prepareNewWallet();
@@ -328,21 +368,35 @@ class WalletVault {
     String mnemonic, {
     String? name,
     String? accountName,
+    String Function(int)? nameForWallet,
   }) async => (await addMnemonicWallet(
     mnemonic,
     name: name,
     accountName: accountName,
+    nameForWallet: nameForWallet,
   )).selected!.account;
 
   Future<WalletAccount> importWallet(
     String mnemonic, {
     String? name,
     String? accountName,
-  }) => saveRecoveryPhrase(mnemonic, name: name, accountName: accountName);
+    String Function(int)? nameForWallet,
+  }) => saveRecoveryPhrase(
+    mnemonic,
+    name: name,
+    accountName: accountName,
+    nameForWallet: nameForWallet,
+  );
 
   /// Compatibility view of the selected mnemonic account (or first mnemonic
   /// wallet when a private-key account is selected). It never replaces a root.
   Future<WalletAccount?> loadWallet() async {
+    if (_database != null) {
+      final selected = (await loadWalletSummary()).selected;
+      if (selected?.kind == WalletKind.mnemonic) return selected!.account;
+      final row = await _macCall<Map<Object?, Object?>>('firstMnemonic');
+      return row == null ? null : _macGroup(row).accounts.first.account;
+    }
     final portfolio = await loadPortfolio();
     final group = portfolio.groups
         .where((g) => g.kind == WalletKind.mnemonic)
@@ -713,7 +767,7 @@ class EvmNetworkService {
         _activeIndex = index;
         return result;
       } catch (error) {
-        if (_disposed) rethrow;
+        if (_disposed || error is _TransferRejected) rethrow;
         lastError = error;
       }
     }
@@ -727,7 +781,12 @@ class EvmNetworkService {
   Future<void> checkConnection() => _withFailover((_) async {});
 
   Future<EtherAmount> getNativeBalance(WalletAccount account) =>
-      _withFailover((client) => client.getBalance(account.address));
+      getNativeBalanceForAddress(account.addressFor(network));
+
+  Future<EtherAmount> getNativeBalanceForAddress(String address) {
+    final owner = EthereumAddress.fromHex(address, enforceEip55: false);
+    return _withFailover((client) => client.getBalance(owner));
+  }
 
   Future<String> readTokenContract(
     String contract,
@@ -748,6 +807,11 @@ class EvmNetworkService {
   Future<BigInt> getTokenBalance(
     WalletAccount account,
     TokenDefinition token,
+  ) => getTokenBalanceForAddress(account.addressFor(network), token);
+
+  Future<BigInt> getTokenBalanceForAddress(
+    String address,
+    TokenDefinition token,
   ) async {
     if (token.networkId != network.id) {
       throw const WalletInputException(
@@ -756,8 +820,8 @@ class EvmNetworkService {
     }
     token.validate(network);
     final owner = network.isTron
-        ? bytesToHex(decodeTronAddress(account.tronAddress).sublist(1))
-        : account.addressHex.substring(2);
+        ? bytesToHex(decodeTronAddress(address).sublist(1))
+        : EthereumAddress.fromHex(address, enforceEip55: false).hexNo0x;
     final result = await readTokenContract(
       token.contract,
       'balanceOf(address)',
@@ -810,6 +874,104 @@ class EvmNetworkService {
         chainId: network.id,
       ),
     );
+    return _broadcastEvm(signed);
+  }
+
+  Future<PreparedWalletTransfer> prepareTransfer({
+    required WalletAccount account,
+    required String recipient,
+    required BigInt amount,
+    TokenDefinition? token,
+  }) async {
+    final to = _evmRecipient(recipient);
+    _validateTransfer(network, token, amount);
+    final owner = account.address;
+    final contract = token == null
+        ? null
+        : EthereumAddress.fromHex(token.contract);
+    final data = token == null ? null : _transferData(to.addressBytes, amount);
+    final value = EtherAmount.inWei(token == null ? amount : BigInt.zero);
+    final target = contract ?? to;
+
+    final fee = await _withFailover((client) async {
+      if (token != null) {
+        final decimals = await client.callRaw(
+          contract: contract!,
+          data: _tokenCall('decimals()'),
+        );
+        _requireTokenDecimals(token, decimals);
+        final balance = await client.callRaw(
+          contract: contract,
+          data: _tokenCall(
+            'balanceOf(address)',
+            _addressWord(owner.addressBytes),
+          ),
+        );
+        _requireBalance(decodeTokenUint(balance), amount);
+        final result = await _simulateEvm(
+          () => client.callRaw(sender: owner, contract: contract, data: data!),
+        );
+        _requireTransferSuccess(result);
+      }
+
+      final available = await client.getBalance(
+        owner,
+        atBlock: const BlockNum.pending(),
+      );
+      _requireBalance(available.getInWei, value.getInWei);
+      final gasPrice = await client.getGasPrice();
+      final gas = await _simulateEvm(
+        () => client.estimateGas(
+          sender: owner,
+          to: target,
+          value: value,
+          data: data,
+          gasPrice: gasPrice,
+        ),
+      );
+      if (gas <= BigInt.zero ||
+          gas > BigInt.from(9007199254740991) ||
+          gasPrice.getInWei <= BigInt.zero) {
+        throw const WalletInputException(MessageCode.transferFeeUnavailable);
+      }
+      final fee = gas * gasPrice.getInWei;
+      _requireFeeBalance(available.getInWei, value.getInWei, fee);
+      return (gas.toInt(), gasPrice, fee);
+    });
+
+    return PreparedWalletTransfer._(
+      fee: fee.$3,
+      send: () async {
+        final signed = await _withFailover((client) async {
+          final available = await client.getBalance(
+            owner,
+            atBlock: const BlockNum.pending(),
+          );
+          _requireFeeBalance(available.getInWei, value.getInWei, fee.$3);
+          final nonce = await client.getTransactionCount(
+            owner,
+            atBlock: const BlockNum.pending(),
+          );
+          return client.signTransaction(
+            account.credentials,
+            Transaction(
+              from: owner,
+              to: target,
+              value: value,
+              data: data,
+              maxGas: fee.$1,
+              gasPrice: fee.$2,
+              nonce: nonce,
+            ),
+            chainId: network.id,
+          );
+        });
+        return _broadcastEvm(signed);
+      },
+    );
+  }
+
+  Future<String> _broadcastEvm(Uint8List signed) async {
     final hash = bytesToHex(keccak256(signed), include0x: true);
     var attempted = false;
     try {
@@ -882,9 +1044,8 @@ BigInt parseEtherToWei(String input) => parseNativeAmount(input, 18);
 
 BigInt parseNativeAmount(String input, int decimals) {
   final normalized = input.trim();
-  final match = RegExp(
-    '^(\\d+)(?:\\.(\\d{1,$decimals}))?\$',
-  ).firstMatch(normalized);
+  final fractionPattern = decimals == 0 ? '' : '(?:\\.(\\d{1,$decimals}))?';
+  final match = RegExp('^(\\d+)$fractionPattern\$').firstMatch(normalized);
   if (match == null) {
     throw WalletInputException(
       MessageCode.msgEnterAValidAmountWithAtMostDecimal,
@@ -893,7 +1054,10 @@ BigInt parseNativeAmount(String input, int decimals) {
   }
 
   final whole = BigInt.parse(match.group(1)!);
-  final fraction = (match.group(2) ?? '').padRight(decimals, '0');
+  final fraction = (decimals == 0 ? '' : match.group(2) ?? '').padRight(
+    decimals,
+    '0',
+  );
   final fractionalWei = fraction.isEmpty ? BigInt.zero : BigInt.parse(fraction);
   return whole * BigInt.from(10).pow(decimals) + fractionalWei;
 }

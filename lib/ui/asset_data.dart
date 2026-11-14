@@ -210,24 +210,7 @@ extension _WalletAssetData on _WalletShellState {
           limit: 100,
         );
         if (!current()) return;
-        for (final t in data.tokens.take(100)) {
-          try {
-            t.token.validate(n);
-            if (t.units < BigInt.zero || t.units >= BigInt.one << 256) {
-              throw const FormatException();
-            }
-            final prior = tokens[t.token.key];
-            if (prior != null &&
-                (prior.token.decimals != t.token.decimals ||
-                    prior.token.symbol != t.token.symbol)) {
-              throw const FormatException();
-            }
-            tokens[t.token.key] = t;
-          } catch (_) {
-            invalid = true;
-          }
-        }
-        invalid = invalid || data.invalidCount > 0 || data.tokens.length > 100;
+        invalid = mergeDiscoveredTokens(n, data, tokens) || invalid;
         cursor = data.cursor;
         if (cursor != null &&
             !(discoveryCursors[n.id] ??= <String>{}).add(cursor)) {
@@ -267,7 +250,7 @@ extension _WalletAssetData on _WalletShellState {
     }
   }
 
-  Future<void> openIndexerServices() =>
+  void openIndexerServices() =>
       _openSettings(initial: SettingsDestination.indexers);
 
   Future<void> showPortfolioHolding(PortfolioHolding h) async {
@@ -287,13 +270,16 @@ extension _WalletAssetData on _WalletShellState {
       units: p.units,
       error: p.error,
     );
-    await showWalletPanel<void>(
+    final send = await showWalletPanel<bool>(
       context: context,
       width: 560,
       builder: (context) => TokenDetailsPanel(
         theme: theme,
         holding: asToken(h),
         address: h.address,
+        onSend: h.spam || !networkServices.containsKey(h.network.id)
+            ? null
+            : () => closeWalletPanel(context, true),
         onRefresh: () async {
           await refreshAllAssets();
           if (owner != account) {
@@ -323,5 +309,8 @@ extension _WalletAssetData on _WalletShellState {
               },
       ),
     );
+    if (mounted && send == true && account == owner) {
+      await _showSendSheet(network: h.network, token: token);
+    }
   }
 }

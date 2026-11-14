@@ -1364,6 +1364,205 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsMatchedOption => '已定位此设置';
+
+  @override
+  String get omniImportTitle => '预览 OmniVault 导入';
+
+  @override
+  String get omniImportResult => 'OmniVault 导入结果';
+
+  @override
+  String omniReading(int count) {
+    return '正在校验，已处理 $count 行…';
+  }
+
+  @override
+  String get omniConfirm => '确认导入';
+
+  @override
+  String get omniNewWallet => '新钱包';
+
+  @override
+  String get omniAliasesAdded => '新增别名';
+
+  @override
+  String get omniDuplicates => '重复';
+
+  @override
+  String get omniSkipped => '跳过';
+
+  @override
+  String get omniFailed => '失败';
+
+  @override
+  String get omniAllRows => '全部记录';
+
+  @override
+  String get omniNoRows => '此类别没有记录';
+
+  @override
+  String omniLine(int line) {
+    return '第 $line 行';
+  }
+
+  @override
+  String get omniPreviousPage => '上一页';
+
+  @override
+  String get omniNextPage => '下一页';
+
+  @override
+  String get omniWalletAliases => '钱包别名';
+
+  @override
+  String get omniHeader => 'OmniVault CSV 必须包含七个必需列，且表头不能重复。';
+
+  @override
+  String get omniInvalidEncoding => '文件必须使用 UTF-8 编码。';
+
+  @override
+  String omniMalformedCsv(int line) {
+    return '第 $line 行的 CSV 引号格式无效。';
+  }
+
+  @override
+  String get omniColumnCount => '此行列数与表头不一致。';
+
+  @override
+  String get omniInvalidStatus => '无法识别私钥导出状态。';
+
+  @override
+  String get omniInvalidIdentity => '平台和 UID 各需 1 至 256 个字符，且不能包含控制字符。';
+
+  @override
+  String get omniInvalidAddress => '原地址在该链上的格式无效。';
+
+  @override
+  String get omniAddressMismatch => '私钥派生地址与原地址不一致。';
+
+  @override
+  String get omniWalletChanged => '钱包簿已有变更，请重新打开文件进行校验。';
+
+  @override
+  String get omniStorageError => '加密钱包数据库未能完成此操作。';
+
+  @override
+  String get omniRecordTooLarge => 'CSV 中有一条记录超过支持的大小。';
+
+  @override
+  String get omniSearchHint => '搜索钱包名、平台、UID 或地址前缀';
+
+  @override
+  String get omniFileHint => '支持 OmniVault CSV 或包含链和私钥的 CSV/TSV';
+
+  @override
+  String get transferChooseAsset => '选择要发送的资产';
+
+  @override
+  String get transferReview => '核对转账';
+
+  @override
+  String get transferEdit => '修改转账';
+
+  @override
+  String get transferSender => '转出地址';
+
+  @override
+  String get transferContract => '代币合约';
+
+  @override
+  String get transferFee => '预计网络手续费';
+
+  @override
+  String get transferTronFeeNote => 'TRX 手续费会随可用能量和带宽变化。';
+
+  @override
+  String get transferViewTransaction => '查看链上交易';
+
+  @override
+  String get transferInvalidRecipient => '请输入该网络的有效收款地址。';
+
+  @override
+  String get transferAmountTooLarge => '金额超过该网络支持的范围。';
+
+  @override
+  String get transferSimulationFailed => '网络未通过转账模拟，请检查金额和收款地址。';
+
+  @override
+  String get transferTokenDecimalsChanged => '代币合约返回的精度不同，请刷新代币信息后再发送。';
+
+  @override
+  String get transferFeeUnavailable => '无法估算手续费，请重试或检查 RPC 节点。';
+
+  @override
+  String get transferInsufficientFee => '原生币余额不足，无法支付本次转账及其网络手续费。';
+
+  @override
+  String get transferReviewExpired => '请重新核对转账后再签名。';
+
+  @override
+  String get walletBalancesTitle => '全部钱包余额';
+
+  @override
+  String walletBalancesStarted(String time) {
+    return '$time 开始查询';
+  }
+
+  @override
+  String get walletBalancesChecking => '查询中';
+
+  @override
+  String get walletBalancesPaused => '已暂停';
+
+  @override
+  String get walletBalancesFinished => '查询完成';
+
+  @override
+  String get walletBalancesLoadFailed => '钱包列表读取失败';
+
+  @override
+  String walletBalancesProgress(String state, int checked, int total) {
+    return '$state · $checked / $total 个账户';
+  }
+
+  @override
+  String get walletBalancesScope =>
+      '按美元估值从高到低排列。指定链的钱包查来源链，其余钱包查已启用网络。涵盖原生币、内置和关注的代币，以及已配置的代币发现。测试网资产不计入估值。';
+
+  @override
+  String walletBalancesIncompleteCount(int count) {
+    return '$count 个账户结果不完整';
+  }
+
+  @override
+  String get walletBalancesPause => '暂停查询';
+
+  @override
+  String get walletBalancesResume => '继续查询';
+
+  @override
+  String get walletBalancesBackground => '转到后台查询';
+
+  @override
+  String get walletBalancesNoNetwork => '无可查询网络';
+
+  @override
+  String get walletBalancesQueryIncomplete => '余额或代币发现不完整';
+
+  @override
+  String get walletBalancesTokenListError => '无法读取关注代币';
+
+  @override
+  String get walletBalancesMissingPrices => '部分资产缺少报价';
+
+  @override
+  String get walletBalancesNoHoldings => '查询范围内余额为零。';
+
+  @override
+  String get walletBalancesWaiting => '正在等待首批结果…';
+
+  @override
+  String get walletBalancesEmpty => '没有可查询的钱包。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -2726,4 +2925,203 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsMatchedOption => '已定位此設定';
+
+  @override
+  String get omniImportTitle => '預覽 OmniVault 匯入';
+
+  @override
+  String get omniImportResult => 'OmniVault 匯入結果';
+
+  @override
+  String omniReading(int count) {
+    return '正在驗證，已處理 $count 列…';
+  }
+
+  @override
+  String get omniConfirm => '確認匯入';
+
+  @override
+  String get omniNewWallet => '新錢包';
+
+  @override
+  String get omniAliasesAdded => '新增別名';
+
+  @override
+  String get omniDuplicates => '重複';
+
+  @override
+  String get omniSkipped => '略過';
+
+  @override
+  String get omniFailed => '失敗';
+
+  @override
+  String get omniAllRows => '全部記錄';
+
+  @override
+  String get omniNoRows => '此類別沒有記錄';
+
+  @override
+  String omniLine(int line) {
+    return '第 $line 列';
+  }
+
+  @override
+  String get omniPreviousPage => '上一頁';
+
+  @override
+  String get omniNextPage => '下一頁';
+
+  @override
+  String get omniWalletAliases => '錢包別名';
+
+  @override
+  String get omniHeader => 'OmniVault CSV 必須包含七個必要欄位，且表頭不能重複。';
+
+  @override
+  String get omniInvalidEncoding => '檔案必須使用 UTF-8 編碼。';
+
+  @override
+  String omniMalformedCsv(int line) {
+    return '第 $line 列的 CSV 引號格式無效。';
+  }
+
+  @override
+  String get omniColumnCount => '此列欄位數與表頭不一致。';
+
+  @override
+  String get omniInvalidStatus => '無法識別私鑰匯出狀態。';
+
+  @override
+  String get omniInvalidIdentity => '平台和 UID 各需 1 至 256 個字元，且不能包含控制字元。';
+
+  @override
+  String get omniInvalidAddress => '原地址在該鏈上的格式無效。';
+
+  @override
+  String get omniAddressMismatch => '私鑰衍生地址與原地址不一致。';
+
+  @override
+  String get omniWalletChanged => '錢包簿已有變更，請重新開啟檔案驗證。';
+
+  @override
+  String get omniStorageError => '加密錢包資料庫未能完成此操作。';
+
+  @override
+  String get omniRecordTooLarge => 'CSV 中有一筆記錄超過支援的大小。';
+
+  @override
+  String get omniSearchHint => '搜尋錢包名稱、平台、UID 或地址前綴';
+
+  @override
+  String get omniFileHint => '支援 OmniVault CSV 或包含鏈和私鑰的 CSV/TSV';
+
+  @override
+  String get transferChooseAsset => '選擇要發送的資產';
+
+  @override
+  String get transferReview => '核對轉帳';
+
+  @override
+  String get transferEdit => '修改轉帳';
+
+  @override
+  String get transferSender => '轉出地址';
+
+  @override
+  String get transferContract => '代幣合約';
+
+  @override
+  String get transferFee => '預計網路手續費';
+
+  @override
+  String get transferTronFeeNote => 'TRX 手續費會隨可用能量和頻寬變化。';
+
+  @override
+  String get transferViewTransaction => '查看鏈上交易';
+
+  @override
+  String get transferInvalidRecipient => '請輸入該網路的有效收款地址。';
+
+  @override
+  String get transferAmountTooLarge => '金額超過該網路支援的範圍。';
+
+  @override
+  String get transferSimulationFailed => '網路未通過轉帳模擬，請檢查金額和收款地址。';
+
+  @override
+  String get transferTokenDecimalsChanged => '代幣合約回傳的精度不同，請重新整理代幣資訊後再發送。';
+
+  @override
+  String get transferFeeUnavailable => '無法估算手續費，請重試或檢查 RPC 節點。';
+
+  @override
+  String get transferInsufficientFee => '原生幣餘額不足，無法支付本次轉帳及其網路手續費。';
+
+  @override
+  String get transferReviewExpired => '請重新核對轉帳後再簽名。';
+
+  @override
+  String get walletBalancesTitle => '全部錢包餘額';
+
+  @override
+  String walletBalancesStarted(String time) {
+    return '$time 開始查詢';
+  }
+
+  @override
+  String get walletBalancesChecking => '查詢中';
+
+  @override
+  String get walletBalancesPaused => '已暫停';
+
+  @override
+  String get walletBalancesFinished => '查詢完成';
+
+  @override
+  String get walletBalancesLoadFailed => '錢包列表讀取失敗';
+
+  @override
+  String walletBalancesProgress(String state, int checked, int total) {
+    return '$state · $checked / $total 個帳戶';
+  }
+
+  @override
+  String get walletBalancesScope =>
+      '按美元估值從高到低排列。指定鏈的錢包查來源鏈，其餘錢包查已啟用網路。涵蓋原生幣、內建和關注的代幣，以及已設定的代幣探索。測試網資產不計入估值。';
+
+  @override
+  String walletBalancesIncompleteCount(int count) {
+    return '$count 個帳戶結果不完整';
+  }
+
+  @override
+  String get walletBalancesPause => '暫停查詢';
+
+  @override
+  String get walletBalancesResume => '繼續查詢';
+
+  @override
+  String get walletBalancesBackground => '轉到背景查詢';
+
+  @override
+  String get walletBalancesNoNetwork => '無可查詢網路';
+
+  @override
+  String get walletBalancesQueryIncomplete => '餘額或代幣探索不完整';
+
+  @override
+  String get walletBalancesTokenListError => '無法讀取關注代幣';
+
+  @override
+  String get walletBalancesMissingPrices => '部分資產缺少報價';
+
+  @override
+  String get walletBalancesNoHoldings => '查詢範圍內餘額為零。';
+
+  @override
+  String get walletBalancesWaiting => '正在等待首批結果…';
+
+  @override
+  String get walletBalancesEmpty => '沒有可查詢的錢包。';
 }

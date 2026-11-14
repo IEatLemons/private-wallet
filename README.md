@@ -15,7 +15,7 @@ This milestone contains the first real wallet vertical slice:
 - A current-operation network for signing, with each network's RPC pool and current working endpoint visible in Settings
 - Per-network editable ordered RPC pools, built-in free public endpoints, automatic failover, custom EVM network profiles, and Chain ID checks
 - Clickable native-asset rows, searchable full asset list, and asset details with refresh/send/receive actions
-- Local EVM/TRON transaction signing and native-asset broadcast on the selected network
+- Local EVM/TRON signing and broadcast for native coins and ERC20, BEP20 and TRC20 tokens
 - Recovery phrase display followed by word-position verification before a newly created wallet is saved
 - Address-first asset home: linked EVM/TRON addresses, cross-chain coin totals, compact lists and USDT-based reference USD values
 - Optional Moralis / Alchemy / TronGrid asset discovery with user-supplied keys and setup guides
@@ -25,7 +25,7 @@ This milestone contains the first real wallet vertical slice:
 - Receive address copy and an explicit send review form
 - CSV/TSV batch import for chain + private-key rows, with validation, duplicate skipping, and secure local storage
 
-This is not a mainnet-ready release. Token transfers, swaps, WalletConnect, dApp discovery, full multi-chain adapters, fee simulation, hardware wallets, backup export, and security audit gates are not complete. Ethereum Mainnet, Ethereum Sepolia, Polygon Mainnet, Polygon Amoy, BNB Smart Chain Mainnet, and TRON Mainnet are selectable profiles; the user chooses which networks to view and when to connect.
+This is not a mainnet-ready release. Swaps, WalletConnect, dApp discovery, full multi-chain adapters, hardware wallets, backup export, and security audit gates are not complete. Ethereum Mainnet, Ethereum Sepolia, Polygon Mainnet, Polygon Amoy, BNB Smart Chain Mainnet, and TRON Mainnet are selectable profiles; the user chooses which networks to view and when to connect.
 
 ## Run locally
 
@@ -205,7 +205,7 @@ are excluded from the aggregate.
 Click **添加币种** to show/hide the presets or add Circle USDC on Ethereum/Polygon.
 **添加自定义代币** accepts a network and contract, reads its symbol and decimals
 from that chain, then requires **确认添加**. ERC20/BEP20 and TRC20 queries are
-read-only; there is no token approval, signing or transfer in this flow. Token
+read-only while querying balances and adding tokens. Token
 preferences persist locally under `stone_wallet.v1.watched_tokens`, separately
 from wallet secrets. Corrupt preference records are reported rather than silently
 replaced. Wallet keys and existing network settings are preserved.
@@ -249,9 +249,11 @@ responses for authentication, pagination, duplicate holdings, malformed metadata
 quota errors, account races, exact valuation, stale quotes and setup flows.
 
 Token details show the exact contract, chain, decimals, account address and receive
-QR. They deliberately expose no Send action: token transfers are not implemented.
-The existing send action is labeled within the native-asset section and continues
-to send only the current chain's native asset.
+QR. Choose **发送** on the asset home or in asset details to transfer native coins
+and ERC20, BEP20 or TRC20 tokens, including USDT on BNB Smart Chain and TRON.
+The review displays the sender, recipient, chain, amount, token contract and
+estimated native fee. Signing and broadcast start after confirmation. Use the
+returned hash to check chain inclusion and execution in the explorer.
 
 Sources: [Tether's contract registry](https://tether.to/en/supported-protocols/),
 [BNB Chain token mapping](https://explorer.bnbchain.org/asset/USDT-6D8),
@@ -290,9 +292,10 @@ rate limits and network mismatches trigger the next configured endpoint.
 
 TRX transfers may consume TRX when bandwidth is insufficient, and transferring to
 an unactivated address can incur activation fees. This release supports the native
-assets **BNB and TRX**; BEP20/TRC20 balance viewing is supported as described below. Token transfers, staking and TRON
-multisignature permissions are not implemented. No live-value transfer is part of
-the automated verification.
+assets **BNB and TRX** and BEP20/TRC20 transfers. TRC20 uses the sender's native TRX
+balance and available Energy and Bandwidth to estimate the fee. Staking and TRON
+multisignature permissions are outside this transfer flow. Automated verification
+uses synthetic keys and mock RPC responses.
 
 Network references: [BNB configuration](https://docs.bnbchain.org/bnb-smart-chain/developers/wallet-configuration/),
 [TRON addresses](https://developers.tron.network/docs/account),
@@ -353,6 +356,21 @@ the account and connects to the selected network for its balance. Invalid or
 duplicate imports stay in the form for correction. Existing mnemonic and imported
 accounts remain available in the wallet picker as **主钱包** and **私钥账户**.
 Single and batch imports share the same storage, including existing batch data.
+
+### macOS 上导入 OmniVault 私钥
+
+在欢迎页或「设置 → 钱包 → 导入钱包」中选择「批量导入私钥表格」，打开
+OmniVault 导出的 UTF-8 CSV。文件应包含 `platform`、`uid`、`chain`、
+`address`、`private_key`、`key_status`、`reason`。应用会在本机核对 BSC
+和 TRON 主网地址，按源文件行号显示预览，确认后保存有效记录。
+
+新钱包以「平台 · UID」命名。同链同地址的其他来源保存为别名。在钱包管理中可按
+平台或 UID 前缀搜索，改名后也可通过原别名找到钱包。点击钱包旁的别名按钮可查看完整列表。
+macOS 钱包簿使用 SQLCipher 加密，数据库密钥保存在本机 Keychain。首次打开新版时会迁移已有钱包。
+旧的双列 CSV/TSV 和单条私钥入口仍可使用。
+
+macOS 构建通过 Swift Package Manager 使用 SQLCipher Community Edition，
+遵循其 [BSD 许可证](https://github.com/sqlcipher/SQLCipher.swift/blob/4.20.0/LICENSE.md)。
 
 Choose a network name in **Manage Networks** to set the operation chain; checkboxes
 enable additional chains for balance viewing. Click **Save** to connect. Syncing,

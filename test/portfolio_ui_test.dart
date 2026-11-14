@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stone_wallet/main.dart';
 import 'package:stone_wallet/asset_discovery.dart';
@@ -99,6 +100,66 @@ String indexerRecord() => jsonEncode({
   ],
 });
 void main() {
+  testWidgets('chain rows open the matching address in the external browser', (
+    tester,
+  ) async {
+    const channel = MethodChannel('plugins.flutter.io/url_launcher');
+    final messenger = tester.binding.defaultBinaryMessenger;
+    final opened = <String>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      expect(call.method, 'launch');
+      expect(call.arguments['useWebView'], isFalse);
+      expect(call.arguments['useSafariVC'], isFalse);
+      opened.add(call.arguments['url'] as String);
+      return true;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    await launch(tester, MapSecretStore({WalletVault.mnemonicKey: phrase}));
+    final bnb = nativePosition(tester, bnbSmartChainNetwork.id);
+    await selectCoin(tester, bnb.assetId);
+    final bnbRow = find.byType(PortfolioChainRow);
+    await assetTap(
+      tester,
+      find.descendant(of: bnbRow, matching: find.byTooltip('区块浏览器')),
+    );
+    expect(opened.single, 'https://bscscan.com/address/${bnb.address}');
+    expect(find.byType(AssetDetailsPanel), findsNothing);
+    await assetTap(tester, find.byKey(ValueKey('chain-holding-${bnb.key}')));
+    expect(find.byType(AssetDetailsPanel), findsOneWidget);
+    await assetTap(
+      tester,
+      find.descendant(
+        of: find.byType(AssetDetailsPanel),
+        matching: find.widgetWithText(TextButton, '区块浏览器'),
+      ),
+    );
+    expect(opened, [opened.first, opened.first]);
+    await assetTap(tester, find.byTooltip('关闭'));
+
+    await selectCoin(tester, 'usdt');
+    final tronRow = find.byWidgetPredicate(
+      (widget) => widget is PortfolioChainRow && widget.holding.network.isTron,
+    );
+    final tron = tester.widget<PortfolioChainRow>(tronRow).holding;
+    await assetTap(
+      tester,
+      find.descendant(of: tronRow, matching: find.byTooltip('区块浏览器')),
+    );
+    expect(opened.last, 'https://tronscan.org/#/address/${tron.address}');
+    expect(find.byType(TokenDetailsPanel), findsNothing);
+    await assetTap(tester, find.byKey(ValueKey('chain-holding-${tron.key}')));
+    await assetTap(
+      tester,
+      find.descendant(
+        of: find.byType(TokenDetailsPanel),
+        matching: find.text('区块浏览器'),
+      ),
+    );
+    expect(opened.last, 'https://tronscan.org/#/address/${tron.address}');
+    expect(opened, hasLength(4));
+  });
+
   testWidgets(
     'compact overview shows four rows on first iPhone viewport and filters by real linked addresses and networks',
     (tester) async {
@@ -305,7 +366,13 @@ void main() {
         tester,
         find.byKey(ValueKey('chain-holding-${found.key}')),
       );
-      expect(find.text('Send'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(TokenDetailsPanel),
+          matching: find.text('Send'),
+        ),
+        findsOneWidget,
+      );
       await assetTap(tester, find.text('Watch this token'));
       expect(
         (await vault.loadTokens()).any((t) => t.key == extraToken.key),

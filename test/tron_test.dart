@@ -453,10 +453,16 @@ void main() {
         );
         await tap(tester, find.byTooltip('关闭').last);
         await nativeDetails(tester, tronMainnetNetwork.id);
-        await tap(tester, find.text('发送'));
+        await tap(
+          tester,
+          find.descendant(
+            of: find.byType(AssetDetailsPanel),
+            matching: find.text('发送'),
+          ),
+        );
         await input(tester, '收款地址', '0x${'01' * 20}');
         await input(tester, '金额（TRX）', '1');
-        await tap(tester, find.text('签名并广播'));
+        await tap(tester, find.text('核对转账'));
         expect(find.textContaining('请输入有效的 TRON 地址'), findsOneWidget);
         await tap(tester, find.byTooltip('关闭').last);
         await tap(tester, find.byKey(const ValueKey('open-settings')));

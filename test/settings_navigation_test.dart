@@ -165,6 +165,91 @@ void main() {
   );
 
   testWidgets(
+    'desktop main navigation keeps the rail fixed and switches content on the next frame',
+    (tester) async {
+      await launch(
+        tester,
+        MapSecretStore({WalletVault.mnemonicKey: phrase}),
+        size: const Size(1200, 850),
+      );
+      final rail = find.byType(WalletRail);
+      final settings = find.byKey(const ValueKey('wallet-nav-settings'));
+      final assets = find.byKey(const ValueKey('wallet-nav-assets'));
+      final hub = find.byKey(const ValueKey('settings-hub'));
+      final railElement = tester.element(rail);
+      final assetState = tester.state(find.byType(AssetsPage));
+
+      for (final width in [1200.0, 900.0]) {
+        tester.view.physicalSize = Size(width, 850);
+        await tester.pumpAndSettle();
+        final railBounds = tester.getRect(rail);
+
+        await tester.tap(settings);
+        await tester.pump();
+        expect(hub, findsOneWidget);
+        expect(tester.getTopLeft(hub).dx, railBounds.right);
+        expect(identical(tester.element(rail), railElement), isTrue);
+        expect(tester.getRect(rail), railBounds);
+        expect(tester.widget<WalletRail>(rail).selected, WalletPage.settings);
+        expect(find.byType(AssetsPage), findsNothing);
+
+        await tester.tap(assets);
+        await tester.pump();
+        expect(hub, findsNothing);
+        expect(identical(tester.element(rail), railElement), isTrue);
+        expect(tester.getRect(rail), railBounds);
+        expect(tester.widget<WalletRail>(rail).selected, WalletPage.assets);
+        expect(tester.state(find.byType(AssetsPage)), same(assetState));
+      }
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'desktop sidebar switches sections in one frame and keeps one directory',
+    (tester) async {
+      await launch(
+        tester,
+        MapSecretStore({WalletVault.mnemonicKey: phrase}),
+        size: const Size(1200, 850),
+      );
+      await assetTap(tester, find.byKey(const ValueKey('open-settings')));
+
+      Finder row(String section) =>
+          find.byKey(ValueKey('settings-nav-$section'));
+      Finder entry(String id) => find.byKey(ValueKey('settings-entry-$id'));
+
+      await tester.tap(row('wallets'));
+      await tester.pump();
+      expect(entry('manage-wallets'), findsOneWidget);
+      await tester.tap(row('assets'));
+      await tester.pump();
+      expect(entry('watched-tokens'), findsOneWidget);
+      expect(entry('manage-wallets'), findsNothing);
+      expect(find.byKey(const ValueKey('settings-search-entry')), findsNothing);
+      await tester.tap(row('data'));
+      await tester.pump();
+      expect(entry('indexers'), findsOneWidget);
+      expect(entry('watched-tokens'), findsNothing);
+      expect(find.byKey(const ValueKey('settings-search-entry')), findsNothing);
+
+      await settingsEntryTap(tester, 'networks');
+      await assetTap(tester, find.byType(BackButton));
+      expect(entry('indexers'), findsOneWidget);
+      await assetTap(tester, row('data'));
+      await assetTap(tester, find.byType(BackButton));
+      expect(
+        find.byKey(const ValueKey('settings-search-entry')),
+        findsOneWidget,
+      );
+      await assetTap(tester, row('directory'));
+      await assetTap(tester, find.byType(BackButton));
+      expect(find.byKey(const ValueKey('settings-hub')), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'system back traverses settings while desktop Assets exits the whole stack',
     (tester) async {
       await launch(tester, MapSecretStore({WalletVault.mnemonicKey: phrase}));

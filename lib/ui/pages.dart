@@ -8,10 +8,12 @@ class OnboardingPage extends StatelessWidget {
     required this.onImport,
     required this.onImportPrivateKey,
     required this.onBatchImport,
+    this.supportsOmniVault = false,
     required this.onToggleStyle,
     super.key,
   });
   final WalletTheme theme;
+  final bool supportsOmniVault;
   final WalletMessage? error;
   final VoidCallback onCreate,
       onImport,
@@ -130,7 +132,9 @@ class OnboardingPage extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          tr(context, MessageCode.msgCsvTsvColumnsChainPrivateKey),
+          supportsOmniVault
+              ? AppLocalizations.of(context).omniFileHint
+              : tr(context, MessageCode.msgCsvTsvColumnsChainPrivateKey),
           style: TextStyle(color: theme.muted, fontSize: 12, height: 1.5),
         ),
         if (error != null) ...[

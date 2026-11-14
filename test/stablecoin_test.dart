@@ -340,7 +340,13 @@ void main() {
             .address,
         seedAccount.tronAddress,
       );
-      expect(find.text('发送'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(TokenDetailsPanel),
+          matching: find.text('发送'),
+        ),
+        findsOneWidget,
+      );
       await tap(tester, find.byTooltip('关闭'));
       await assetMenu(tester, MessageCode.msgAddTokens);
       await tap(tester, find.byKey(ValueKey('watch-${builtinTokens[4].key}')));

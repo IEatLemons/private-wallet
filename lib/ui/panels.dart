@@ -808,13 +808,29 @@ class SendSheet extends StatefulWidget {
     required this.theme,
     required this.network,
     required this.balanceWei,
-    required this.onSend,
+    this.onSend,
+    this.onPrepare,
+    this.onConfirmTransfer,
+    this.token,
+    this.fromAddress,
     super.key,
-  });
+  }) : assert(onPrepare == null ? onSend != null : onConfirmTransfer != null);
   final WalletTheme theme;
   final EvmNetwork network;
   final BigInt? balanceWei;
-  final Future<String> Function(String recipient, String amount) onSend;
+  final TokenDefinition? token;
+  final String? fromAddress;
+  final Future<String> Function(String recipient, String amount)? onSend;
+  final Future<PreparedWalletTransfer> Function(
+    String recipient,
+    BigInt amount,
+  )?
+  onPrepare;
+  final Future<String> Function(PreparedWalletTransfer transfer)?
+  onConfirmTransfer;
+
+  String get symbol => token?.symbol ?? network.nativeSymbol;
+  int get decimals => token?.decimals ?? network.nativeDecimals;
   @override
   State<SendSheet> createState() => _SendSheetState();
 }
@@ -825,6 +841,9 @@ class _SendSheetState extends State<SendSheet> {
   bool sending = false;
   WalletMessage? error;
   String? uncertainHash;
+  PreparedWalletTransfer? review;
+  BigInt? reviewedAmount;
+
   @override
   void dispose() {
     recipientController.dispose();
@@ -836,16 +855,37 @@ class _SendSheetState extends State<SendSheet> {
     if (sending || uncertainHash != null) return;
     FocusManager.instance.primaryFocus?.unfocus();
     try {
+      if (review case final prepared?) {
+        setState(() {
+          sending = true;
+          error = null;
+        });
+        final tx = await widget.onConfirmTransfer!(prepared);
+        if (mounted) closeWalletPanel(context, tx);
+        return;
+      }
       final recipient = recipientController.text.trim(),
           amount = amountController.text.trim();
-      widget.network.validateAddress(recipient);
-      final wei = widget.network.parseAmount(amount);
+      if (widget.network.isTron) {
+        decodeTronAddress(recipient);
+      } else {
+        try {
+          widget.network.validateAddress(recipient);
+        } on ArgumentError {
+          throw const WalletInputException(
+            MessageCode.transferInvalidRecipient,
+          );
+        }
+      }
+      final wei = parseNativeAmount(amount, widget.decimals);
       if (wei <= BigInt.zero) {
         throw const WalletInputException(
           MessageCode.msgAmountMustBeGreaterThanZero,
         );
       }
-      if (widget.balanceWei != null && wei > widget.balanceWei!) {
+      if (widget.onPrepare == null &&
+          widget.balanceWei != null &&
+          wei > widget.balanceWei!) {
         throw const WalletInputException(
           MessageCode.msgAmountExceedsTheAvailableBalance,
         );
@@ -854,14 +894,29 @@ class _SendSheetState extends State<SendSheet> {
         sending = true;
         error = null;
       });
-      final tx = await widget.onSend(recipient, amount);
-      if (mounted) Navigator.pop(context, tx);
+      if (widget.onPrepare case final prepare?) {
+        final result = await prepare(recipient, wei);
+        if (mounted) {
+          setState(() {
+            sending = false;
+            review = result;
+            reviewedAmount = wei;
+          });
+        }
+      } else {
+        final tx = await widget.onSend!(recipient, amount);
+        if (mounted) closeWalletPanel(context, tx);
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
           sending = false;
           error = walletMessage(e);
-          if (e is RpcBroadcastException) uncertainHash = e.transactionHash;
+          if (e is RpcBroadcastException) {
+            uncertainHash = e.transactionHash;
+          } else {
+            review = null;
+          }
         });
       }
     }
@@ -872,9 +927,7 @@ class _SendSheetState extends State<SendSheet> {
     canPop: !sending,
     child: WalletPanel(
       theme: widget.theme,
-      title: tr(context, MessageCode.msgSendMore, [
-        widget.network.nativeSymbol,
-      ]),
+      title: tr(context, MessageCode.msgSendMore, [widget.symbol]),
       canClose: !sending,
       subtitle: tr(context, MessageCode.msgSignedOnThisDevice, [
         widget.network.name,
@@ -882,73 +935,129 @@ class _SendSheetState extends State<SendSheet> {
             ? tr(context, MessageCode.msgTestnet)
             : tr(context, MessageCode.msgMainnet),
       ]),
-      footer: FilledButton(
-        onPressed: sending || uncertainHash != null ? null : _submit,
-        child: sending
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : Text(
-                localized(
-                  context,
-                  uncertainHash != null
-                      ? tr(
-                          context,
-                          MessageCode.msgCheckTheTransactionStatusFirst,
-                        )
-                      : tr(context, MessageCode.msgSignAndBroadcast),
-                ),
-              ),
+      footer: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          if (review != null && uncertainHash == null)
+            OutlinedButton(
+              onPressed: sending
+                  ? null
+                  : () => setState(() {
+                      review = null;
+                      error = null;
+                    }),
+              child: Text(AppLocalizations.of(context).transferEdit),
+            ),
+          FilledButton(
+            key: const ValueKey('submit-transfer'),
+            onPressed: sending || uncertainHash != null ? null : _submit,
+            child: sending
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(
+                    uncertainHash != null
+                        ? tr(
+                            context,
+                            MessageCode.msgCheckTheTransactionStatusFirst,
+                          )
+                        : review != null || widget.onPrepare == null
+                        ? tr(context, MessageCode.msgSignAndBroadcast)
+                        : AppLocalizations.of(context).transferReview,
+                  ),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TextField(
-            controller: recipientController,
-            enabled: !sending,
-            autocorrect: false,
-            decoration: InputDecoration(
-              labelText: tr(context, MessageCode.msgRecipientAddress),
-              hintText: widget.network.addressHint,
+          if (review case final prepared?) ...[
+            _reviewRow(
+              AppLocalizations.of(context).transferSender,
+              widget.fromAddress ?? '',
             ),
-          ),
-          const SizedBox(height: 20),
-          TextField(
-            controller: amountController,
-            enabled: !sending,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: tr(context, MessageCode.msgAmount, [
-                widget.network.nativeSymbol,
-              ]),
-              hintText: '0.00',
+            _reviewRow(
+              tr(context, MessageCode.msgRecipientAddress),
+              recipientController.text.trim(),
             ),
-          ),
-          const SizedBox(height: 16),
-          if (widget.balanceWei != null)
-            Text(
-              tr(context, MessageCode.msgAvailable, [
-                displayQuantity(
-                  context,
-                  widget.network.formatAmount(widget.balanceWei!),
-                ),
-                widget.network.nativeSymbol,
-                widget.network.isTron
-                    ? tr(
-                        context,
-                        MessageCode
-                            .msgInsufficientBandwidthConsumesTrxAnUnactivatedRecipientMay,
-                      )
-                    : tr(context, MessageCode.msgGasFeesAreChargedSeparately),
-              ]),
-              style: TextStyle(
-                color: widget.theme.muted,
-                fontSize: 12,
-                height: 1.6,
+            _reviewRow(
+              tr(context, MessageCode.msgAmount, [widget.symbol]),
+              formatNativeAmount(
+                reviewedAmount!,
+                widget.decimals,
+                displayDecimals: widget.decimals,
               ),
             ),
+            if (widget.token case final token?)
+              _reviewRow(
+                AppLocalizations.of(context).transferContract,
+                token.contract,
+              ),
+            _reviewRow(
+              AppLocalizations.of(context).transferFee,
+              '${formatNativeAmount(prepared.fee, widget.network.nativeDecimals, displayDecimals: widget.network.nativeDecimals)} ${widget.network.nativeSymbol}',
+            ),
+            if (widget.network.isTron)
+              Text(
+                AppLocalizations.of(context).transferTronFeeNote,
+                style: TextStyle(color: widget.theme.muted, fontSize: 12),
+              ),
+          ] else ...[
+            if (widget.fromAddress case final from?)
+              _reviewRow(AppLocalizations.of(context).transferSender, from),
+            TextField(
+              controller: recipientController,
+              enabled: !sending && uncertainHash == null,
+              autocorrect: false,
+              decoration: InputDecoration(
+                labelText: tr(context, MessageCode.msgRecipientAddress),
+                hintText: widget.network.addressHint,
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: amountController,
+              enabled: !sending && uncertainHash == null,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: InputDecoration(
+                labelText: tr(context, MessageCode.msgAmount, [widget.symbol]),
+                hintText: '0.00',
+              ),
+            ),
+            if (widget.balanceWei case final available?) ...[
+              const SizedBox(height: 16),
+              Text(
+                tr(context, MessageCode.msgAvailable, [
+                  displayQuantity(
+                    context,
+                    formatNativeAmount(
+                      available,
+                      widget.decimals,
+                      displayDecimals: widget.decimals,
+                    ),
+                  ),
+                  widget.symbol,
+                  widget.network.isTron
+                      ? tr(
+                          context,
+                          MessageCode
+                              .msgInsufficientBandwidthConsumesTrxAnUnactivatedRecipientMay,
+                        )
+                      : tr(context, MessageCode.msgGasFeesAreChargedSeparately),
+                ]),
+                style: TextStyle(
+                  color: widget.theme.muted,
+                  fontSize: 12,
+                  height: 1.6,
+                ),
+              ),
+            ],
+          ],
           if (error != null) ...[
             const SizedBox(height: 16),
             Text(
@@ -962,9 +1071,22 @@ class _SendSheetState extends State<SendSheet> {
               tr(context, MessageCode.msgTransactionHash, [uncertainHash]),
               style: TextStyle(color: widget.theme.text, fontSize: 13),
             ),
+            _TransactionLink(network: widget.network, hash: uncertainHash!),
           ],
         ],
       ),
+    ),
+  );
+
+  Widget _reviewRow(String label, String value) => Padding(
+    padding: const EdgeInsets.only(bottom: 14),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(color: widget.theme.muted, fontSize: 12)),
+        const SizedBox(height: 4),
+        SelectableText(value),
+      ],
     ),
   );
 }
