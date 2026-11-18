@@ -54,6 +54,11 @@ class WalletRail extends StatelessWidget {
               WalletPage.assets,
             ),
             (
+              Icons.folder_open_outlined,
+              AppLocalizations.of(context).manageWalletsTitle,
+              WalletPage.wallets,
+            ),
+            (
               Icons.settings_outlined,
               tr(context, MessageCode.msgSettings),
               WalletPage.settings,

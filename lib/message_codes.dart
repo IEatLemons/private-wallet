@@ -398,6 +398,7 @@ enum MessageCode {
   transferFeeUnavailable,
   transferInsufficientFee,
   transferReviewExpired,
+  manageWalletChanged,
 }
 
 class WalletMessage {

@@ -1,6 +1,7 @@
 part of '../main.dart';
 
 enum WalletManagerAction {
+  manage,
   selected,
   create,
   importOptions,
@@ -15,12 +16,14 @@ class WalletManagerPanel extends StatefulWidget {
     required this.initial,
     required this.vault,
     this.network = ethereumMainnetNetwork,
+    this.quickSwitch = false,
     super.key,
   });
   final WalletTheme theme;
   final WalletPortfolio initial;
   final WalletVault vault;
   final EvmNetwork network;
+  final bool quickSwitch;
   @override
   State<WalletManagerPanel> createState() => _WalletManagerPanelState();
 }
@@ -158,6 +161,44 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
         : group.preferredNetworkId == 56
         ? bnbSmartChainNetwork
         : widget.network;
+    if (widget.quickSwitch) {
+      return Column(
+        children: [
+          for (final entry in accounts)
+            ListTile(
+              key: ValueKey('wallet-account-${entry.id}'),
+              dense: true,
+              selected: entry.id == portfolio.activeAccountId,
+              leading: Icon(
+                entry.id == portfolio.activeAccountId
+                    ? Icons.check_circle
+                    : Icons.account_balance_wallet_outlined,
+              ),
+              title: Text(
+                entry.displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: Text(
+                '${network.name} · ${shortAddress(entry.addressFor(network))}',
+              ),
+              trailing: group.hasAliases
+                  ? IconButton(
+                      tooltip: AppLocalizations.of(context).omniWalletAliases,
+                      onPressed: busy ? null : () => _showAliases(group),
+                      icon: const Icon(Icons.badge_outlined),
+                    )
+                  : null,
+              onTap: busy
+                  ? null
+                  : () => _change(
+                      () => widget.vault.selectAccount(entry.id),
+                      close: true,
+                    ),
+            ),
+        ],
+      );
+    }
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: WalletCard(
@@ -367,13 +408,28 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
       canPop: !busy,
       child: WalletPanel(
         theme: widget.theme,
-        title: tr(context, MessageCode.msgWalletManagement),
+        title: tr(
+          context,
+          widget.quickSwitch
+              ? MessageCode.msgSelectWallet
+              : MessageCode.msgWalletManagement,
+        ),
         canClose: !busy,
         scrollBody: false,
         footer: Wrap(
           spacing: 12,
           runSpacing: 8,
           children: [
+            if (widget.quickSwitch)
+              TextButton.icon(
+                key: const ValueKey('quick-manage-wallets'),
+                onPressed: busy
+                    ? null
+                    : () =>
+                          closeWalletPanel(context, WalletManagerAction.manage),
+                icon: const Icon(Icons.folder_open_outlined),
+                label: Text(AppLocalizations.of(context).msgWalletManagement),
+              ),
             FilledButton.icon(
               onPressed: busy
                   ? null

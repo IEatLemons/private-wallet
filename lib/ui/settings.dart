@@ -455,7 +455,7 @@ class _SettingsHubState extends State<_SettingsHub> {
     }
     switch (entry.action!) {
       case SettingsAction.manageWallets:
-        await shell.selectWallet();
+        shell._openWalletManagement();
       case SettingsAction.createWallet:
         await shell._createWallet();
       case SettingsAction.importMnemonic:

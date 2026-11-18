@@ -624,6 +624,7 @@ String tr(
     MessageCode.transferFeeUnavailable => strings.transferFeeUnavailable,
     MessageCode.transferInsufficientFee => strings.transferInsufficientFee,
     MessageCode.transferReviewExpired => strings.transferReviewExpired,
+    MessageCode.manageWalletChanged => strings.manageWalletChanged,
     MessageCode.discoveryNotConfiguredShort =>
       strings.discoveryNotConfiguredShort,
   };

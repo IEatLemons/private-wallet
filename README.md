@@ -341,8 +341,23 @@ an index. The original address and network configuration are preserved.
 Recovery phrases restore the same deterministic addresses; account names and the
 number of locally added accounts are local metadata. After restoring a phrase on
 a fresh installation, use **添加账户** to recreate its additional addresses in
-order. Balance/history-based account discovery, wallet removal and secret export
-are not part of this change.
+order. Balance/history-based account discovery and secret export remain separate
+features.
+
+### 钱包管理与删除
+
+左侧「钱包」进入分页管理页，可组合搜索和链、平台、类型筛选，并按资产估值、
+名称或添加时间排序。顶部钱包入口提供快速切换及「钱包管理」入口。点击钱包行
+查看账户、地址和分页别名，通过「使用此账户」切换签名账户。
+
+「查询全部余额」手动启动后台扫描，支持暂停和继续。余额及查询时间保存在
+本机加密存储中，重启后可查看。链筛选限定估值范围，查询失败保留上次成功值
+及时间，并显示结果不完整。macOS 使用 SQLCipher 分页读取余额和管理数据。
+
+支持跨页勾选、本页全选和全部筛选结果删除，确认前显示固定的影响清单及数量。
+钱包详情可删除整个钱包或编号大于 0 的派生账户。删除会清理当前钱包簿的
+密钥记录、别名、索引和余额缓存，既有迁移恢复来源保留。派生编号只递增，
+删除末尾账户后新增账户会使用新编号。全部钱包删空后显示欢迎页。
 
 `flutter test test/wallet_management_test.dart` checks migration, failed writes,
 duplicate imports, concurrent derivation, renaming, search, switching and restart.

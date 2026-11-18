@@ -12,6 +12,117 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appName => 'Asterkeel Wallet';
 
   @override
+  String get manageWalletsTitle => 'Wallets';
+
+  @override
+  String get manageUpdateFailed => 'Update failed';
+
+  @override
+  String get manageWalletChanged =>
+      'The wallet book changed. Review the deletion list again.';
+
+  @override
+  String get manageAdd => 'Create or import';
+
+  @override
+  String get managePlatform => 'Platform';
+
+  @override
+  String get manageAllChains => 'All networks';
+
+  @override
+  String get manageAllPlatforms => 'All platforms';
+
+  @override
+  String get manageNoPlatform => 'No platform';
+
+  @override
+  String get manageType => 'Type';
+
+  @override
+  String get manageAllTypes => 'All types';
+
+  @override
+  String get manageSort => 'Sort';
+
+  @override
+  String get manageValueSort => 'Value descending';
+
+  @override
+  String get manageNameSort => 'Name A–Z';
+
+  @override
+  String get manageNewestSort => 'Newest first';
+
+  @override
+  String manageMatches(int count) {
+    return '$count wallets';
+  }
+
+  @override
+  String get manageQueryBalances => 'Query all balances';
+
+  @override
+  String get manageChainValueScope =>
+      'Values are scoped to the selected network.';
+
+  @override
+  String get manageSelectPage => 'Select page';
+
+  @override
+  String get manageSelectAll => 'Select all matches';
+
+  @override
+  String manageSelected(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get manageClear => 'Clear';
+
+  @override
+  String get manageDelete => 'Delete';
+
+  @override
+  String get manageCurrent => 'Current';
+
+  @override
+  String manageAccounts(int count) {
+    return '$count accounts';
+  }
+
+  @override
+  String get manageNotQueried => 'Not queried';
+
+  @override
+  String get manageConfirmDelete => 'Confirm deletion';
+
+  @override
+  String get manageCancel => 'Cancel';
+
+  @override
+  String manageDeleteCounts(int wallets, int accounts) {
+    return 'Delete $wallets wallets and $accounts accounts';
+  }
+
+  @override
+  String get manageDeleteExplanation =>
+      'This removes the selected records and signing keys from the current wallet book, including aliases and cached balances. To restore access, import your recovery phrase or private key again. Existing migration recovery sources are retained.';
+
+  @override
+  String get manageDeleteActive =>
+      'The current account is included. A remaining account will be selected, or the welcome page will open when the wallet book is empty.';
+
+  @override
+  String get manageDeleteWallet => 'Delete wallet';
+
+  @override
+  String get manageDeleteAccount => 'Delete account';
+
+  @override
+  String get manageUseAccount => 'Use this account';
+
+  @override
   String get msgSyncing => 'Syncing…';
 
   @override

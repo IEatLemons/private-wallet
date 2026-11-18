@@ -240,6 +240,12 @@ void main() {
         await tap(tester, find.text('主钱包'));
         expect(find.byType(WalletManagerPanel), findsOneWidget);
         expect(find.text('1 个钱包 · 1 个账户'), findsOneWidget);
+        await tap(tester, find.byKey(const ValueKey('quick-manage-wallets')));
+        final initial = await vault.loadPortfolio();
+        await tap(
+          tester,
+          find.byKey(ValueKey('manage-wallet-${initial.groups.first.id}')),
+        );
         await tap(tester, find.text('添加账户'));
         var data = await vault.loadPortfolio();
         expect(data.accounts, hasLength(2));
@@ -251,10 +257,11 @@ void main() {
         await tester.enterText(find.byType(TextField).last, '我的钱包');
         await tap(tester, find.text('保存名称'));
         final childId = data.accounts.last.id;
-        await tap(tester, find.byKey(ValueKey('rename-account-$childId')));
+        await tap(tester, find.byKey(ValueKey('manage-account-menu-$childId')));
+        await tap(tester, find.text('重命名账户'));
         await tester.enterText(find.byType(TextField).last, '长期账户');
         await tap(tester, find.text('保存名称'));
-        await tap(tester, find.byKey(ValueKey('wallet-account-$childId')));
+        await tap(tester, find.byKey(ValueKey('manage-use-$childId')));
         expect(find.text('我的钱包 · 长期账户'), findsOneWidget);
         expect(rpc.calls, isEmpty);
 
@@ -280,7 +287,10 @@ void main() {
         await tester.pumpAndSettle();
         final matchedAccount = find.byKey(ValueKey('wallet-account-$childId'));
         expect(
-          find.descendant(of: matchedAccount, matching: find.text('长期账户')),
+          find.descendant(
+            of: matchedAccount,
+            matching: find.text('我的钱包 · 长期账户'),
+          ),
           findsOneWidget,
         );
         expect(find.text('账户 1'), findsNothing);

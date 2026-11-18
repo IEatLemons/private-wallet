@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -13,7 +12,6 @@ import 'asset_test_helpers.dart';
 import 'network_management_test.dart' show rpcResult;
 import 'widget_test.dart' show MapSecretStore;
 
-const _database = MethodChannel('asterkeel/wallet_database');
 String _key(int number) => number.toRadixString(16).padLeft(64, '0');
 
 class _WalletFixture {
@@ -65,31 +63,26 @@ void main() {
       );
       final zero = _WalletFixture(4, 'Empty wallet', bnbSmartChainNetwork);
       final entries = [smaller, bigger, failed, zero];
-      final methods = <String>[];
-      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        _database,
-        (call) async {
-          methods.add(call.method);
-          return switch (call.method) {
-            'needsMigration' => false,
-            'summary' => {
-              'groups_count': entries.length,
-              'accounts_count': entries.length,
-              'active_id': '${smaller.id}:0',
-              'selected': {...smaller.account, 'secret': _key(smaller.number)},
-            },
-            'initialNetwork' => null,
-            'walletPage' => [for (final entry in entries) entry.group],
-            _ => throw StateError('Unexpected database call ${call.method}'),
-          };
-        },
-      );
-      addTearDown(
-        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-          _database,
-          null,
-        ),
-      );
+      final store = MapSecretStore({
+        WalletVault.walletBookKey: jsonEncode({
+          'version': 2,
+          'activeAccountId': '${smaller.id}:0',
+          'groups': [
+            for (final entry in entries)
+              {
+                'id': entry.id,
+                'name': entry.name,
+                'kind': 'privateKey',
+                'networkId': entry.network.id,
+                'secret': _key(entry.number),
+                'accounts': [
+                  {'index': 0, 'name': entry.name},
+                ],
+              },
+          ],
+        }),
+        WalletVault.selectedNetworkKey: bnbSmartChainNetwork.id.toString(),
+      });
 
       final addressesRead = <(int, String)>[];
       final started = Completer<void>();
@@ -155,12 +148,7 @@ void main() {
           };
         }),
       );
-      final vault = WalletVault(
-        store: MapSecretStore({
-          WalletVault.selectedNetworkKey: bnbSmartChainNetwork.id.toString(),
-        }),
-        useMacWalletDatabase: true,
-      );
+      final vault = WalletVault(store: store);
       await tester.pumpWidget(
         StoneWalletApp(
           vault: vault,
@@ -171,16 +159,17 @@ void main() {
       await tester.pumpAndSettle();
       addressesRead.clear();
       final open = find.byKey(const ValueKey('portfolio-wallet-balances'));
-      final close = find.byKey(const ValueKey('wallet-balance-close'));
-      final control = find.byKey(const ValueKey('wallet-balance-control'));
+      final close = find.byKey(const ValueKey('wallet-nav-assets'));
+      final reopen = find.byKey(const ValueKey('wallet-nav-wallets'));
+      final control = find.byKey(const ValueKey('manage-query-balances'));
       Finder row(_WalletFixture wallet) =>
-          find.byKey(ValueKey('wallet-balance-${wallet.id}:0'));
+          find.byKey(ValueKey('manage-wallet-${wallet.id}'));
 
       await tester.tap(open);
       await tester.pumpAndSettle();
       expect(started.isCompleted, isTrue);
       expect(row(smaller), findsOneWidget);
-      expect(row(bigger), findsNothing);
+      expect(row(bigger), findsOneWidget);
 
       await tester.tap(control);
       await tester.pumpAndSettle();
@@ -194,14 +183,14 @@ void main() {
         isNot(contains((56, zero.address.addressHex.toLowerCase()))),
       );
 
-      await assetTap(tester, open);
+      await assetTap(tester, reopen);
       expect(row(bigger), findsOneWidget);
       expect(find.text(r'≈ $800.00'), findsOneWidget);
       await tester.tap(control);
       await tester.pumpAndSettle();
       await assetTap(tester, close);
       await tester.pump(const Duration(milliseconds: 300));
-      await assetTap(tester, open);
+      await assetTap(tester, reopen);
       final complete = find.text('查询完成 · 4 / 4 个账户');
       for (var i = 0; i < 10 && complete.evaluate().isEmpty; i++) {
         await tester.pump(const Duration(milliseconds: 100));
@@ -238,8 +227,10 @@ void main() {
         (tronMainnetNetwork.id, bigger.address.tronAddress),
         (tronMainnetNetwork.id, failed.address.tronAddress),
       });
-      expect(methods.where((method) => method == 'walletPage'), hasLength(1));
-      expect(methods, isNot(contains('select')));
+      expect(
+        (await vault.loadWalletSummary()).activeAccountId,
+        '${smaller.id}:0',
+      );
       expect(await vault.loadSelectedNetworkId(), bnbSmartChainNetwork.id);
 
       await assetTap(tester, row(bigger));

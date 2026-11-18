@@ -70,6 +70,7 @@ extension MacWalletBook on WalletVault {
         'derive_kind' =>
           MessageCode.msgOnlyRecoveryPhraseWalletsCanDeriveAdditionalAccounts,
         'wallet_changed' => MessageCode.omniWalletChanged,
+        'removal_changed' => MessageCode.manageWalletChanged,
         _ => MessageCode.omniStorageError,
       });
     }
@@ -182,23 +183,26 @@ extension MacWalletBook on WalletVault {
     );
   });
 
-  Future<WalletPortfolio> _macAddDerived(String id, String? name) =>
-      _serialize(() async {
-        final source = await _macRow('derive', {'id': id});
-        final index = source['next_index'] as int;
-        final account = WalletAccount.fromMnemonic(
-          source['secret'] as String,
-          accountIndex: index,
-        );
-        return _macSummary('addDerived', {
-          'id': id,
-          'account': _macAccountRecord(
-            index,
-            _checkedName(name ?? '账户 ${index + 1}'),
-            account,
-          ),
-        });
-      });
+  Future<WalletPortfolio> _macAddDerived(
+    String id,
+    String? name,
+    String Function(int)? nameForAccount,
+  ) => _serialize(() async {
+    final source = await _macRow('derive', {'id': id});
+    final index = source['next_index'] as int;
+    final account = WalletAccount.fromMnemonic(
+      source['secret'] as String,
+      accountIndex: index,
+    );
+    return _macSummary('addDerived', {
+      'id': id,
+      'account': _macAccountRecord(
+        index,
+        _checkedName(name ?? nameForAccount?.call(index) ?? '账户 ${index + 1}'),
+        account,
+      ),
+    });
+  });
 
   Future<BatchImportResult> _macImportPrivateRows(
     List<WalletImportRow> rows,
@@ -374,17 +378,20 @@ Map<String, Object?> _migrationRecord(_StoredGroup group) {
       _macAccountRecord(entry.index, entry.name, group.account(entry.index)),
   ];
   final first = accounts.firstWhere((row) => row['account_index'] == 0);
-  return _macRecord(
-    id: group.id,
-    name: group.name,
-    kind: group.kind,
-    secret: group.secret,
-    networkId: group.networkId,
-    identity: group.networkId == tronMainnetNetwork.id
-        ? first['tron'] as String
-        : (first['evm'] as String).toLowerCase(),
-    accounts: accounts,
-  );
+  return {
+    ..._macRecord(
+      id: group.id,
+      name: group.name,
+      kind: group.kind,
+      secret: group.secret,
+      networkId: group.networkId,
+      identity: group.networkId == tronMainnetNetwork.id
+          ? first['tron'] as String
+          : (first['evm'] as String).toLowerCase(),
+      accounts: accounts,
+    ),
+    'nextAccountIndex': group.nextAccountIndex,
+  };
 }
 
 Map<String, Object?> _macRecord({

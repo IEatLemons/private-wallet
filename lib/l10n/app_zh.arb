@@ -1,6 +1,70 @@
 {
   "@@locale": "zh",
   "appName": "星舟钱包",
+  "manageWalletsTitle": "钱包",
+  "manageUpdateFailed": "更新失败",
+  "manageWalletChanged": "钱包簿已变化，请重新核对删除清单。",
+  "manageAdd": "创建或导入",
+  "managePlatform": "平台",
+  "manageAllChains": "全部网络",
+  "manageAllPlatforms": "全部平台",
+  "manageNoPlatform": "无平台",
+  "manageType": "类型",
+  "manageAllTypes": "全部类型",
+  "manageSort": "排序",
+  "manageValueSort": "资产从高到低",
+  "manageNameSort": "名称升序",
+  "manageNewestSort": "最新添加",
+  "manageMatches": "{count} 个钱包",
+  "manageQueryBalances": "查询全部余额",
+  "manageChainValueScope": "当前估值仅汇总所选网络的资产。",
+  "manageSelectPage": "选择本页",
+  "manageSelectAll": "选择全部筛选结果",
+  "manageSelected": "已选 {count} 个",
+  "manageClear": "清空选择",
+  "manageDelete": "删除",
+  "manageCurrent": "当前",
+  "manageAccounts": "{count} 个账户",
+  "manageNotQueried": "未查询",
+  "manageConfirmDelete": "确认删除",
+  "manageCancel": "取消",
+  "manageDeleteCounts": "删除 {wallets} 个钱包、{accounts} 个账户",
+  "manageDeleteExplanation": "将从当前钱包簿移除所选记录和签名密钥，同时清理别名及余额缓存。恢复访问需要重新导入助记词或私钥。既有迁移恢复来源继续保留。",
+  "manageDeleteActive": "包含当前账户。删除后将选中剩余账户，全部删空后返回欢迎页。",
+  "manageDeleteWallet": "删除钱包",
+  "manageDeleteAccount": "删除账户",
+  "manageUseAccount": "使用此账户",
+  "@manageMatches": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@manageSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@manageAccounts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@manageDeleteCounts": {
+    "placeholders": {
+      "wallets": {
+        "type": "int"
+      },
+      "accounts": {
+        "type": "int"
+      }
+    }
+  },
   "msgSyncing": "同步中…",
   "msgRefreshAssets": "刷新资产",
   "msgManageNetworks": "管理网络",

@@ -108,12 +108,20 @@ class _StoredGroup {
     required this.secret,
     required this.accounts,
     this.networkId,
-  });
+    int? nextAccountIndex,
+  }) : nextAccountIndex =
+           nextAccountIndex ??
+           accounts.fold<int>(
+                 0,
+                 (maximum, a) => a.index > maximum ? a.index : maximum,
+               ) +
+               1;
   final String id, secret;
   String name;
   final WalletKind kind;
   final int? networkId;
   final List<_StoredAccount> accounts;
+  int nextAccountIndex;
   String entryId(int index) => '$id:$index';
   WalletAccount account(int index) => kind == WalletKind.mnemonic
       ? WalletAccount.fromMnemonic(secret, accountIndex: index)
@@ -144,14 +152,20 @@ class _StoredGroup {
     'kind': kind.name,
     'secret': secret,
     'networkId': networkId,
+    'nextAccountIndex': nextAccountIndex,
     'accounts': [for (final a in accounts) a.toJson()],
   };
 }
 
 class _WalletBook {
-  _WalletBook({required this.groups, this.activeAccountId});
+  _WalletBook({
+    required this.groups,
+    this.activeAccountId,
+    Map<String, dynamic>? balances,
+  }) : balances = balances ?? {};
   final List<_StoredGroup> groups;
   String? activeAccountId;
+  final Map<String, dynamic> balances;
   WalletPortfolio snapshot() => WalletPortfolio(
     groups: List.unmodifiable(groups.map((g) => g.snapshot())),
     activeAccountId: activeAccountId,
@@ -160,6 +174,7 @@ class _WalletBook {
     'version': 2,
     'groups': groups.map((g) => g.toJson()).toList(),
     'activeAccountId': activeAccountId,
+    'balances': balances,
   };
 }
 
@@ -217,9 +232,14 @@ extension WalletManagement on WalletVault {
             secret: value['secret'] as String,
             networkId: value['networkId'] as int?,
             accounts: accounts,
+            nextAccountIndex: value['nextAccountIndex'] as int?,
           );
           if (kind == WalletKind.privateKey &&
               (group.networkId == null || group.networkId! <= 0)) {
+            throw const FormatException();
+          }
+          if (group.nextAccountIndex <=
+              accounts.map((a) => a.index).reduce((a, b) => a > b ? a : b)) {
             throw const FormatException();
           }
           // Validate secrets before returning any account; never silently drop a wallet.
@@ -229,6 +249,7 @@ extension WalletManagement on WalletVault {
         return _WalletBook(
           groups: groups,
           activeAccountId: json['activeAccountId'] as String?,
+          balances: Map<String, dynamic>.from(json['balances'] as Map? ?? {}),
         );
       } catch (_) {
         throw const WalletInputException(
@@ -469,9 +490,12 @@ extension WalletManagement on WalletVault {
     });
   }
 
-  Future<WalletPortfolio> addDerivedAccount(String groupId, {String? name}) =>
-      _database != null
-      ? _macAddDerived(groupId, name)
+  Future<WalletPortfolio> addDerivedAccount(
+    String groupId, {
+    String? name,
+    String Function(int)? nameForAccount,
+  }) => _database != null
+      ? _macAddDerived(groupId, name, nameForAccount)
       : _changeBook((book) {
           final group = book.groups.where((g) => g.id == groupId).firstOrNull;
           if (group == null || group.kind != WalletKind.mnemonic) {
@@ -480,17 +504,19 @@ extension WalletManagement on WalletVault {
                   .msgOnlyRecoveryPhraseWalletsCanDeriveAdditionalAccounts,
             );
           }
-          final next =
-              group.accounts
-                  .map((a) => a.index)
-                  .reduce((a, b) => a > b ? a : b) +
-              1;
+          final next = group.nextAccountIndex;
           group.account(
             next,
           ); // Validate the derivation before changing persisted data.
           group.accounts.add(
-            _StoredAccount(next, _checkedName(name ?? '账户 ${next + 1}')),
+            _StoredAccount(
+              next,
+              _checkedName(
+                name ?? nameForAccount?.call(next) ?? '账户 ${next + 1}',
+              ),
+            ),
           );
+          group.nextAccountIndex = next + 1;
           book.activeAccountId = group.entryId(next);
           return book.snapshot();
         });

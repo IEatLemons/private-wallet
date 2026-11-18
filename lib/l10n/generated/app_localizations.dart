@@ -105,6 +105,204 @@ abstract class AppLocalizations {
   /// **'Asterkeel Wallet'**
   String get appName;
 
+  /// No description provided for @manageWalletsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallets'**
+  String get manageWalletsTitle;
+
+  /// No description provided for @manageUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Update failed'**
+  String get manageUpdateFailed;
+
+  /// No description provided for @manageWalletChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The wallet book changed. Review the deletion list again.'**
+  String get manageWalletChanged;
+
+  /// No description provided for @manageAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Create or import'**
+  String get manageAdd;
+
+  /// No description provided for @managePlatform.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform'**
+  String get managePlatform;
+
+  /// No description provided for @manageAllChains.
+  ///
+  /// In en, this message translates to:
+  /// **'All networks'**
+  String get manageAllChains;
+
+  /// No description provided for @manageAllPlatforms.
+  ///
+  /// In en, this message translates to:
+  /// **'All platforms'**
+  String get manageAllPlatforms;
+
+  /// No description provided for @manageNoPlatform.
+  ///
+  /// In en, this message translates to:
+  /// **'No platform'**
+  String get manageNoPlatform;
+
+  /// No description provided for @manageType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get manageType;
+
+  /// No description provided for @manageAllTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'All types'**
+  String get manageAllTypes;
+
+  /// No description provided for @manageSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get manageSort;
+
+  /// No description provided for @manageValueSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Value descending'**
+  String get manageValueSort;
+
+  /// No description provided for @manageNameSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Name A–Z'**
+  String get manageNameSort;
+
+  /// No description provided for @manageNewestSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest first'**
+  String get manageNewestSort;
+
+  /// No description provided for @manageMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} wallets'**
+  String manageMatches(int count);
+
+  /// No description provided for @manageQueryBalances.
+  ///
+  /// In en, this message translates to:
+  /// **'Query all balances'**
+  String get manageQueryBalances;
+
+  /// No description provided for @manageChainValueScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Values are scoped to the selected network.'**
+  String get manageChainValueScope;
+
+  /// No description provided for @manageSelectPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Select page'**
+  String get manageSelectPage;
+
+  /// No description provided for @manageSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all matches'**
+  String get manageSelectAll;
+
+  /// No description provided for @manageSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String manageSelected(int count);
+
+  /// No description provided for @manageClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get manageClear;
+
+  /// No description provided for @manageDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get manageDelete;
+
+  /// No description provided for @manageCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get manageCurrent;
+
+  /// No description provided for @manageAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} accounts'**
+  String manageAccounts(int count);
+
+  /// No description provided for @manageNotQueried.
+  ///
+  /// In en, this message translates to:
+  /// **'Not queried'**
+  String get manageNotQueried;
+
+  /// No description provided for @manageConfirmDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm deletion'**
+  String get manageConfirmDelete;
+
+  /// No description provided for @manageCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get manageCancel;
+
+  /// No description provided for @manageDeleteCounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {wallets} wallets and {accounts} accounts'**
+  String manageDeleteCounts(int wallets, int accounts);
+
+  /// No description provided for @manageDeleteExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the selected records and signing keys from the current wallet book, including aliases and cached balances. To restore access, import your recovery phrase or private key again. Existing migration recovery sources are retained.'**
+  String get manageDeleteExplanation;
+
+  /// No description provided for @manageDeleteActive.
+  ///
+  /// In en, this message translates to:
+  /// **'The current account is included. A remaining account will be selected, or the welcome page will open when the wallet book is empty.'**
+  String get manageDeleteActive;
+
+  /// No description provided for @manageDeleteWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete wallet'**
+  String get manageDeleteWallet;
+
+  /// No description provided for @manageDeleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get manageDeleteAccount;
+
+  /// No description provided for @manageUseAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this account'**
+  String get manageUseAccount;
+
   /// No description provided for @msgSyncing.
   ///
   /// In en, this message translates to:

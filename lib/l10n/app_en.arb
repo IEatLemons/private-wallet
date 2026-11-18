@@ -1,6 +1,70 @@
 {
   "@@locale": "en",
   "appName": "Asterkeel Wallet",
+  "manageWalletsTitle": "Wallets",
+  "manageUpdateFailed": "Update failed",
+  "manageWalletChanged": "The wallet book changed. Review the deletion list again.",
+  "manageAdd": "Create or import",
+  "managePlatform": "Platform",
+  "manageAllChains": "All networks",
+  "manageAllPlatforms": "All platforms",
+  "manageNoPlatform": "No platform",
+  "manageType": "Type",
+  "manageAllTypes": "All types",
+  "manageSort": "Sort",
+  "manageValueSort": "Value descending",
+  "manageNameSort": "Name A–Z",
+  "manageNewestSort": "Newest first",
+  "manageMatches": "{count} wallets",
+  "manageQueryBalances": "Query all balances",
+  "manageChainValueScope": "Values are scoped to the selected network.",
+  "manageSelectPage": "Select page",
+  "manageSelectAll": "Select all matches",
+  "manageSelected": "{count} selected",
+  "manageClear": "Clear",
+  "manageDelete": "Delete",
+  "manageCurrent": "Current",
+  "manageAccounts": "{count} accounts",
+  "manageNotQueried": "Not queried",
+  "manageConfirmDelete": "Confirm deletion",
+  "manageCancel": "Cancel",
+  "manageDeleteCounts": "Delete {wallets} wallets and {accounts} accounts",
+  "manageDeleteExplanation": "This removes the selected records and signing keys from the current wallet book, including aliases and cached balances. To restore access, import your recovery phrase or private key again. Existing migration recovery sources are retained.",
+  "manageDeleteActive": "The current account is included. A remaining account will be selected, or the welcome page will open when the wallet book is empty.",
+  "manageDeleteWallet": "Delete wallet",
+  "manageDeleteAccount": "Delete account",
+  "manageUseAccount": "Use this account",
+  "@manageMatches": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@manageSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@manageAccounts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@manageDeleteCounts": {
+    "placeholders": {
+      "wallets": {
+        "type": "int"
+      },
+      "accounts": {
+        "type": "int"
+      }
+    }
+  },
   "msgSyncing": "Syncing…",
   "msgRefreshAssets": "Refresh assets",
   "msgManageNetworks": "Manage networks",

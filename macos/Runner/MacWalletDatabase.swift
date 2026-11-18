@@ -14,6 +14,7 @@ final class MacWalletDatabase {
     private var handle: OpaquePointer?
     private var lockDescriptor: Int32 = -1
     private var statements: [String: OpaquePointer] = [:]
+    private var managementCounts: [String: (revision: Int, count: Int)] = [:]
     #if DEBUG
     var failNextCommit = false
     #endif
@@ -116,9 +117,20 @@ final class MacWalletDatabase {
             case 1:
                 // The exclusive process lock ensures any previous preview is abandoned.
                 try transaction { try clearPreview() }
+            case 2:
+                try transaction { try clearPreview() }
             default:
                 throw WalletDatabaseError()
             }
+            if version != 2 {
+                try transaction {
+                    for sql in Self.managementSchema { try execute(sql) }
+                    try execute("UPDATE wallet_groups SET next_account_index = (SELECT coalesce(max(account_index), 0) + 1 FROM accounts WHERE group_id = wallet_groups.id)")
+                    try execute("PRAGMA user_version = 2")
+                }
+            }
+            try execute("DELETE FROM removal_targets")
+            try execute("DELETE FROM removal_state")
         } catch {
             close()
             throw error
@@ -296,6 +308,30 @@ final class MacWalletDatabase {
             return try summary()
         case "walletPage":
             return try walletPage(arguments)
+        case "managementPage":
+            return try managementPage(arguments)
+        case "managementGroup":
+            return try managementGroup(arguments.string("id"))
+        case "accountPage":
+            let id = try arguments.string("id")
+            let after = arguments["after"] as? Int ?? -1
+            return try query("SELECT * FROM accounts WHERE group_id = ? AND account_index > ? ORDER BY account_index LIMIT 51", [id, after])
+        case "platformPage":
+            return try query("SELECT DISTINCT platform FROM aliases WHERE platform > ? COLLATE NOCASE ORDER BY platform COLLATE NOCASE LIMIT 51", [arguments["after"] as? String ?? ""])
+        case "prepareRemoval":
+            return try prepareRemoval(arguments)
+        case "removalPage":
+            return try removalPage(arguments)
+        case "cancelRemoval":
+            try cancelRemoval(arguments.string("token"))
+            return nil
+        case "commitRemoval":
+            try commitRemoval(arguments.string("token"))
+            return try summary()
+        case "saveBalance":
+            return try saveBalance(arguments)
+        case "balanceDetails":
+            return try query("SELECT * FROM balance_cache WHERE account_id IN (SELECT id FROM accounts WHERE group_id = ? AND account_index > ? ORDER BY account_index LIMIT 50) ORDER BY account_id, network_id", [try arguments.string("id"), arguments["after"] as? Int ?? -1])
         case "aliasPage":
             return try query("""
                 SELECT id, platform, uid FROM aliases WHERE group_id = ? AND id > ?
@@ -409,6 +445,7 @@ final class MacWalletDatabase {
         for entry in try record.records("accounts") {
             try insertAccount(entry, group: id)
         }
+        try execute("UPDATE wallet_groups SET next_account_index = max(?, (SELECT coalesce(max(account_index), 0) + 1 FROM accounts WHERE group_id = ?)) WHERE id = ?", [record["nextAccountIndex"] as? Int ?? 1, id, id])
         try execute("""
             UPDATE state SET groups_count = groups_count + 1, private_count = private_count + ? WHERE id = 1
             """, [kind == "privateKey" ? 1 : 0])
@@ -484,9 +521,9 @@ final class MacWalletDatabase {
     private func derive(_ args: [String: Any]) throws -> [String: Any] {
         let id = try args.string("id")
         guard let row = try query("""
-            SELECT g.secret, max(a.account_index) + 1 AS next_index
-            FROM wallet_groups g JOIN accounts a ON a.group_id = g.id
-            WHERE g.kind = 'mnemonic' AND g.id = ? GROUP BY g.id
+            SELECT secret, next_account_index AS next_index
+            FROM wallet_groups
+            WHERE kind = 'mnemonic' AND id = ?
             """, [id]).first else { throw WalletDatabaseError("derive_kind") }
         return row
     }
@@ -499,6 +536,7 @@ final class MacWalletDatabase {
                 throw WalletDatabaseError("wallet_changed")
             }
             try insertAccount(entry, group: id)
+            try execute("UPDATE wallet_groups SET next_account_index = ? WHERE id = ?", [try entry.int("account_index") + 1, id])
             try setActive("\(id):\(entry.int("account_index"))")
         }
     }
@@ -704,6 +742,306 @@ final class MacWalletDatabase {
             var result = try summary()
             if wasEmpty, let first { result["initial_network"] = first["network_id"] }
             return result
+        }
+    }
+
+    private static let managementSchema = [
+        "ALTER TABLE wallet_groups ADD COLUMN next_account_index INTEGER NOT NULL DEFAULT 1",
+        "CREATE INDEX wallet_network ON wallet_groups(network_id, sequence)",
+        "CREATE INDEX wallet_name ON wallet_groups(name COLLATE NOCASE, id)",
+        "CREATE INDEX alias_platform ON aliases(platform COLLATE NOCASE, group_id)",
+        """
+        CREATE TABLE balance_cache (
+            account_id TEXT NOT NULL REFERENCES accounts(id), network_id INTEGER NOT NULL,
+            amount TEXT, payload TEXT NOT NULL, attempted_at INTEGER NOT NULL,
+            updated_at INTEGER, incomplete INTEGER NOT NULL, failed INTEGER NOT NULL,
+            PRIMARY KEY(account_id, network_id)
+        )
+        """,
+        """
+        CREATE TABLE balance_totals (
+            group_id TEXT NOT NULL REFERENCES wallet_groups(id), network_id INTEGER NOT NULL,
+            amount TEXT, sort_key TEXT NOT NULL, incomplete INTEGER NOT NULL,
+            updated_at INTEGER, attempted_at INTEGER,
+            PRIMARY KEY(group_id, network_id)
+        )
+        """,
+        "CREATE INDEX balance_rank ON balance_totals(network_id, sort_key DESC, group_id)",
+        "CREATE TABLE removal_state (token TEXT PRIMARY KEY, revision INTEGER NOT NULL, account_id TEXT)",
+        "CREATE TABLE removal_targets (token TEXT NOT NULL, group_id TEXT NOT NULL, PRIMARY KEY(token, group_id))",
+    ]
+
+    private func managementFilter(_ args: [String: Any]) -> (String, [Any?]) {
+        var conditions: [String] = []
+        var bindings: [Any?] = []
+        let prefix = (args["query"] as? String ?? "").lowercased()
+        if !prefix.isEmpty {
+            let escaped = prefix.replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "%", with: "\\%")
+                .replacingOccurrences(of: "_", with: "\\_") + "%"
+            conditions.append("g.id IN (SELECT group_id FROM search_terms WHERE term LIKE ? ESCAPE '\\')")
+            bindings.append(escaped)
+        }
+        if let kind = args["kind"] as? String {
+            conditions.append("g.kind = ?")
+            bindings.append(kind)
+        }
+        if let chain = args["chain"] as? Int {
+            let enabled = (args["enabled"] as? [Int] ?? []).contains(chain)
+            conditions.append(enabled ? "(g.network_id = ? OR g.network_id IS NULL)" : "g.network_id = ?")
+            bindings.append(chain)
+        }
+        if let platform = args["platform"] as? String {
+            if platform.isEmpty {
+                conditions.append("NOT EXISTS (SELECT 1 FROM aliases p WHERE p.group_id = g.id)")
+            } else {
+                conditions.append("EXISTS (SELECT 1 FROM aliases p WHERE p.group_id = g.id AND p.platform = ? COLLATE NOCASE)")
+                bindings.append(platform)
+            }
+        }
+        return (conditions.isEmpty ? "1" : conditions.joined(separator: " AND "), bindings)
+    }
+
+    private func managementGroup(_ id: String) throws -> [String: Any] {
+        guard var row = try query("""
+            SELECT g.id, g.name, g.kind, g.network_id, g.sequence, g.next_account_index,
+              (SELECT count(*) FROM accounts WHERE group_id = g.id) AS account_count,
+              EXISTS(SELECT 1 FROM aliases WHERE group_id = g.id) AS has_aliases,
+              (SELECT platform FROM aliases WHERE group_id = g.id ORDER BY id LIMIT 1) AS platform
+            FROM wallet_groups g WHERE g.id = ?
+            """, [id]).first else { throw WalletDatabaseError("wallet_missing") }
+        row["accounts"] = try query("SELECT * FROM accounts WHERE group_id = ? ORDER BY account_index LIMIT 1", [id])
+        return row
+    }
+
+    private func managementPage(_ args: [String: Any]) throws -> [String: Any] {
+        let (filter, bindings) = managementFilter(args)
+        let revision = try integer("SELECT revision AS value FROM state")
+        let countKey = filter + bindings.map { String(describing: $0) }.joined(separator: "\u{1f}")
+        let count: Int
+        if let cached = managementCounts[countKey], cached.revision == revision {
+            count = cached.count
+        } else {
+            count = filter == "1"
+                ? try integer("SELECT groups_count AS value FROM state")
+                : try query("SELECT count(*) AS value FROM wallet_groups g WHERE \(filter)", bindings).first?["value"] as? Int ?? 0
+            if managementCounts.count > 32 { managementCounts.removeAll() }
+            managementCounts[countKey] = (revision, count)
+        }
+        let chain = args["chain"] as? Int ?? 0
+        let sort = args["sort"] as? String ?? "value"
+        let order: String
+        switch sort {
+        case "name": order = "g.name COLLATE NOCASE, g.id"
+        case "newest": order = "g.sequence DESC, g.id"
+        default: order = "coalesce(b.sort_key, '') DESC, g.id"
+        }
+        let offset = max(0, args["offset"] as? Int ?? 0)
+        let matches = try query("""
+            SELECT g.id, b.amount, b.incomplete, b.updated_at, b.attempted_at
+            FROM wallet_groups g LEFT JOIN balance_totals b ON b.group_id = g.id AND b.network_id = ?
+            WHERE \(filter) ORDER BY \(order) LIMIT 51 OFFSET ?
+            """, [chain] + bindings + [offset])
+        return [
+            "total": count,
+            "more": matches.count > 50,
+            "groups": try matches.prefix(50).map { item -> [String: Any] in
+                var row = try managementGroup(item.string("id"))
+                for key in ["amount", "incomplete", "updated_at", "attempted_at"] {
+                    row[key] = item[key]
+                }
+                return row
+            },
+        ]
+    }
+
+    private func prepareRemoval(_ args: [String: Any]) throws -> [String: Any] {
+        try transaction {
+            let token = UUID().uuidString
+            let accountID = args["account"] as? String
+            try execute("INSERT INTO removal_state SELECT ?, revision, ? FROM state", [token, accountID])
+            if let accountID {
+                guard let account = try account(accountID, includeSecret: false),
+                      try account.int("account_index") > 0,
+                      try account.string("kind") == "mnemonic" else {
+                    throw WalletDatabaseError("protected_account")
+                }
+                try execute("INSERT INTO removal_targets VALUES (?, ?)", [token, try account.string("group_id")])
+            } else if let ids = args["ids"] as? [String] {
+                guard !ids.isEmpty else { throw WalletDatabaseError("wallet_missing") }
+                for id in Set(ids) {
+                    guard try !query("SELECT 1 FROM wallet_groups WHERE id = ?", [id]).isEmpty else {
+                        throw WalletDatabaseError("removal_changed")
+                    }
+                    try execute("INSERT INTO removal_targets VALUES (?, ?)", [token, id])
+                }
+            } else {
+                let (filter, bindings) = managementFilter(args)
+                try execute("INSERT INTO removal_targets SELECT ?, g.id FROM wallet_groups g WHERE \(filter)", [token] + bindings)
+                for id in args["excluded"] as? [String] ?? [] {
+                    try execute("DELETE FROM removal_targets WHERE token = ? AND group_id = ?", [token, id])
+                }
+            }
+            let groups = try query("SELECT count(*) AS value FROM removal_targets WHERE token = ?", [token]).first?["value"] as? Int ?? 0
+            guard groups > 0 else { throw WalletDatabaseError("wallet_missing") }
+            let count = accountID == nil
+                ? try query("SELECT count(*) AS value FROM accounts WHERE group_id IN (SELECT group_id FROM removal_targets WHERE token = ?)", [token]).first?["value"] as? Int ?? 0
+                : 1
+            let active = try query("SELECT active_id FROM state").first?["active_id"] as? String
+            let containsActive: Bool
+            if let accountID { containsActive = active == accountID }
+            else {
+                containsActive = try !query("SELECT 1 FROM accounts WHERE id = ? AND group_id IN (SELECT group_id FROM removal_targets WHERE token = ?)", [active, token]).isEmpty
+            }
+            return ["token": token, "wallets": accountID == nil ? groups : 0, "accounts": count, "active": containsActive]
+        }
+    }
+
+    private func removalPage(_ args: [String: Any]) throws -> [[String: Any]] {
+        try query("""
+            SELECT g.id, g.name, g.kind, g.network_id, b.amount, b.incomplete
+            FROM removal_targets t JOIN wallet_groups g ON g.id = t.group_id
+            LEFT JOIN balance_totals b ON b.group_id = g.id AND b.network_id = 0
+            WHERE t.token = ? ORDER BY g.sequence LIMIT 51 OFFSET ?
+            """, [try args.string("token"), max(0, args["offset"] as? Int ?? 0)])
+    }
+
+    private func cancelRemoval(_ token: String) throws {
+        try transaction {
+            try execute("DELETE FROM removal_targets WHERE token = ?", [token])
+            try execute("DELETE FROM removal_state WHERE token = ?", [token])
+        }
+    }
+
+    private func commitRemoval(_ token: String) throws {
+        try transaction {
+            guard let preview = try query("""
+                SELECT r.account_id FROM removal_state r JOIN state s ON r.revision = s.revision WHERE r.token = ?
+                """, [token]).first else { throw WalletDatabaseError("removal_changed") }
+            let accountID = preview["account_id"] as? String
+            let target = "SELECT group_id FROM removal_targets WHERE token = ?"
+            let fallbackGroup = accountID.flatMap { id in
+                try? account(id, includeSecret: false)?["group_id"] as? String
+            }
+            if let accountID {
+                guard let row = try account(accountID, includeSecret: false), try row.int("account_index") > 0 else {
+                    throw WalletDatabaseError("protected_account")
+                }
+                try execute("DELETE FROM balance_cache WHERE account_id = ?", [accountID])
+                try execute("DELETE FROM search_terms WHERE group_id = ? AND account_index = ?", [try row.string("group_id"), try row.int("account_index")])
+                try execute("DELETE FROM accounts WHERE id = ?", [accountID])
+                try refreshTotals(row.string("group_id"))
+            } else {
+                try execute("DELETE FROM balance_cache WHERE account_id IN (SELECT id FROM accounts WHERE group_id IN (\(target)))", [token])
+                for table in ["balance_totals", "aliases", "search_terms", "accounts"] {
+                    try execute("DELETE FROM \(table) WHERE group_id IN (\(target))", [token])
+                }
+                try execute("DELETE FROM wallet_groups WHERE id IN (\(target))", [token])
+            }
+            let active = try query("SELECT active_id FROM state").first?["active_id"] as? String
+            if let active, try account(active, includeSecret: false) == nil {
+                let fallback: String?
+                if let fallbackGroup { fallback = "\(fallbackGroup):0" }
+                else { fallback = try firstAccountID() }
+                try execute("UPDATE state SET active_id = ?, pending_network = NULL WHERE id = 1", [fallback])
+            }
+            try execute("""
+                UPDATE state SET
+                  groups_count = (SELECT count(*) FROM wallet_groups),
+                  accounts_count = (SELECT count(*) FROM accounts),
+                  private_count = (SELECT count(*) FROM wallet_groups WHERE kind = 'privateKey'),
+                  revision = revision + 1 WHERE id = 1
+                """)
+            try execute("DELETE FROM removal_targets WHERE token = ?", [token])
+            try execute("DELETE FROM removal_state WHERE token = ?", [token])
+            #if DEBUG
+            if failNextCommit {
+                failNextCommit = false
+                throw WalletDatabaseError()
+            }
+            #endif
+        }
+    }
+
+    /// Adds integer strings in units of 10^-72 without floating-point conversion.
+    private func addAmounts(_ a: String, _ b: String) -> String {
+        let left = Array(a.utf8.reversed()), right = Array(b.utf8.reversed())
+        var carry = 0, output: [UInt8] = []
+        for i in 0..<max(left.count, right.count) {
+            let sum = (i < left.count ? Int(left[i]) - 48 : 0) +
+                (i < right.count ? Int(right[i]) - 48 : 0) + carry
+            output.append(UInt8(sum % 10 + 48))
+            carry = sum / 10
+        }
+        if carry > 0 { output.append(UInt8(carry + 48)) }
+        return String(decoding: output.reversed(), as: UTF8.self)
+    }
+
+    private func refreshTotals(_ id: String) throws {
+        let rows = try query("""
+            SELECT c.* FROM balance_cache c JOIN accounts a ON a.id = c.account_id WHERE a.group_id = ?
+            """, [id])
+        let accountCount = try query("SELECT count(*) AS value FROM accounts WHERE group_id = ?", [id]).first?["value"] as? Int ?? 0
+        try execute("DELETE FROM balance_totals WHERE group_id = ?", [id])
+        let chains = Set(rows.compactMap { $0["network_id"] as? Int })
+        for chain in [0] + chains.sorted() {
+            let scoped = chain == 0 ? rows : rows.filter { $0["network_id"] as? Int == chain }
+            var amount: String?
+            for row in scoped {
+                if let value = row["amount"] as? String { amount = addAmounts(amount ?? "0", value) }
+            }
+            let represented = Set(scoped.compactMap { $0["account_id"] as? String }).count
+            // Coverage bits match BalanceCoverage in wallet_management.dart.
+            var incomplete = represented < accountCount ? 8 : 0
+            for row in scoped {
+                incomplete |= row["incomplete"] as? Int ?? 1
+                if row["failed"] as? Int == 1 { incomplete |= 4 }
+            }
+            let timestamps = scoped.compactMap { $0["updated_at"] as? Int }
+            let attempts = scoped.compactMap { $0["attempted_at"] as? Int }
+            let key = amount.map { String(format: "%010d", $0.count) + $0 } ?? ""
+            try execute("INSERT INTO balance_totals VALUES (?, ?, ?, ?, ?, ?, ?)", [
+                id, chain, amount, key, incomplete,
+                timestamps.count == scoped.count ? timestamps.min() : nil, attempts.min(),
+            ])
+        }
+    }
+
+    private func saveBalance(_ args: [String: Any]) throws -> Bool {
+        try transaction {
+            let id = try args.string("id")
+            guard let owner = try account(id, includeSecret: false) else { return false }
+            let records = try args.records("records")
+            let time = try args.int("time")
+            let chains = try records.map { try $0.int("chain") }
+            if chains.isEmpty {
+                try execute("DELETE FROM balance_cache WHERE account_id = ?", [id])
+            } else {
+                let placeholders = chains.map { _ in "?" }.joined(separator: ",")
+                try execute("DELETE FROM balance_cache WHERE account_id = ? AND network_id NOT IN (\(placeholders))", [id] + chains.map { $0 as Any? })
+            }
+            for record in records {
+                let chain = try record.int("chain")
+                let failed = try record.int("failed")
+                let rawAmount = record["amount"] as? String
+                let amount = rawAmount.map { value -> String in
+                    let digits = value.drop(while: { $0 == "0" })
+                    return digits.isEmpty ? "0" : String(digits)
+                }
+                if let amount, amount.isEmpty || !amount.utf8.allSatisfy({ $0 >= 48 && $0 <= 57 }) {
+                    throw WalletDatabaseError()
+                }
+                let previous = try query("SELECT * FROM balance_cache WHERE account_id = ? AND network_id = ?", [id, chain]).first
+                let keepPrevious = failed != 0 && previous?["updated_at"] != nil
+                try execute("INSERT OR REPLACE INTO balance_cache VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [
+                    id, chain, keepPrevious ? previous?["amount"] : amount,
+                    keepPrevious ? previous?["payload"] : try record.string("payload"),
+                    time, keepPrevious ? previous?["updated_at"] : (failed == 0 ? time : nil),
+                    try record.int("incomplete"), failed,
+                ])
+            }
+            try refreshTotals(owner.string("group_id"))
+            return true
         }
     }
 

@@ -28,6 +28,7 @@ part 'ui/portfolio_settings.dart';
 part 'ui/asset_data.dart';
 part 'ui/wallet_balances.dart';
 part 'ui/wallet_manager.dart';
+part 'ui/wallet_management.dart';
 part 'ui/omnivault_import.dart';
 part 'ui/transfers.dart';
 part 'ui/stablecoins.dart';
@@ -303,6 +304,8 @@ class _WalletShellState extends State<WalletShell> {
   final assetScroll = ScrollController();
   final _settingsHub = GlobalKey<_SettingsHubState>();
   SettingsDestination? _settingsDestination;
+  bool _walletManagementOpen = false;
+  bool _walletManagementVisited = false;
   void _updateView(VoidCallback fn) {
     setState(fn);
     viewRevision.value++;
@@ -1053,18 +1056,33 @@ class _WalletShellState extends State<WalletShell> {
   }
 
   void _goToAssets() {
-    if (_settingsDestination == null) return;
+    if (_settingsDestination == null && !_walletManagementOpen) return;
     FocusManager.instance.primaryFocus?.unfocus();
-    setState(() => _settingsDestination = null);
+    setState(() {
+      _settingsDestination = null;
+      _walletManagementOpen = false;
+    });
     unawaited(refreshQuotes());
   }
 
   void _openSettings({
     SettingsDestination initial = SettingsDestination.directory,
   }) {
-    if (_settingsDestination != null) return;
+    if (_settingsDestination != null && !_walletManagementOpen) return;
     FocusManager.instance.primaryFocus?.unfocus();
-    setState(() => _settingsDestination = initial);
+    setState(() {
+      _settingsDestination = initial;
+      _walletManagementOpen = false;
+    });
+  }
+
+  void _openWalletManagement() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _settingsDestination = null;
+      _walletManagementOpen = true;
+      _walletManagementVisited = true;
+    });
   }
 
   Future<void> _showAssetDetails(AssetRow asset) async {
@@ -1292,6 +1310,8 @@ class _WalletShellState extends State<WalletShell> {
 
   Future<void> _runWalletAction(WalletManagerAction action) async {
     switch (action) {
+      case WalletManagerAction.manage:
+        _openWalletManagement();
       case WalletManagerAction.create:
         await _createWallet();
       case WalletManagerAction.importMnemonic:
@@ -1321,11 +1341,16 @@ class _WalletShellState extends State<WalletShell> {
       builder: (_) => WalletManagerPanel(
         theme: theme,
         initial: portfolio,
+        quickSwitch: true,
         vault: vault,
         network: selectedNetwork ?? ethereumMainnetNetwork,
       ),
     );
     if (!mounted) return;
+    if (result == WalletManagerAction.manage) {
+      _openWalletManagement();
+      return;
+    }
     try {
       await _reloadPortfolio(
         useAccountNetwork: result == WalletManagerAction.selected,
@@ -1378,10 +1403,21 @@ class _WalletShellState extends State<WalletShell> {
     }
     final layout = WalletLayout.of(context);
     final settings = _settingsDestination;
+    final page = _walletManagementOpen
+        ? WalletPage.wallets
+        : settings == null
+        ? WalletPage.assets
+        : WalletPage.settings;
     return PopScope(
-      canPop: settings == null,
+      canPop: settings == null && !_walletManagementOpen,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _settingsHub.currentState?.back();
+        if (!didPop) {
+          if (_walletManagementOpen) {
+            _goToAssets();
+          } else {
+            _settingsHub.currentState?.back();
+          }
+        }
       },
       child: Scaffold(
         body: SafeArea(
@@ -1391,12 +1427,12 @@ class _WalletShellState extends State<WalletShell> {
               if (!layout.mobile)
                 WalletRail(
                   theme: theme,
-                  selected: settings == null
-                      ? WalletPage.assets
-                      : WalletPage.settings,
+                  selected: page,
                   onSelect: (page) {
                     if (page == WalletPage.settings) {
                       _openSettings();
+                    } else if (page == WalletPage.wallets) {
+                      _openWalletManagement();
                     } else {
                       _goToAssets();
                     }
@@ -1406,11 +1442,15 @@ class _WalletShellState extends State<WalletShell> {
                 const SizedBox.shrink(),
               Expanded(
                 child: IndexedStack(
-                  index: settings == null ? 0 : 1,
+                  index: _walletManagementOpen
+                      ? 2
+                      : settings == null
+                      ? 0
+                      : 1,
                   sizing: StackFit.expand,
                   children: [
                     ExcludeFocus(
-                      excluding: settings != null,
+                      excluding: settings != null || _walletManagementOpen,
                       child: _buildAssets(layout),
                     ),
                     if (settings != null)
@@ -1419,7 +1459,19 @@ class _WalletShellState extends State<WalletShell> {
                         shell: this,
                         initial: settings,
                         onExit: _goToAssets,
-                      ),
+                      )
+                    else
+                      const SizedBox.shrink(),
+                    if (_walletManagementVisited)
+                      ExcludeFocus(
+                        excluding: !_walletManagementOpen,
+                        child: _WalletManagementView(
+                          shell: this,
+                          active: _walletManagementOpen,
+                        ),
+                      )
+                    else
+                      const SizedBox.shrink(),
                   ],
                 ),
               ),

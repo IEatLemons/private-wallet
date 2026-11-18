@@ -424,13 +424,18 @@ void main() {
         expect(book.groups.single.name, strings(tester).msgMainWallet);
         expect(book.selected!.name, strings(tester).msgAccountMore('1'));
         await tap(tester, find.text(book.groups.single.name));
+        await tap(tester, find.byKey(const ValueKey('quick-manage-wallets')));
+        await tap(
+          tester,
+          find.byKey(ValueKey('manage-wallet-${book.groups.single.id}')),
+        );
         await tap(
           tester,
           find.byKey(ValueKey('derive-account-${book.groups.single.id}')),
         );
         book = await vault.loadPortfolio();
         expect(book.selected!.name, strings(tester).msgAccountMore('2'));
-        await tap(tester, find.byTooltip(strings(tester).msgClose));
+        await tap(tester, find.byIcon(Icons.arrow_back));
         expect(find.byType(AssetsPage), findsOneWidget);
         await tap(tester, find.byKey(const ValueKey('open-settings')));
         await settingsEntryTap(tester, 'wallets');

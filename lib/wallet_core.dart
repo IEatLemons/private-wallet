@@ -6,6 +6,7 @@ import 'dart:math' show Random;
 import 'dart:typed_data';
 
 import 'message_codes.dart';
+import 'quotes.dart';
 export 'message_codes.dart';
 
 import 'package:bip32/bip32.dart';
@@ -22,6 +23,7 @@ import 'package:web3dart/json_rpc.dart' show RPCError;
 
 part 'wallet_book.dart';
 part 'mac_wallet_book.dart';
+part 'wallet_management.dart';
 part 'omnivault_import.dart';
 part 'tron.dart';
 part 'tokens.dart';
@@ -348,6 +350,7 @@ class WalletVault {
   bool get supportsOmniVaultImport => _database != null;
 
   Future<void> _mutationTail = Future.value();
+  final Map<String, WalletRemovalPreview> _removals = {};
 
   Future<bool> hasWallet() async => (await loadWalletSummary()).groupCount > 0;
 

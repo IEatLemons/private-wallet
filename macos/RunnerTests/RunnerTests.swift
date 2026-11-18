@@ -89,6 +89,139 @@ final class RunnerTests: XCTestCase {
         }
     }
 
+    func testManagementCacheRemovalAndDerivationWatermark() throws {
+        let token = UUID().uuidString
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(token)
+        let service = "asterkeel.management-test." + token
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+            SecItemDelete([
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: service,
+                kSecAttrAccount as String: "wallet-database-v1",
+                kSecAttrSynchronizable as String: false,
+            ] as CFDictionary)
+        }
+        var database: MacWalletDatabase? = MacWalletDatabase(directory: directory, keychainService: service)
+        let accounts: [[String: Any]] = (0...2).map {
+            ["account_index": $0, "name": "Account \($0)", "evm": address, "tron": tron]
+        }
+        let group: [String: Any] = [
+            "id": walletID, "kind": "mnemonic", "name": "Original",
+            "secret": "synthetic recovery phrase", "identity": address.lowercased(),
+            "accounts": accounts,
+        ]
+        _ = try database!.call("migrate", ["activeId": walletID + ":2", "groups": [group]])
+        let page = try XCTUnwrap(database!.call("managementPage", [:]) as? [String: Any])
+        XCTAssertEqual(page["total"] as? Int, 1)
+        let groups = try XCTUnwrap(page["groups"] as? [[String: Any]])
+        XCTAssertNil(groups.first?["secret"])
+        XCTAssertEqual((groups.first?["accounts"] as? [[String: Any]])?.count, 1)
+        let amount = "12" + String(repeating: "0", count: 72)
+        let cache: [String: Any] = [
+            "id": walletID + ":2", "time": 1000,
+            "records": [["chain": 56, "amount": amount, "payload": "[]", "failed": 0, "incomplete": 0]],
+        ]
+        XCTAssertEqual(try database!.call("saveBalance", cache) as? Bool, true)
+        let preview = try XCTUnwrap(database!.call("prepareRemoval", ["account": walletID + ":2"]) as? [String: Any])
+        let previewID = try XCTUnwrap(preview["token"] as? String)
+        XCTAssertEqual(preview["accounts"] as? Int, 1)
+        XCTAssertEqual(preview["active"] as? Bool, true)
+        // Refreshes of replaceable balances must not invalidate deletion approval.
+        XCTAssertEqual(try database!.call("saveBalance", cache) as? Bool, true)
+        let failed: [String: Any] = [
+            "id": walletID + ":2", "time": 2000,
+            "records": [["chain": 56, "amount": "0", "payload": "[]", "failed": 1, "incomplete": 4]],
+        ]
+        XCTAssertEqual(try database!.call("saveBalance", failed) as? Bool, true)
+        let refreshed = try XCTUnwrap(database!.call("managementPage", [:]) as? [String: Any])
+        let cachedGroup = try XCTUnwrap((refreshed["groups"] as? [[String: Any]])?.first)
+        XCTAssertEqual(cachedGroup["amount"] as? String, amount)
+        XCTAssertEqual((cachedGroup["incomplete"] as? Int ?? 0) & 4, 4)
+        XCTAssertEqual(cachedGroup["updated_at"] as? Int, 1000)
+        #if DEBUG
+        database!.failNextCommit = true
+        XCTAssertThrowsError(try database!.call("commitRemoval", ["token": previewID]))
+        XCTAssertEqual(try summary(database!)["accounts_count"] as? Int, 3)
+        #endif
+        _ = try database!.call("commitRemoval", ["token": previewID])
+        XCTAssertEqual(try summary(database!)["accounts_count"] as? Int, 2)
+        XCTAssertEqual(try summary(database!)["active_id"] as? String, walletID + ":0")
+        let next = try XCTUnwrap(database!.call("derive", ["id": walletID]) as? [String: Any])
+        XCTAssertEqual(next["next_index"] as? Int, 3)
+        XCTAssertThrowsError(try database!.call("prepareRemoval", ["account": walletID + ":0"]))
+        XCTAssertTrue(try XCTUnwrap(database!.call("balanceDetails", ["id": walletID]) as? [[String: Any]]).isEmpty)
+        XCTAssertEqual(try database!.call("saveBalance", cache) as? Bool, false)
+        let all = try XCTUnwrap(database!.call("prepareRemoval", ["query": "orig"]) as? [String: Any])
+        _ = try database!.call("rename", ["id": walletID, "name": "Renamed"])
+        XCTAssertThrowsError(try database!.call("commitRemoval", ["token": try XCTUnwrap(all["token"] as? String)]))
+        let final = try XCTUnwrap(database!.call("prepareRemoval", ["ids": [walletID]]) as? [String: Any])
+        _ = try database!.call("commitRemoval", ["token": try XCTUnwrap(final["token"] as? String)])
+        XCTAssertEqual(try summary(database!)["groups_count"] as? Int, 0)
+        XCTAssertNil(try summary(database!)["active_id"])
+        database = nil
+        database = MacWalletDatabase(directory: directory, keychainService: service)
+        XCTAssertEqual(try summary(database!)["groups_count"] as? Int, 0)
+        XCTAssertEqual(try database!.call("needsMigration", [:]) as? Bool, false)
+    }
+
+    func testManagementPaginationAndRankingAtScale() throws {
+        let count = Int(ProcessInfo.processInfo.environment["ASTERKEEL_MANAGEMENT_ROWS"] ?? "146")!
+        let token = UUID().uuidString
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(token)
+        let service = "asterkeel.management-scale." + token
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+            SecItemDelete([
+                kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
+                kSecAttrAccount as String: "wallet-database-v1", kSecAttrSynchronizable as String: false,
+            ] as CFDictionary)
+        }
+        let database = MacWalletDatabase(directory: directory, keychainService: service)
+        _ = try database.call("migrate", ["groups": []])
+        let start = Date()
+        for offset in stride(from: 0, to: count, by: 5000) {
+            let groups: [[String: Any]] = (offset..<min(offset + 5000, count)).map { index in
+                let identity = "0x" + String(repeating: "0", count: 40 - String(index + 1, radix: 16).count) + String(index + 1, radix: 16)
+                return [
+                    "id": "fixture-\(index)", "kind": "privateKey", "secret": key,
+                    "network_id": index.isMultiple(of: 2) ? 56 : 728126428, "identity": identity,
+                    "accounts": [["account_index": 0, "name": "Account", "evm": identity, "tron": tron]],
+                ]
+            }
+            let names = (offset..<min(offset + 5000, count)).map { String(format: "Fixture %06d", $0) }
+            let results = try XCTUnwrap(database.call("addPrivate", ["groups": groups, "names": names]) as? [String])
+            XCTAssertTrue(results.allSatisfy { $0 == "new" })
+        }
+        for index in stride(from: 0, to: count, by: max(1, count / 100)) {
+            _ = try database.call("saveBalance", [
+                "id": "fixture-\(index):0", "time": 1000,
+                "records": [["chain": index.isMultiple(of: 2) ? 56 : 728126428,
+                    "amount": "\(index + 1)" + String(repeating: "0", count: 72),
+                    "payload": "[]", "failed": 0, "incomplete": 0]],
+            ])
+        }
+        var timings: [Double] = []
+        for index in 0..<30 {
+            let watch = Date()
+            let args: [String: Any] = index.isMultiple(of: 2)
+                ? ["query": "fixture", "chain": 56, "sort": "value"]
+                : ["sort": "name", "offset": 50]
+            let page = try XCTUnwrap(database.call("managementPage", args) as? [String: Any])
+            XCTAssertEqual((page["groups"] as? [[String: Any]])?.count, 50)
+            timings.append(Date().timeIntervalSince(watch) * 1000)
+        }
+        timings.sort()
+        let previewStart = Date()
+        let removal = try XCTUnwrap(database.call("prepareRemoval", ["chain": 56]) as? [String: Any])
+        XCTAssertEqual(removal["wallets"] as? Int, (count + 1) / 2)
+        _ = try database.call("commitRemoval", ["token": try XCTUnwrap(removal["token"] as? String)])
+        XCTAssertEqual(try summary(database)["groups_count"] as? Int, count / 2)
+        let size = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: [.fileSizeKey])
+            .reduce(0) { $0 + ((try? $1.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) }
+        print("management rows=\(count) query-p95-ms=\(timings[28]) removal-ms=\(Date().timeIntervalSince(previewStart) * 1000) total-seconds=\(Date().timeIntervalSince(start)) disk-bytes=\(size)")
+    }
+
     private func row(_ line: Int, _ platform: String, _ uid: String, network: Int = 56) -> [String: Any] {
         [
             "line": line, "status": "valid", "platform": platform, "uid": uid, "network": network,

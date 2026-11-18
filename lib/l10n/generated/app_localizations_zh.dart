@@ -12,6 +12,114 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appName => '星舟钱包';
 
   @override
+  String get manageWalletsTitle => '钱包';
+
+  @override
+  String get manageUpdateFailed => '更新失败';
+
+  @override
+  String get manageWalletChanged => '钱包簿已变化，请重新核对删除清单。';
+
+  @override
+  String get manageAdd => '创建或导入';
+
+  @override
+  String get managePlatform => '平台';
+
+  @override
+  String get manageAllChains => '全部网络';
+
+  @override
+  String get manageAllPlatforms => '全部平台';
+
+  @override
+  String get manageNoPlatform => '无平台';
+
+  @override
+  String get manageType => '类型';
+
+  @override
+  String get manageAllTypes => '全部类型';
+
+  @override
+  String get manageSort => '排序';
+
+  @override
+  String get manageValueSort => '资产从高到低';
+
+  @override
+  String get manageNameSort => '名称升序';
+
+  @override
+  String get manageNewestSort => '最新添加';
+
+  @override
+  String manageMatches(int count) {
+    return '$count 个钱包';
+  }
+
+  @override
+  String get manageQueryBalances => '查询全部余额';
+
+  @override
+  String get manageChainValueScope => '当前估值仅汇总所选网络的资产。';
+
+  @override
+  String get manageSelectPage => '选择本页';
+
+  @override
+  String get manageSelectAll => '选择全部筛选结果';
+
+  @override
+  String manageSelected(int count) {
+    return '已选 $count 个';
+  }
+
+  @override
+  String get manageClear => '清空选择';
+
+  @override
+  String get manageDelete => '删除';
+
+  @override
+  String get manageCurrent => '当前';
+
+  @override
+  String manageAccounts(int count) {
+    return '$count 个账户';
+  }
+
+  @override
+  String get manageNotQueried => '未查询';
+
+  @override
+  String get manageConfirmDelete => '确认删除';
+
+  @override
+  String get manageCancel => '取消';
+
+  @override
+  String manageDeleteCounts(int wallets, int accounts) {
+    return '删除 $wallets 个钱包、$accounts 个账户';
+  }
+
+  @override
+  String get manageDeleteExplanation =>
+      '将从当前钱包簿移除所选记录和签名密钥，同时清理别名及余额缓存。恢复访问需要重新导入助记词或私钥。既有迁移恢复来源继续保留。';
+
+  @override
+  String get manageDeleteActive => '包含当前账户。删除后将选中剩余账户，全部删空后返回欢迎页。';
+
+  @override
+  String get manageDeleteWallet => '删除钱包';
+
+  @override
+  String get manageDeleteAccount => '删除账户';
+
+  @override
+  String get manageUseAccount => '使用此账户';
+
+  @override
   String get msgSyncing => '同步中…';
 
   @override
@@ -1571,6 +1679,114 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get appName => '星舟錢包';
+
+  @override
+  String get manageWalletsTitle => '錢包';
+
+  @override
+  String get manageUpdateFailed => '更新失敗';
+
+  @override
+  String get manageWalletChanged => '錢包簿已變更，請重新核對刪除清單。';
+
+  @override
+  String get manageAdd => '建立或匯入';
+
+  @override
+  String get managePlatform => '平台';
+
+  @override
+  String get manageAllChains => '全部網路';
+
+  @override
+  String get manageAllPlatforms => '全部平台';
+
+  @override
+  String get manageNoPlatform => '無平台';
+
+  @override
+  String get manageType => '類型';
+
+  @override
+  String get manageAllTypes => '全部類型';
+
+  @override
+  String get manageSort => '排序';
+
+  @override
+  String get manageValueSort => '資產從高到低';
+
+  @override
+  String get manageNameSort => '名稱升序';
+
+  @override
+  String get manageNewestSort => '最新加入';
+
+  @override
+  String manageMatches(int count) {
+    return '$count 個錢包';
+  }
+
+  @override
+  String get manageQueryBalances => '查詢全部餘額';
+
+  @override
+  String get manageChainValueScope => '目前估值僅彙總所選網路的資產。';
+
+  @override
+  String get manageSelectPage => '選擇本頁';
+
+  @override
+  String get manageSelectAll => '選擇全部篩選結果';
+
+  @override
+  String manageSelected(int count) {
+    return '已選 $count 個';
+  }
+
+  @override
+  String get manageClear => '清空選擇';
+
+  @override
+  String get manageDelete => '刪除';
+
+  @override
+  String get manageCurrent => '目前';
+
+  @override
+  String manageAccounts(int count) {
+    return '$count 個帳戶';
+  }
+
+  @override
+  String get manageNotQueried => '未查詢';
+
+  @override
+  String get manageConfirmDelete => '確認刪除';
+
+  @override
+  String get manageCancel => '取消';
+
+  @override
+  String manageDeleteCounts(int wallets, int accounts) {
+    return '刪除 $wallets 個錢包、$accounts 個帳戶';
+  }
+
+  @override
+  String get manageDeleteExplanation =>
+      '將從目前錢包簿移除所選紀錄和簽章金鑰，同時清理別名及餘額快取。恢復存取需要重新匯入助記詞或私鑰。既有遷移恢復來源繼續保留。';
+
+  @override
+  String get manageDeleteActive => '包含目前帳戶。刪除後將選中剩餘帳戶，全部刪空後返回歡迎頁。';
+
+  @override
+  String get manageDeleteWallet => '刪除錢包';
+
+  @override
+  String get manageDeleteAccount => '刪除帳戶';
+
+  @override
+  String get manageUseAccount => '使用此帳戶';
 
   @override
   String get msgSyncing => '同步中…';

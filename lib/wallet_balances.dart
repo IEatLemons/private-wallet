@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
@@ -62,6 +63,7 @@ class WalletBalanceScan extends ChangeNotifier {
     required this.makeRpc,
     required this.makeIndexer,
     this.batchDelay = const Duration(milliseconds: 250),
+    this.persistResults = false,
   });
 
   final WalletVault vault;
@@ -69,7 +71,10 @@ class WalletBalanceScan extends ChangeNotifier {
   final EvmNetworkService Function(EvmNetwork) makeRpc;
   final AssetDiscoveryService Function(IndexerConfig) makeIndexer;
   final Duration batchDelay;
+  final bool persistResults;
   final _results = SplayTreeSet<WalletBalance>(WalletBalance.compare);
+  int _checked = 0;
+  int _generation = 0;
   final _rpc = <int, EvmNetworkService>{};
   final _indexers = <int, AssetDiscoveryService>{};
   Completer<void>? _resume;
@@ -80,7 +85,7 @@ class WalletBalanceScan extends ChangeNotifier {
   bool running = false;
   bool loadFailed = false;
   int total = 0, incompleteCount = 0;
-  int get checked => _results.length;
+  int get checked => _checked;
   DateTime? startedAt;
   Map<QuoteAsset, PriceQuote> quotes = const {};
 
@@ -115,6 +120,8 @@ class WalletBalanceScan extends ChangeNotifier {
     startedAt = DateTime.now();
     quotes = const {};
     _results.clear();
+    _checked = 0;
+    final generation = ++_generation;
     _publishNow();
 
     final byId = {for (final network in networks) network.id: network};
@@ -146,9 +153,9 @@ class WalletBalanceScan extends ChangeNotifier {
       }
 
       var exhausted = false;
-      while (!_disposed && !exhausted) {
+      while (!_disposed && generation == _generation && !exhausted) {
         await _resume?.future;
-        if (_disposed) break;
+        if (_disposed || generation != _generation) break;
         final batch = <WalletEntry>[];
         while (batch.length < 3 && !_disposed) {
           if (!await entries.moveNext()) {
@@ -158,7 +165,7 @@ class WalletBalanceScan extends ChangeNotifier {
           batch.add(entries.current);
         }
         await _resume?.future;
-        if (_disposed) break;
+        if (_disposed || generation != _generation) break;
         await Future.wait(
           batch.map((entry) async {
             final preferred = byId[entry.preferredNetworkId];
@@ -174,7 +181,17 @@ class WalletBalanceScan extends ChangeNotifier {
               indexerByChain,
               tokenCatalogIncomplete: tokenCatalogIncomplete,
             );
-            if (_disposed || !_results.add(balance)) return;
+            if (_disposed || generation != _generation) return;
+            if (persistResults) {
+              final records = [
+                for (final chain in scope) _cacheRecord(balance, chain),
+              ];
+              if (!await vault.saveManagementBalance(entry.id, records)) return;
+              if (_disposed || generation != _generation) return;
+            } else if (!_results.add(balance)) {
+              return;
+            }
+            _checked++;
             if (balance.partial || balance.noNetworks) incompleteCount++;
             _publishLater();
           }),
@@ -195,6 +212,52 @@ class WalletBalanceScan extends ChangeNotifier {
       await entries.cancel();
       await cleanup;
     }
+  }
+
+  Map<String, Object?> _cacheRecord(WalletBalance balance, EvmNetwork chain) {
+    final holdings = balance.holdings
+        .where((h) => h.network.id == chain.id)
+        .toList();
+    final failed =
+        holdings.any((h) => !h.known) ||
+        balance.incompleteDiscovery.any((n) => n.id == chain.id);
+    final unpriced = holdings.any(
+      (h) => h.known && !chain.isTestnet && h.value(quotes) == null,
+    );
+    final value =
+        sumValues(holdings, quotes) ??
+        (!failed && !chain.isTestnet && holdings.isEmpty
+            ? ExactDecimal.zero
+            : null);
+    return {
+      'chain': chain.id,
+      'amount': value?.fixed(72, round: false).replaceAll('.', ''),
+      'failed': failed ? 1 : 0,
+      'incomplete':
+          (failed ? BalanceCoverage.failed : 0) |
+          (unpriced ? BalanceCoverage.missingPrices : 0) |
+          (balance.tokenCatalogIncomplete ? BalanceCoverage.partial : 0),
+      'payload': jsonEncode([
+        for (final h in holdings)
+          {
+            'symbol': h.symbol,
+            'quantity': h.quantityText,
+            'contract': h.token?.contract,
+            'ready': h.known,
+            'value': h.value(quotes)?.fixed(2),
+          },
+      ]),
+    };
+  }
+
+  /// Stop the current generation before a destructive wallet-book change.
+  void invalidate() {
+    _generation++;
+    _resume?.complete();
+    _resume = null;
+    _results.clear();
+    _checked = 0;
+    if (!_disposed) _publishNow();
   }
 
   Future<WalletBalance> _readWallet(

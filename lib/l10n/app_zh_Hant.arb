@@ -1,6 +1,70 @@
 {
   "@@locale": "zh_Hant",
   "appName": "星舟錢包",
+  "manageWalletsTitle": "錢包",
+  "manageUpdateFailed": "更新失敗",
+  "manageWalletChanged": "錢包簿已變更，請重新核對刪除清單。",
+  "manageAdd": "建立或匯入",
+  "managePlatform": "平台",
+  "manageAllChains": "全部網路",
+  "manageAllPlatforms": "全部平台",
+  "manageNoPlatform": "無平台",
+  "manageType": "類型",
+  "manageAllTypes": "全部類型",
+  "manageSort": "排序",
+  "manageValueSort": "資產從高到低",
+  "manageNameSort": "名稱升序",
+  "manageNewestSort": "最新加入",
+  "manageMatches": "{count} 個錢包",
+  "manageQueryBalances": "查詢全部餘額",
+  "manageChainValueScope": "目前估值僅彙總所選網路的資產。",
+  "manageSelectPage": "選擇本頁",
+  "manageSelectAll": "選擇全部篩選結果",
+  "manageSelected": "已選 {count} 個",
+  "manageClear": "清空選擇",
+  "manageDelete": "刪除",
+  "manageCurrent": "目前",
+  "manageAccounts": "{count} 個帳戶",
+  "manageNotQueried": "未查詢",
+  "manageConfirmDelete": "確認刪除",
+  "manageCancel": "取消",
+  "manageDeleteCounts": "刪除 {wallets} 個錢包、{accounts} 個帳戶",
+  "manageDeleteExplanation": "將從目前錢包簿移除所選紀錄和簽章金鑰，同時清理別名及餘額快取。恢復存取需要重新匯入助記詞或私鑰。既有遷移恢復來源繼續保留。",
+  "manageDeleteActive": "包含目前帳戶。刪除後將選中剩餘帳戶，全部刪空後返回歡迎頁。",
+  "manageDeleteWallet": "刪除錢包",
+  "manageDeleteAccount": "刪除帳戶",
+  "manageUseAccount": "使用此帳戶",
+  "@manageMatches": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@manageSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@manageAccounts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@manageDeleteCounts": {
+    "placeholders": {
+      "wallets": {
+        "type": "int"
+      },
+      "accounts": {
+        "type": "int"
+      }
+    }
+  },
   "msgSyncing": "同步中…",
   "msgRefreshAssets": "刷新資產",
   "msgManageNetworks": "管理網路",
