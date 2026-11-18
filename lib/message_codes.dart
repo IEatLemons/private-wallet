@@ -57,6 +57,8 @@ enum MessageCode {
   msgWalletSecurity,
   msgAccountSource,
   msgDerivationPath,
+  invalidDerivationPath,
+  duplicateDerivationPath,
   msgPrivateKeyImport,
   msgRecoveryPhrasesAndPrivateKeysRemainInSecure,
   msgWalletManagement,

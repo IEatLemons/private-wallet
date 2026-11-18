@@ -149,6 +149,21 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
     );
   }
 
+  Future<void> _addAccount(WalletGroup group) async {
+    final result = await showWalletPanel<WalletPortfolio>(
+      context: context,
+      width: 560,
+      builder: (_) => DerivedAccountPanel(
+        theme: widget.theme,
+        vault: widget.vault,
+        group: group,
+        network: widget.network,
+      ),
+    );
+    if (!mounted || result == null) return;
+    await _change(() async => result);
+  }
+
   Widget _group(WalletGroup group, List<WalletEntry> accounts) {
     final theme = widget.theme;
     final network = !_paged
@@ -318,24 +333,7 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
               if (group.kind == WalletKind.mnemonic)
                 TextButton.icon(
                   key: ValueKey('derive-account-${group.id}'),
-                  onPressed: busy
-                      ? null
-                      : () => _change(
-                          () => widget.vault.addDerivedAccount(
-                            group.id,
-                            name: tr(context, MessageCode.msgAccountMore, [
-                              _paged
-                                  ? group.accounts.first.groupAccountCount + 1
-                                  : group.accounts
-                                            .map((a) => a.index)
-                                            .fold<int>(
-                                              0,
-                                              (a, b) => a > b ? a : b,
-                                            ) +
-                                        2,
-                            ]),
-                          ),
-                        ),
+                  onPressed: busy ? null : () => _addAccount(group),
                   icon: const Icon(Icons.add, size: 18),
                   label: Text(tr(context, MessageCode.msgAddAccount)),
                 ),
@@ -604,4 +602,131 @@ class _WalletNamePanelState extends State<WalletNamePanel> {
       ],
     ),
   );
+}
+
+class DerivedAccountPanel extends StatefulWidget {
+  const DerivedAccountPanel({
+    required this.theme,
+    required this.vault,
+    required this.group,
+    this.network = ethereumMainnetNetwork,
+    super.key,
+  });
+  final WalletTheme theme;
+  final WalletVault vault;
+  final WalletGroup group;
+  final EvmNetwork network;
+
+  @override
+  State<DerivedAccountPanel> createState() => _DerivedAccountPanelState();
+}
+
+class _DerivedAccountPanelState extends State<DerivedAccountPanel> {
+  final name = TextEditingController();
+  late final evm = TextEditingController(text: widget.group.nextEvmPath);
+  late final tron = TextEditingController(text: widget.group.nextTronPath);
+  bool busy = false;
+  WalletMessage? error;
+
+  @override
+  void dispose() {
+    name.dispose();
+    evm.dispose();
+    tron.dispose();
+    super.dispose();
+  }
+
+  Future<void> _add() async {
+    if (busy) return;
+    setState(() {
+      busy = true;
+      error = null;
+    });
+    try {
+      final result = await widget.vault.addDerivedAccount(
+        widget.group.id,
+        name: name.text.trim().isEmpty
+            ? tr(context, MessageCode.msgAccountMore, [
+                widget.group.accounts.first.groupAccountCount + 1,
+              ])
+            : name.text,
+        evmPath: evm.text,
+        tronPath: tron.text,
+      );
+      if (mounted) closeWalletPanel(context, result);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          busy = false;
+          error = walletMessage(e);
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    final fields = [
+      (evm, strings.evmDerivationPath, 'derived-evm-path'),
+      (tron, strings.tronDerivationPath, 'derived-tron-path'),
+    ];
+    return PopScope(
+      canPop: !busy,
+      child: WalletPanel(
+        theme: widget.theme,
+        title: tr(context, MessageCode.msgAddAccount),
+        subtitle: widget.group.name,
+        canClose: !busy,
+        footer: FilledButton(
+          key: const ValueKey('confirm-derived-account'),
+          onPressed: busy ? null : _add,
+          child: Text(tr(context, MessageCode.msgAddAccount)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              strings.derivedAccountHint,
+              style: TextStyle(color: widget.theme.muted),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              key: const ValueKey('derived-account-name'),
+              controller: name,
+              enabled: !busy,
+              maxLength: 64,
+              decoration: InputDecoration(
+                labelText: tr(context, MessageCode.msgName),
+                hintText: tr(context, MessageCode.msgAccountMore, [
+                  widget.group.accounts.first.groupAccountCount + 1,
+                ]),
+              ),
+            ),
+            for (final field
+                in widget.network.isTron ? fields.reversed : fields) ...[
+              const SizedBox(height: 16),
+              TextField(
+                key: ValueKey(field.$3),
+                controller: field.$1,
+                enabled: !busy,
+                autocorrect: false,
+                enableSuggestions: false,
+                keyboardType: TextInputType.visiblePassword,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
+                decoration: InputDecoration(labelText: field.$2),
+              ),
+            ],
+            if (error != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                localized(context, error!),
+                style: TextStyle(color: widget.theme.danger),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 }

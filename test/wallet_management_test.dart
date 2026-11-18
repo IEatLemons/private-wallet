@@ -241,6 +241,10 @@ void main() {
         expect(find.byType(WalletManagerPanel), findsOneWidget);
         expect(find.text('1 个钱包 · 1 个账户'), findsOneWidget);
         await tap(tester, find.text('添加账户'));
+        await tap(
+          tester,
+          find.byKey(const ValueKey('confirm-derived-account')),
+        );
         var data = await vault.loadPortfolio();
         expect(data.accounts, hasLength(2));
         expect(find.text('账户 2'), findsOneWidget);

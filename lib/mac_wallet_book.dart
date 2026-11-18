@@ -70,6 +70,8 @@ extension MacWalletBook on WalletVault {
         'derive_kind' =>
           MessageCode.msgOnlyRecoveryPhraseWalletsCanDeriveAdditionalAccounts,
         'wallet_changed' => MessageCode.omniWalletChanged,
+        'derive_duplicate' => MessageCode.duplicateDerivationPath,
+        'derive_index' => MessageCode.msgAccountIndexIsOutOfRange,
         _ => MessageCode.omniStorageError,
       });
     }
@@ -182,23 +184,37 @@ extension MacWalletBook on WalletVault {
     );
   });
 
-  Future<WalletPortfolio> _macAddDerived(String id, String? name) =>
-      _serialize(() async {
-        final source = await _macRow('derive', {'id': id});
-        final index = source['next_index'] as int;
-        final account = WalletAccount.fromMnemonic(
-          source['secret'] as String,
-          accountIndex: index,
-        );
-        return _macSummary('addDerived', {
-          'id': id,
-          'account': _macAccountRecord(
-            index,
-            _checkedName(name ?? '账户 ${index + 1}'),
-            account,
-          ),
-        });
-      });
+  Future<WalletPortfolio> _macAddDerived(
+    String id,
+    String? name, {
+    String? evmPath,
+    String? tronPath,
+  }) => _serialize(() async {
+    final source = await _macRow('derive', {'id': id});
+    final index = source['next_index'] as int;
+    final evm = normalizeDerivationPath(
+      evmPath ?? source['next_evm_path'] as String,
+    );
+    final tron = normalizeDerivationPath(
+      tronPath ?? source['next_tron_path'] as String,
+    );
+    final account = WalletAccount.fromMnemonic(
+      source['secret'] as String,
+      accountIndex: index,
+      evmPath: evm,
+      tronPath: tron,
+    );
+    return _macSummary('addDerived', {
+      'id': id,
+      'account': _macAccountRecord(
+        index,
+        _checkedName(name ?? '账户 ${index + 1}'),
+        account,
+        evmPath: evm,
+        tronPath: tron,
+      ),
+    });
+  });
 
   Future<BatchImportResult> _macImportPrivateRows(
     List<WalletImportRow> rows,
@@ -321,6 +337,8 @@ WalletGroup _macGroup(_DatabaseRow row) {
     kind: kind,
     preferredNetworkId: network,
     hasAliases: row['has_aliases'] == 1,
+    suggestedEvmPath: row['next_evm_path'] as String?,
+    suggestedTronPath: row['next_tron_path'] as String?,
     accounts: [
       for (final entry in accounts)
         _macEntry(
@@ -353,6 +371,8 @@ WalletEntry _macEntry(
     groupName: name,
     kind: kind,
     index: index,
+    evmPath: row['evm_path'] as String?,
+    tronPath: row['tron_path'] as String?,
     groupAccountCount: count,
     preferredNetworkId: networkId,
     evmAddress: row['evm'] as String,
@@ -360,7 +380,12 @@ WalletEntry _macEntry(
     account: secret == null
         ? null
         : kind == WalletKind.mnemonic
-        ? WalletAccount.fromMnemonic(secret, accountIndex: index)
+        ? WalletAccount.fromMnemonic(
+            secret,
+            accountIndex: index,
+            evmPath: row['evm_path'] as String?,
+            tronPath: row['tron_path'] as String?,
+          )
         : WalletAccount.fromPrivateKey(secret),
   );
 }
@@ -371,7 +396,13 @@ List<Map<String, Object?>> _migrationRecords(_WalletBook book) =>
 Map<String, Object?> _migrationRecord(_StoredGroup group) {
   final accounts = [
     for (final entry in group.accounts)
-      _macAccountRecord(entry.index, entry.name, group.account(entry.index)),
+      _macAccountRecord(
+        entry.index,
+        entry.name,
+        group.account(entry.index),
+        evmPath: entry.evmPath,
+        tronPath: entry.tronPath,
+      ),
   ];
   final first = accounts.firstWhere((row) => row['account_index'] == 0);
   return _macRecord(
@@ -408,10 +439,14 @@ Map<String, Object?> _macRecord({
 Map<String, Object?> _macAccountRecord(
   int index,
   String name,
-  WalletAccount account,
-) => {
+  WalletAccount account, {
+  String? evmPath,
+  String? tronPath,
+}) => {
   'account_index': index,
   'name': name,
   'evm': account.checksumAddress,
   'tron': account.tronAddress,
+  'evm_path': evmPath,
+  'tron_path': tronPath,
 };

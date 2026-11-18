@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
-import 'dart:math' show Random;
+import 'dart:math' show Random, max;
 import 'dart:typed_data';
 
 import 'message_codes.dart';
@@ -587,7 +587,12 @@ class WalletAccount {
   WalletAccount._({required this.credentials, EthPrivateKey? tronCredentials})
     : _tronCredentials = tronCredentials ?? credentials;
 
-  factory WalletAccount.fromMnemonic(String mnemonic, {int accountIndex = 0}) {
+  factory WalletAccount.fromMnemonic(
+    String mnemonic, {
+    int accountIndex = 0,
+    String? evmPath,
+    String? tronPath,
+  }) {
     if (accountIndex < 0 || accountIndex >= 0x80000000) {
       throw const WalletInputException(MessageCode.msgAccountIndexIsOutOfRange);
     }
@@ -599,7 +604,11 @@ class WalletAccount {
     final seed = bip39.mnemonicToSeed(mnemonic);
     final node = BIP32
         .fromSeed(seed)
-        .derivePath(evmAccountDerivationPath(accountIndex));
+        .derivePath(
+          normalizeDerivationPath(
+            evmPath ?? evmAccountDerivationPath(accountIndex),
+          ),
+        );
     final privateKey = node.privateKey;
     if (privateKey == null) {
       throw const WalletInputException(
@@ -609,7 +618,11 @@ class WalletAccount {
 
     final tronKey = BIP32
         .fromSeed(seed)
-        .derivePath(tronAccountDerivationPath(accountIndex))
+        .derivePath(
+          normalizeDerivationPath(
+            tronPath ?? tronAccountDerivationPath(accountIndex),
+          ),
+        )
         .privateKey!;
     return WalletAccount._(
       credentials: EthPrivateKey(_copyBytes(privateKey)),

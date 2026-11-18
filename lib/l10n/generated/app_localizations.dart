@@ -3172,6 +3172,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search address, UID or order'**
   String get omniPoolSearchAddress;
+
+  /// No description provided for @invalidDerivationPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a full path such as m/44\'/60\'/0\'/0/1. Each index must be between 0 and 2147483647, with at most 255 levels.'**
+  String get invalidDerivationPath;
+
+  /// No description provided for @duplicateDerivationPath.
+  ///
+  /// In en, this message translates to:
+  /// **'An account in this wallet already uses one of these derivation paths. Choose unused paths for both chains.'**
+  String get duplicateDerivationPath;
+
+  /// No description provided for @derivedAccountHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the full derivation path for each chain. EVM networks share the EVM path. The new account will use these paths to derive addresses and sign transactions.'**
+  String get derivedAccountHint;
+
+  /// No description provided for @evmDerivationPath.
+  ///
+  /// In en, this message translates to:
+  /// **'EVM derivation path'**
+  String get evmDerivationPath;
+
+  /// No description provided for @tronDerivationPath.
+  ///
+  /// In en, this message translates to:
+  /// **'TRON derivation path'**
+  String get tronDerivationPath;
 }
 
 class _AppLocalizationsDelegate

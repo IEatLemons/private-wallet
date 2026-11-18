@@ -876,5 +876,10 @@
   "omniPoolChain": "链",
   "omniPoolAddresses": "地址",
   "omniPoolAllChains": "全部链",
-  "omniPoolSearchAddress": "搜索地址、UID 或订单"
+  "omniPoolSearchAddress": "搜索地址、UID 或订单",
+  "invalidDerivationPath": "请输入完整路径，如 m/44'/60'/0'/0/1。每级索引范围为 0–2147483647，最多 255 级。",
+  "duplicateDerivationPath": "此钱包已有账户使用其中的派生路径，请为两条链选择尚未使用的路径。",
+  "derivedAccountHint": "可直接修改两条链的完整派生路径，EVM 网络共用 EVM 路径。新增账户将按这些路径生成地址并签名。",
+  "evmDerivationPath": "EVM 派生路径",
+  "tronDerivationPath": "TRON 派生路径"
 }

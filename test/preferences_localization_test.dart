@@ -428,6 +428,10 @@ void main() {
           tester,
           find.byKey(ValueKey('derive-account-${book.groups.single.id}')),
         );
+        await tap(
+          tester,
+          find.byKey(const ValueKey('confirm-derived-account')),
+        );
         book = await vault.loadPortfolio();
         expect(book.selected!.name, strings(tester).msgAccountMore('2'));
         await tap(tester, find.byTooltip(strings(tester).msgClose));

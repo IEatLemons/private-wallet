@@ -112,15 +112,23 @@ final class MacWalletDatabase {
                 try transaction {
                     for sql in Self.schema { try execute(sql) }
                     for sql in Self.poolSchema { try execute(sql) }
-                    try execute("PRAGMA user_version = 2")
+                    for sql in Self.derivationSchema { try execute(sql) }
+                    try execute("PRAGMA user_version = 3")
                 }
             case 1:
                 try transaction {
                     for sql in Self.poolSchema { try execute(sql) }
-                    try execute("PRAGMA user_version = 2")
+                    for sql in Self.derivationSchema { try execute(sql) }
+                    try execute("PRAGMA user_version = 3")
                     try clearPreview()
                 }
             case 2:
+                try transaction {
+                    for sql in Self.derivationSchema { try execute(sql) }
+                    try execute("PRAGMA user_version = 3")
+                    try clearPreview()
+                }
+            case 3:
                 // The exclusive process lock ensures any previous preview is abandoned.
                 try transaction { try clearPreview() }
             default:
@@ -259,6 +267,11 @@ final class MacWalletDatabase {
         )
         """,
         "CREATE INDEX preview_row_status ON preview_rows(status, source_line)",
+    ]
+
+    private static let derivationSchema = [
+        "ALTER TABLE accounts ADD COLUMN evm_path TEXT",
+        "ALTER TABLE accounts ADD COLUMN tron_path TEXT",
     ]
 
     private static let poolSchema = [
@@ -580,7 +593,11 @@ final class MacWalletDatabase {
               EXISTS(SELECT 1 FROM aliases WHERE group_id = wallet_groups.id) AS has_aliases
             FROM wallet_groups WHERE id = ?
             """, [id]).first else { throw WalletDatabaseError() }
-        row["accounts"] = try query("SELECT * FROM accounts WHERE group_id = ? ORDER BY account_index", [id])
+        let entries = try query("SELECT * FROM accounts WHERE group_id = ? ORDER BY account_index", [id])
+        row["accounts"] = entries
+        if row["kind"] as? String == "mnemonic", let defaults = try? derivationDefaults(entries) {
+            row.merge(defaults) { _, value in value }
+        }
         return row
     }
 
@@ -612,8 +629,9 @@ final class MacWalletDatabase {
         let evm = try entry.string("evm")
         let tron = try entry.string("tron")
         try execute("""
-            INSERT INTO accounts (id, group_id, account_index, name, evm, tron) VALUES (?, ?, ?, ?, ?, ?)
-            """, ["\(id):\(index)", id, index, name, evm, tron])
+            INSERT INTO accounts (id, group_id, account_index, name, evm, tron, evm_path, tron_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, ["\(id):\(index)", id, index, name, evm, tron, entry["evm_path"] as? String, entry["tron_path"] as? String])
         try term(name, group: id, index: index)
         try term(evm, group: id, index: index)
         try term(tron, group: id, index: index)
@@ -673,13 +691,33 @@ final class MacWalletDatabase {
         }
     }
 
+    private func derivationDefaults(_ entries: [[String: Any]]) throws -> [String: Any] {
+        let next = try entries.map { try $0.int("account_index") }.max().map { $0 + 1 } ?? 0
+        guard next < 0x80000000 else { throw WalletDatabaseError("derive_index") }
+        var result: [String: Any] = ["next_index": next]
+        for (column, coin) in [("evm_path", 60), ("tron_path", 195)] {
+            let used = try Set(entries.map { entry in
+                if let path = entry[column] as? String { return path }
+                let index = try entry.int("account_index")
+                return "m/44'/\(coin)'/0'/0/\(index)"
+            })
+            var index = next
+            while used.contains("m/44'/\(coin)'/0'/0/\(index)") {
+                index += 1
+                guard index < 0x80000000 else { throw WalletDatabaseError("derive_index") }
+            }
+            result["next_" + column] = "m/44'/\(coin)'/0'/0/\(index)"
+        }
+        return result
+    }
+
     private func derive(_ args: [String: Any]) throws -> [String: Any] {
         let id = try args.string("id")
-        guard let row = try query("""
-            SELECT g.secret, max(a.account_index) + 1 AS next_index
-            FROM wallet_groups g JOIN accounts a ON a.group_id = g.id
-            WHERE g.kind = 'mnemonic' AND g.id = ? GROUP BY g.id
-            """, [id]).first else { throw WalletDatabaseError("derive_kind") }
+        guard var row = try query("SELECT secret FROM wallet_groups WHERE kind = 'mnemonic' AND id = ?", [id]).first else {
+            throw WalletDatabaseError("derive_kind")
+        }
+        let entries = try query("SELECT account_index, evm_path, tron_path FROM accounts WHERE group_id = ?", [id])
+        row.merge(try derivationDefaults(entries)) { _, value in value }
         return row
     }
 
@@ -689,6 +727,11 @@ final class MacWalletDatabase {
             guard let entry = args["account"] as? [String: Any],
                   try derive(args).int("next_index") == entry.int("account_index") else {
                 throw WalletDatabaseError("wallet_changed")
+            }
+            let evm = try entry.string("evm")
+            let tron = try entry.string("tron")
+            guard try query("SELECT 1 FROM accounts WHERE group_id = ? AND (evm = ? COLLATE NOCASE OR tron = ?) LIMIT 1", [id, evm, tron]).isEmpty else {
+                throw WalletDatabaseError("derive_duplicate")
             }
             try insertAccount(entry, group: id)
             try setActive("\(id):\(entry.int("account_index"))")

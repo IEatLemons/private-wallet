@@ -315,9 +315,11 @@ Click the current wallet name at the top, or **设置 → 管理钱包与账户*
 [OKX's wallet management guide](https://web3.okx.com/zh-hans/help/how-do-i-manage-my-wallet-app):
 
 - A mnemonic wallet owns one recovery phrase and can derive **账户 1, 账户 2, …**
-  with **添加账户**. The first address keeps the original derivation path ending
-  in `/0`; additional addresses end in `/1`, `/2`, etc. A private-key wallet has
-  one account and does not expose account derivation.
+  with **添加账户**. The form allows editing the full EVM and TRON BIP32 paths
+  separately, including hardened components and large indices such as
+  `m/44'/195'/0'/0/925183485`. Defaults continue with unused standard paths.
+  Paths are validated and duplicate paths in the same wallet are rejected.
+  A private-key wallet has one account and does not expose account derivation.
 - **创建新钱包** generates a new recovery phrase, shows it and verifies the
   requested words before saving. Creating from an existing wallet can be
   cancelled without changing the current wallet.
@@ -330,8 +332,8 @@ Click the current wallet name at the top, or **设置 → 管理钱包与账户*
   assets, receive address and signing account follow the selection. Settings
   shows the selected account's actual derivation path. Selection survives restart.
 
-Wallet secrets, account indices, names and selection are saved together in one
-versioned platform-secure-storage record (`stone_wallet.v2.wallet_book`). Legacy
+Wallet secrets, account indices, per-chain derivation paths, names and selection
+are saved together in one versioned platform-secure-storage record (`stone_wallet.v2.wallet_book`). Legacy
 single-mnemonic and batch-private-key records are validated and migrated together;
 their original secure-storage keys are retained as a recovery copy. Invalid
 records or failed writes do not silently discard or replace existing wallets.
@@ -341,10 +343,13 @@ an index. The original address and network configuration are preserved.
 Recovery phrases restore the same deterministic addresses; account names and the
 number of locally added accounts are local metadata. After restoring a phrase on
 a fresh installation, use **添加账户** to recreate its additional addresses in
-order. Balance/history-based account discovery, wallet removal and secret export
+order, or enter the original full paths for custom accounts. Keep custom paths
+with your offline recovery records. On macOS, SQLCipher schema version 3 stores
+these paths with the addresses; older accounts retain their original standard
+paths after migration. Balance/history-based account discovery, wallet removal and secret export
 are not part of this change.
 
-`flutter test test/wallet_management_test.dart` checks migration, failed writes,
+`flutter test test/wallet_management_test.dart test/custom_derivation_test.dart` checks custom paths, address/signature recovery, migration, failed writes,
 duplicate imports, concurrent derivation, renaming, search, switching and restart.
 `flutter test integration_test/wallet_management_test.dart -d DEVICE_ID` checks
 the complete native flow with only synthetic in-memory wallet data.

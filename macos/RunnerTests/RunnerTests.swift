@@ -90,6 +90,57 @@ final class RunnerTests: XCTestCase {
         }
     }
 
+    func testCustomDerivationPathsPersistAndDuplicateInsertionRollsBack() throws {
+        let token = UUID().uuidString
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("asterkeel-paths-" + token)
+        let service = "com.example.stoneWallet.wallet-database.test." + token
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+            SecItemDelete([
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: service,
+                kSecAttrAccount as String: "wallet-database-v1",
+                kSecAttrSynchronizable as String: false,
+            ] as CFDictionary)
+        }
+        var database: MacWalletDatabase? = MacWalletDatabase(directory: directory, keychainService: service)
+        let group: [String: Any] = [
+            "id": "root", "kind": "mnemonic", "name": "Root", "secret": "synthetic-test-phrase",
+            "identity": "synthetic-root",
+            "accounts": [["account_index": 0, "name": "First", "evm": address, "tron": tron]],
+        ]
+        _ = try database!.call("migrate", ["activeId": "root:0", "groups": [group]])
+        let entry: [String: Any] = [
+            "account_index": 1, "name": "Custom", "evm": "synthetic-evm", "tron": "synthetic-tron",
+            "evm_path": "m/44'/60'/0'/0/2", "tron_path": "m/44'/195'/0'/0/925183485",
+        ]
+        _ = try database!.call("addDerived", ["id": "root", "account": entry])
+        database = nil
+        database = MacWalletDatabase(directory: directory, keychainService: service)
+        let selected = try XCTUnwrap(try summary(database!)["selected"] as? [String: Any])
+        XCTAssertEqual(selected["evm_path"] as? String, entry["evm_path"] as? String)
+        XCTAssertEqual(selected["tron_path"] as? String, entry["tron_path"] as? String)
+        let defaults = try XCTUnwrap(database!.call("derive", ["id": "root"]) as? [String: Any])
+        XCTAssertEqual(defaults["next_index"] as? Int, 2)
+        XCTAssertEqual(defaults["next_evm_path"] as? String, "m/44'/60'/0'/0/3")
+        XCTAssertEqual(defaults["next_tron_path"] as? String, "m/44'/195'/0'/0/2")
+        var duplicate = entry
+        duplicate["account_index"] = 2
+        for (column, value) in [("evm", "another-evm"), ("tron", "another-tron")] {
+            var candidate = duplicate
+            candidate[column] = value
+            XCTAssertThrowsError(try database!.call("addDerived", ["id": "root", "account": candidate])) { error in
+                XCTAssertEqual((error as? WalletDatabaseError)?.code, "derive_duplicate")
+            }
+        }
+        XCTAssertEqual(try summary(database!)["accounts_count"] as? Int, 2)
+        XCTAssertEqual(try summary(database!)["active_id"] as? String, "root:1")
+        let page = try search(database!, "Custom")
+        let visible = try XCTUnwrap((page.first?["accounts"] as? [[String: Any]])?.first)
+        XCTAssertEqual(visible["tron_path"] as? String, entry["tron_path"] as? String)
+        XCTAssertEqual(page.first?["next_evm_path"] as? String, "m/44'/60'/0'/0/3")
+    }
+
     func testPlatformPoolsUseIndependentIndicesAndPersistentDeviceKey() throws {
         let token = UUID().uuidString
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("asterkeel-pools-" + token)

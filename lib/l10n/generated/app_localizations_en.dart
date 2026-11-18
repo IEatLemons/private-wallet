@@ -1885,4 +1885,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get omniPoolSearchAddress => 'Search address, UID or order';
+
+  @override
+  String get invalidDerivationPath =>
+      'Enter a full path such as m/44\'/60\'/0\'/0/1. Each index must be between 0 and 2147483647, with at most 255 levels.';
+
+  @override
+  String get duplicateDerivationPath =>
+      'An account in this wallet already uses one of these derivation paths. Choose unused paths for both chains.';
+
+  @override
+  String get derivedAccountHint =>
+      'Enter the full derivation path for each chain. EVM networks share the EVM path. The new account will use these paths to derive addresses and sign transactions.';
+
+  @override
+  String get evmDerivationPath => 'EVM derivation path';
+
+  @override
+  String get tronDerivationPath => 'TRON derivation path';
 }

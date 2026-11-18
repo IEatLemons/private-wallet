@@ -1698,6 +1698,23 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get omniPoolSearchAddress => '搜索地址、UID 或订单';
+
+  @override
+  String get invalidDerivationPath =>
+      '请输入完整路径，如 m/44\'/60\'/0\'/0/1。每级索引范围为 0–2147483647，最多 255 级。';
+
+  @override
+  String get duplicateDerivationPath => '此钱包已有账户使用其中的派生路径，请为两条链选择尚未使用的路径。';
+
+  @override
+  String get derivedAccountHint =>
+      '可直接修改两条链的完整派生路径，EVM 网络共用 EVM 路径。新增账户将按这些路径生成地址并签名。';
+
+  @override
+  String get evmDerivationPath => 'EVM 派生路径';
+
+  @override
+  String get tronDerivationPath => 'TRON 派生路径';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -3394,4 +3411,21 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get omniPoolSearchAddress => '搜尋地址、UID 或訂單';
+
+  @override
+  String get invalidDerivationPath =>
+      '請輸入完整路徑，如 m/44\'/60\'/0\'/0/1。每級索引範圍為 0–2147483647，最多 255 級。';
+
+  @override
+  String get duplicateDerivationPath => '此錢包已有帳戶使用其中的派生路徑，請為兩條鏈選擇尚未使用的路徑。';
+
+  @override
+  String get derivedAccountHint =>
+      '可直接修改兩條鏈的完整派生路徑，EVM 網路共用 EVM 路徑。新增帳戶將按這些路徑產生地址並簽名。';
+
+  @override
+  String get evmDerivationPath => 'EVM 派生路徑';
+
+  @override
+  String get tronDerivationPath => 'TRON 派生路徑';
 }

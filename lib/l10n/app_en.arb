@@ -922,5 +922,10 @@
   "omniPoolChain": "Chain",
   "omniPoolAddresses": "Addresses",
   "omniPoolAllChains": "All chains",
-  "omniPoolSearchAddress": "Search address, UID or order"
+  "omniPoolSearchAddress": "Search address, UID or order",
+  "invalidDerivationPath": "Enter a full path such as m/44'/60'/0'/0/1. Each index must be between 0 and 2147483647, with at most 255 levels.",
+  "duplicateDerivationPath": "An account in this wallet already uses one of these derivation paths. Choose unused paths for both chains.",
+  "derivedAccountHint": "Enter the full derivation path for each chain. EVM networks share the EVM path. The new account will use these paths to derive addresses and sign transactions.",
+  "evmDerivationPath": "EVM derivation path",
+  "tronDerivationPath": "TRON derivation path"
 }

@@ -2,6 +2,42 @@ part of 'wallet_core.dart';
 
 String evmAccountDerivationPath(int index) => "m/44'/60'/0'/0/$index";
 
+/// Canonical absolute BIP32 child path, with each index below 2^31.
+String normalizeDerivationPath(String path) {
+  final value = path.trim();
+  if (value.length > 4096 ||
+      !RegExp(r"^m(?:/[0-9]+['hH]?)+$").hasMatch(value)) {
+    throw const WalletInputException(MessageCode.invalidDerivationPath);
+  }
+  final parts = value.split('/').skip(1).toList();
+  if (parts.length > 255) {
+    throw const WalletInputException(MessageCode.invalidDerivationPath);
+  }
+  return 'm/${parts.map((part) {
+    final hardened = RegExp(r"['hH]$").hasMatch(part);
+    final index = int.tryParse(hardened ? part.substring(0, part.length - 1) : part);
+    if (index == null || index < 0 || index >= 0x80000000) {
+      throw const WalletInputException(MessageCode.invalidDerivationPath);
+    }
+    return "$index${hardened ? "'" : ''}";
+  }).join('/')}';
+}
+
+String _unusedDerivationPath(
+  int start,
+  Iterable<String> used, {
+  bool tron = false,
+}) {
+  final paths = used.toSet();
+  for (var index = start; index < 0x80000000; index++) {
+    final path = tron
+        ? tronAccountDerivationPath(index)
+        : evmAccountDerivationPath(index);
+    if (!paths.contains(path)) return path;
+  }
+  throw const WalletInputException(MessageCode.msgAccountIndexIsOutOfRange);
+}
+
 enum WalletKind { mnemonic, privateKey }
 
 /// Public wallet metadata. Recovery phrases are confined to the stored records.
@@ -17,6 +53,8 @@ class WalletEntry {
     String? evmAddress,
     String? tronAddress,
     this.preferredNetworkId,
+    this.evmPath,
+    this.tronPath,
     required this.groupAccountCount,
   }) : _account = account,
        _evmAddress = evmAddress,
@@ -27,6 +65,7 @@ class WalletEntry {
   final int? preferredNetworkId;
   final WalletAccount? _account;
   final String? _evmAddress, _tronAddress;
+  final String? evmPath, tronPath;
   WalletAccount get account =>
       _account ??
       (throw StateError('Signing material is not loaded for this account'));
@@ -36,12 +75,13 @@ class WalletEntry {
 
   String get displayName =>
       groupAccountCount == 1 ? groupName : '$groupName · $name';
-  String? get derivationPath =>
-      kind == WalletKind.mnemonic ? evmAccountDerivationPath(index) : null;
+  String? get derivationPath => kind == WalletKind.mnemonic
+      ? evmPath ?? evmAccountDerivationPath(index)
+      : null;
   String? derivationPathFor(EvmNetwork? network) => kind == WalletKind.mnemonic
       ? network?.isTron == true
-            ? tronAccountDerivationPath(index)
-            : evmAccountDerivationPath(index)
+            ? tronPath ?? tronAccountDerivationPath(index)
+            : evmPath ?? evmAccountDerivationPath(index)
       : null;
 }
 
@@ -53,12 +93,30 @@ class WalletGroup {
     required this.accounts,
     this.preferredNetworkId,
     this.hasAliases = false,
+    this.suggestedEvmPath,
+    this.suggestedTronPath,
   });
   final String id, name;
   final WalletKind kind;
   final int? preferredNetworkId;
   final bool hasAliases;
   final List<WalletEntry> accounts;
+  final String? suggestedEvmPath, suggestedTronPath;
+  int get nextAccountIndex =>
+      accounts.fold<int>(-1, (n, a) => max(n, a.index)) + 1;
+  String get nextEvmPath =>
+      suggestedEvmPath ??
+      _unusedDerivationPath(
+        nextAccountIndex,
+        accounts.map((a) => a.derivationPath!),
+      );
+  String get nextTronPath =>
+      suggestedTronPath ??
+      _unusedDerivationPath(
+        nextAccountIndex,
+        accounts.map((a) => a.derivationPathFor(tronMainnetNetwork)!),
+        tron: true,
+      );
 }
 
 class WalletPortfolio {
@@ -94,10 +152,16 @@ class WalletPortfolio {
 }
 
 class _StoredAccount {
-  _StoredAccount(this.index, this.name);
+  _StoredAccount(this.index, this.name, {this.evmPath, this.tronPath});
   final int index;
   String name;
-  Map<String, Object> toJson() => {'index': index, 'name': name};
+  final String? evmPath, tronPath;
+  Map<String, Object> toJson() => {
+    'index': index,
+    'name': name,
+    'evmPath': ?evmPath,
+    'tronPath': ?tronPath,
+  };
 }
 
 class _StoredGroup {
@@ -115,9 +179,18 @@ class _StoredGroup {
   final int? networkId;
   final List<_StoredAccount> accounts;
   String entryId(int index) => '$id:$index';
-  WalletAccount account(int index) => kind == WalletKind.mnemonic
-      ? WalletAccount.fromMnemonic(secret, accountIndex: index)
-      : WalletAccount.fromPrivateKey(secret);
+  WalletAccount account(int index) {
+    final entry = accounts.where((a) => a.index == index).firstOrNull;
+    return kind == WalletKind.mnemonic
+        ? WalletAccount.fromMnemonic(
+            secret,
+            accountIndex: index,
+            evmPath: entry?.evmPath,
+            tronPath: entry?.tronPath,
+          )
+        : WalletAccount.fromPrivateKey(secret);
+  }
+
   WalletGroup snapshot() => WalletGroup(
     id: id,
     name: name,
@@ -133,6 +206,8 @@ class _StoredGroup {
           kind: kind,
           index: a.index,
           account: account(a.index),
+          evmPath: a.evmPath,
+          tronPath: a.tronPath,
           preferredNetworkId: networkId,
           groupAccountCount: accounts.length,
         ),
@@ -201,7 +276,16 @@ extension WalletManagement on WalletVault {
               throw const FormatException();
             }
             accounts.add(
-              _StoredAccount(index, _checkedName(a['name'] as String)),
+              _StoredAccount(
+                index,
+                _checkedName(a['name'] as String),
+                evmPath: a['evmPath'] == null
+                    ? null
+                    : normalizeDerivationPath(a['evmPath'] as String),
+                tronPath: a['tronPath'] == null
+                    ? null
+                    : normalizeDerivationPath(a['tronPath'] as String),
+              ),
             );
           }
           if (accounts.isEmpty ||
@@ -223,6 +307,18 @@ extension WalletManagement on WalletVault {
             throw const FormatException();
           }
           // Validate secrets before returning any account; never silently drop a wallet.
+          final evmPaths = <String>{}, tronPaths = <String>{};
+          for (final entry in accounts) {
+            if (kind == WalletKind.mnemonic &&
+                (!evmPaths.add(
+                      entry.evmPath ?? evmAccountDerivationPath(entry.index),
+                    ) ||
+                    !tronPaths.add(
+                      entry.tronPath ?? tronAccountDerivationPath(entry.index),
+                    ))) {
+              throw const FormatException();
+            }
+          }
           group.account(0);
           groups.add(group);
         }
@@ -345,6 +441,8 @@ extension WalletManagement on WalletVault {
           groupName: group.name,
           kind: group.kind,
           index: account.index,
+          evmPath: account.evmPath,
+          tronPath: account.tronPath,
           evmAddress: owner.checksumAddress,
           tronAddress: owner.tronAddress,
           preferredNetworkId: group.networkId,
@@ -469,9 +567,13 @@ extension WalletManagement on WalletVault {
     });
   }
 
-  Future<WalletPortfolio> addDerivedAccount(String groupId, {String? name}) =>
-      _database != null
-      ? _macAddDerived(groupId, name)
+  Future<WalletPortfolio> addDerivedAccount(
+    String groupId, {
+    String? name,
+    String? evmPath,
+    String? tronPath,
+  }) => _database != null
+      ? _macAddDerived(groupId, name, evmPath: evmPath, tronPath: tronPath)
       : _changeBook((book) {
           final group = book.groups.where((g) => g.id == groupId).firstOrNull;
           if (group == null || group.kind != WalletKind.mnemonic) {
@@ -480,16 +582,37 @@ extension WalletManagement on WalletVault {
                   .msgOnlyRecoveryPhraseWalletsCanDeriveAdditionalAccounts,
             );
           }
-          final next =
-              group.accounts
-                  .map((a) => a.index)
-                  .reduce((a, b) => a > b ? a : b) +
-              1;
-          group.account(
-            next,
-          ); // Validate the derivation before changing persisted data.
+          final next = group.accounts.map((a) => a.index).reduce(max) + 1;
+          final evmPaths = group.accounts.map(
+            (a) => a.evmPath ?? evmAccountDerivationPath(a.index),
+          );
+          final tronPaths = group.accounts.map(
+            (a) => a.tronPath ?? tronAccountDerivationPath(a.index),
+          );
+          final evm = normalizeDerivationPath(
+            evmPath ?? _unusedDerivationPath(next, evmPaths),
+          );
+          final tron = normalizeDerivationPath(
+            tronPath ?? _unusedDerivationPath(next, tronPaths, tron: true),
+          );
+          if (evmPaths.contains(evm) || tronPaths.contains(tron)) {
+            throw const WalletInputException(
+              MessageCode.duplicateDerivationPath,
+            );
+          }
+          WalletAccount.fromMnemonic(
+            group.secret,
+            accountIndex: next,
+            evmPath: evm,
+            tronPath: tron,
+          );
           group.accounts.add(
-            _StoredAccount(next, _checkedName(name ?? '账户 ${next + 1}')),
+            _StoredAccount(
+              next,
+              _checkedName(name ?? '账户 ${next + 1}'),
+              evmPath: evm,
+              tronPath: tron,
+            ),
           );
           book.activeAccountId = group.entryId(next);
           return book.snapshot();
