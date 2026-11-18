@@ -114,30 +114,40 @@ final class MacWalletDatabase {
                     for sql in Self.poolSchema { try execute(sql) }
                     for sql in Self.derivationSchema { try execute(sql) }
                     for sql in Self.legacyAddressSchema { try execute(sql) }
-                    try execute("PRAGMA user_version = 4")
+                    for sql in Self.recoverySchema { try execute(sql) }
+                    try execute("PRAGMA user_version = 5")
                 }
             case 1:
                 try transaction {
                     for sql in Self.poolSchema { try execute(sql) }
                     for sql in Self.derivationSchema { try execute(sql) }
                     for sql in Self.legacyAddressSchema { try execute(sql) }
-                    try execute("PRAGMA user_version = 4")
+                    for sql in Self.recoverySchema { try execute(sql) }
+                    try execute("PRAGMA user_version = 5")
                     try clearPreview()
                 }
             case 2:
                 try transaction {
                     for sql in Self.derivationSchema { try execute(sql) }
                     for sql in Self.legacyAddressSchema { try execute(sql) }
-                    try execute("PRAGMA user_version = 4")
+                    for sql in Self.recoverySchema { try execute(sql) }
+                    try execute("PRAGMA user_version = 5")
                     try clearPreview()
                 }
             case 3:
                 try transaction {
                     for sql in Self.legacyAddressSchema { try execute(sql) }
-                    try execute("PRAGMA user_version = 4")
+                    for sql in Self.recoverySchema { try execute(sql) }
+                    try execute("PRAGMA user_version = 5")
                     try clearPreview()
                 }
             case 4:
+                try transaction {
+                    for sql in Self.recoverySchema { try execute(sql) }
+                    try execute("PRAGMA user_version = 5")
+                    try clearPreview()
+                }
+            case 5:
                 // The exclusive process lock ensures any previous preview is abandoned.
                 try transaction { try clearPreview() }
             default:
@@ -276,6 +286,10 @@ final class MacWalletDatabase {
         )
         """,
         "CREATE INDEX preview_row_status ON preview_rows(status, source_line)",
+    ]
+
+    private static let recoverySchema = [
+        "CREATE TABLE recovery_tasks (id TEXT PRIMARY KEY, payload TEXT NOT NULL, updated_at INTEGER NOT NULL)",
     ]
 
     private static let legacyAddressSchema = [
@@ -475,6 +489,23 @@ final class MacWalletDatabase {
         try open()
         if method.hasPrefix("pool.") { return try poolCall(method, arguments) }
         switch method {
+        case "recovery.export":
+            let data = Data(try arguments.string("payload").utf8)
+            guard data.count <= 65536 else { throw WalletDatabaseError() }
+            let url = URL(fileURLWithPath: try arguments.string("path"))
+            try data.write(to: url, options: .atomic)
+            try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+            return nil
+        case "recovery.list":
+            return try query("SELECT payload FROM recovery_tasks ORDER BY updated_at DESC, id DESC LIMIT 50").map { try $0.string("payload") }
+        case "recovery.save":
+            let payload = try arguments.string("payload")
+            guard payload.utf8.count <= 65536 else { throw WalletDatabaseError() }
+            try execute("""
+                INSERT INTO recovery_tasks(id,payload,updated_at) VALUES (?,?,?)
+                ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at
+                """, [try arguments.string("id"), payload, try arguments.int("updated_at")])
+            return nil
         case "needsMigration":
             return try integer("SELECT migrated AS value FROM state") == 0
         case "migrate":

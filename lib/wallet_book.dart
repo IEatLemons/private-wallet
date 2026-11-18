@@ -424,6 +424,61 @@ extension WalletManagement on WalletVault {
     return operation;
   }
 
+  Future<void> exportRecoveryMatches(
+    String path,
+    List<Map<String, Object?>> matches,
+  ) async {
+    final payload = jsonEncode({
+      'format': 'asterkeel-recovery-results-v1',
+      'matches': matches,
+    });
+    if (_database != null) {
+      await _macCall<void>('recovery.export', {
+        'path': path,
+        'payload': payload,
+      });
+    } else {
+      await File(path).writeAsString(payload, flush: true);
+    }
+  }
+
+  Future<List<Map<String, Object?>>> loadRecoveryTasks() async {
+    if (_database != null) {
+      final records = (await _macCall<List<Object?>>('recovery.list'))!;
+      return [
+        for (final raw in records)
+          Map<String, Object?>.from(jsonDecode(raw as String) as Map),
+      ];
+    }
+    final raw = await _store.read('stone_wallet.recovery_tasks.v1');
+    if (raw == null) return [];
+    return [
+      for (final record in jsonDecode(raw) as List)
+        Map<String, Object?>.from(record as Map),
+    ];
+  }
+
+  Future<void> saveRecoveryTask(Map<String, Object?> record) =>
+      _serialize(() async {
+        final id = record['id'] as String;
+        final payload = jsonEncode(record);
+        if (_database != null) {
+          await _macCall<void>('recovery.save', {
+            'id': id,
+            'payload': payload,
+            'updated_at': record['updated_at'],
+          });
+        } else {
+          final records = await loadRecoveryTasks();
+          records.removeWhere((r) => r['id'] == id);
+          records.insert(0, record);
+          await _store.write(
+            'stone_wallet.recovery_tasks.v1',
+            jsonEncode(records),
+          );
+        }
+      });
+
   Future<WalletPortfolio> loadPortfolio() => _database != null
       ? _macFullPortfolio()
       : _changeBook((book) => book.snapshot());

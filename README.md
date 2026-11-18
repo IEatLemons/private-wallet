@@ -344,7 +344,7 @@ Recovery phrases restore the same deterministic addresses; account names and the
 number of locally added accounts are local metadata. After restoring a phrase on
 a fresh installation, use **添加账户** to recreate its additional addresses in
 order, or enter the original full paths for custom accounts. Keep custom paths
-with your offline recovery records. On macOS, SQLCipher schema version 4 stores
+with your offline recovery records. On macOS, SQLCipher schema version 5 stores
 these paths with the addresses; older accounts retain their original standard
 paths after migration. Balance/history-based account discovery, wallet removal and secret export
 are not part of this change.
@@ -525,6 +525,25 @@ signing configuration; hot reload does not rebuild the native application.
 3. Add token support, WalletConnect v2, multi-chain adapters, hardware wallets, recovery verification, and independent security audits before enabling mainnet.
 
 ### 低负载持续恢复脚本
+
+钱包侧栏和未创建钱包时的首页均可进入独立的「地址恢复」页面，手动填写助记词、
+可选的 BIP39 密码、CHAIN_XPUB 和目标 TRON/EVM 地址。搜索完全在本机运行：
+
+- 「账户编号递增」固定末尾地址索引，按账户编号 0、1、2……搜索固定的历史路径分支。
+- 「地址索引递增」固定填写的基础路径，按末尾索引 0、1、2……派生；两种模式均可设置起止范围。
+- 默认使用单计算线程、约 25% 单核负载，可调整至 5–50%；每 5 秒保存进度，暂停或退出时保存当前位置。
+  切换页面不会中断搜索，重新打开应用后需手动继续。新增内存超过 128 MiB 时自动暂停。
+- 输入、历史任务和匹配私钥保存在 macOS SQLCipher 加密数据库（schema 5），
+  私钥默认隐藏，可单独查看、复制或导出仅当前用户可读的 JSON 结果。导出结果不包含助记词。
+
+CHAIN_XPUB 仅用于核验公开地址及与助记词的对应关系，不会被当作私钥恢复成功。
+结果区分标准地址匹配和旧版错误哈希匹配；错误哈希匹配的派生私钥不控制该错误地址。
+设置「仅标准地址匹配时停止」后，错误哈希结果会保留并继续搜索，最多保留 32 条后暂停。
+顺序搜索不会随机尝试，也不保证在给定范围内找到目标。
+
+页面与下述命令行工具共用 `lib/recovery_engine.dart` 派生引擎。
+`flutter test test/address_recovery_test.dart test/address_recovery_ui_test.dart`
+使用公开测试助记词检查顺序、暂停续跑、结果、加密存储通道和页面操作。
 
 `tool/recovery/recover_address.dart` 提供离线、可续跑的助记词派生地址搜索。
 默认单计算线程、约 25% 单核负载、256 MiB RSS 上限，5 秒原子保存进度，

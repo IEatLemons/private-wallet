@@ -1945,4 +1945,192 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get legacyUseMatchedPath => 'Use matched path';
+
+  @override
+  String get recoveryTitle => 'Address recovery';
+
+  @override
+  String get recoveryIntro =>
+      'Generate and match addresses sequentially on this device, with pause and resume.';
+
+  @override
+  String get recoveryMnemonic => 'Recovery phrase';
+
+  @override
+  String get recoveryXpub => 'CHAIN_XPUB (optional, for verification)';
+
+  @override
+  String get recoveryPassphrase => 'BIP39 passphrase (optional)';
+
+  @override
+  String get recoveryTarget => 'Target address (TRON / EVM)';
+
+  @override
+  String get recoveryMode => 'Sequential search mode';
+
+  @override
+  String get recoveryAccountMode => 'Increment account number';
+
+  @override
+  String get recoveryIndexMode => 'Increment address index';
+
+  @override
+  String get recoveryAccountHint =>
+      'Increment the account number from the start, checking common branches in order. The final index stays fixed.';
+
+  @override
+  String get recoveryIndexHint =>
+      'Keep the base path fixed and increment the final address index from the start.';
+
+  @override
+  String get recoveryBasePath => 'Base derivation path';
+
+  @override
+  String get recoveryFixedIndex => 'Fixed final index';
+
+  @override
+  String get recoveryStart => 'Start number';
+
+  @override
+  String get recoveryEnd => 'End number';
+
+  @override
+  String get recoveryCpu => 'Compute load on one core';
+
+  @override
+  String get recoveryResources =>
+      'One compute worker alternates work and rest. Unexpected memory growth pauses the search. Tasks and progress are encrypted on this device.';
+
+  @override
+  String get recoveryStandardOnly => 'Stop only on a standard address match';
+
+  @override
+  String get recoveryStartTask => 'Start new task';
+
+  @override
+  String get recoveryResume => 'Resume saved task';
+
+  @override
+  String get recoveryPause => 'Pause and save';
+
+  @override
+  String get recoveryNew => 'Clear form';
+
+  @override
+  String get recoveryHistory => 'Local task history';
+
+  @override
+  String get recoveryReady => 'Ready';
+
+  @override
+  String get recoveryRunning => 'Searching sequentially';
+
+  @override
+  String get recoveryPausing => 'Saving and pausing';
+
+  @override
+  String get recoveryPaused => 'Paused, ready to resume';
+
+  @override
+  String get recoveryStandardMatch => 'Standard address match';
+
+  @override
+  String get recoveryLegacyMatch => 'Legacy hash match only';
+
+  @override
+  String get recoveryExhausted => 'Configured range exhausted';
+
+  @override
+  String get recoveryError => 'Task stopped with an error';
+
+  @override
+  String get recoveryChecked => 'Candidates checked';
+
+  @override
+  String get recoveryNext => 'Next sequential number';
+
+  @override
+  String get recoveryCurrentPath => 'Last checked path';
+
+  @override
+  String get recoverySpeed => 'Candidates / second';
+
+  @override
+  String get recoveryStandardAddress => 'Standard address of the derived key';
+
+  @override
+  String get recoveryLegacyAddress => 'Legacy algorithm address';
+
+  @override
+  String get recoveryVerification => 'CHAIN_XPUB verification';
+
+  @override
+  String get recoveryXpubStandard =>
+      'The configured xPub matches the standard target address at the verification index.';
+
+  @override
+  String get recoveryXpubLegacy =>
+      'The configured xPub matches only the legacy incorrect hash at the verification index.';
+
+  @override
+  String get recoveryXpubNone =>
+      'The configured xPub does not match the target at the current verification index.';
+
+  @override
+  String get recoveryOriginMismatch =>
+      'The phrase does not match the xPub at the current base branch. This is not proof of a recovered key.';
+
+  @override
+  String get recoveryWarning =>
+      'A legacy hash match identifies the original derived key, not control of the target address. Continued searching does not guarantee a match.';
+
+  @override
+  String get recoveryMatchHint =>
+      'A standard match still requires checking on-chain permissions. This tool does not transfer funds automatically.';
+
+  @override
+  String get recoveryShow => 'Show sensitive information';
+
+  @override
+  String get recoveryHide => 'Hide sensitive information';
+
+  @override
+  String get recoveryPrivateKey => 'Matched derived private key';
+
+  @override
+  String get recoveryCopyKey => 'Copy derived private key';
+
+  @override
+  String get recoveryExport => 'Export matches and private keys';
+
+  @override
+  String get recoveryExported => 'Matches exported';
+
+  @override
+  String get recoveryStorageError =>
+      'Cannot read or save encrypted tasks. Check secure storage on this device.';
+
+  @override
+  String get recoveryWorkerError =>
+      'Search stopped. The most recently saved progress is retained.';
+
+  @override
+  String get recoveryInvalidXpub =>
+      'Enter a valid extended public key (xPub), not an xPrv.';
+
+  @override
+  String get recoveryInvalidTarget =>
+      'Invalid target address. Check the full address.';
+
+  @override
+  String get recoveryInvalidRange =>
+      'Invalid range or load setting. Indices must be between 0 and 2147483647.';
+
+  @override
+  String get recoveryInvalidPath =>
+      'Invalid base path. Use a full path such as m/44\'/60\'/0\'/0.';
+
+  @override
+  String get recoverySavedHint =>
+      'Select a paused task to resume. Start a new task when changing search inputs; previous tasks and matches are retained.';
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' show AppExitResponse;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'wallet_core.dart';
+import 'address_recovery.dart';
 import 'preferences.dart';
 import 'quotes.dart';
 import 'portfolio_assets.dart';
@@ -30,6 +32,7 @@ part 'ui/wallet_balances.dart';
 part 'ui/wallet_manager.dart';
 part 'ui/omnivault_import.dart';
 part 'ui/platform_address_pool.dart';
+part 'ui/address_recovery.dart';
 part 'ui/transfers.dart';
 part 'ui/stablecoins.dart';
 part 'ui/app_settings.dart';
@@ -305,6 +308,9 @@ class _WalletShellState extends State<WalletShell> {
   final _settingsHub = GlobalKey<_SettingsHubState>();
   SettingsDestination? _settingsDestination;
   bool _addressPoolOpen = false;
+  bool _recoveryOpen = false;
+  late final AddressRecoveryController addressRecovery;
+  late final AppLifecycleListener _recoveryLifecycle;
   void _updateView(VoidCallback fn) {
     setState(fn);
     viewRevision.value++;
@@ -413,6 +419,13 @@ class _WalletShellState extends State<WalletShell> {
   void initState() {
     super.initState();
     vault = widget.vault ?? WalletVault();
+    addressRecovery = AddressRecoveryController(vault);
+    _recoveryLifecycle = AppLifecycleListener(
+      onExitRequested: () async {
+        await addressRecovery.pause();
+        return AppExitResponse.exit;
+      },
+    );
     quoteService = widget.quoteService ?? BinanceQuoteService();
     indexerSettings = IndexerSettings(
       read: vault.readAssetIndexerConfigs,
@@ -423,6 +436,8 @@ class _WalletShellState extends State<WalletShell> {
 
   @override
   void dispose() {
+    _recoveryLifecycle.dispose();
+    addressRecovery.dispose();
     _walletBalanceScan?.dispose();
     clearDiscovery();
     indexerSettings.removeListener(onIndexerSettingsChanged);
@@ -1055,11 +1070,14 @@ class _WalletShellState extends State<WalletShell> {
   }
 
   void _goToAssets() {
-    if (_settingsDestination == null && !_addressPoolOpen) return;
+    if (_settingsDestination == null && !_addressPoolOpen && !_recoveryOpen) {
+      return;
+    }
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       _settingsDestination = null;
       _addressPoolOpen = false;
+      _recoveryOpen = false;
     });
     unawaited(refreshQuotes());
   }
@@ -1069,7 +1087,18 @@ class _WalletShellState extends State<WalletShell> {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       _settingsDestination = null;
+      _recoveryOpen = false;
       _addressPoolOpen = true;
+    });
+  }
+
+  void _openRecovery() {
+    if (_recoveryOpen) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _settingsDestination = null;
+      _addressPoolOpen = false;
+      _recoveryOpen = true;
     });
   }
 
@@ -1080,6 +1109,7 @@ class _WalletShellState extends State<WalletShell> {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       _addressPoolOpen = false;
+      _recoveryOpen = false;
       _settingsDestination = initial;
     });
   }
@@ -1389,6 +1419,23 @@ class _WalletShellState extends State<WalletShell> {
         body: Center(child: CircularProgressIndicator(color: theme.primary)),
       );
     }
+    if (account == null && _recoveryOpen) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _goToAssets();
+        },
+        child: Scaffold(
+          body: SafeArea(
+            child: AddressRecoveryPage(
+              controller: addressRecovery,
+              theme: theme,
+              onBack: _goToAssets,
+            ),
+          ),
+        ),
+      );
+    }
     if (account == null && _addressPoolOpen) {
       return PopScope(
         canPop: false,
@@ -1416,6 +1463,7 @@ class _WalletShellState extends State<WalletShell> {
             onAddressPool: vault.supportsOmniVaultImport
                 ? _openOmniPools
                 : null,
+            onRecovery: _openRecovery,
             onToggleStyle: widget.onToggleStyle,
           ),
         ),
@@ -1423,7 +1471,9 @@ class _WalletShellState extends State<WalletShell> {
     }
     final layout = WalletLayout.of(context);
     final settings = _settingsDestination;
-    final page = _addressPoolOpen
+    final page = _recoveryOpen
+        ? WalletPage.recovery
+        : _addressPoolOpen
         ? WalletPage.addressPool
         : settings == null
         ? WalletPage.assets
@@ -1432,7 +1482,7 @@ class _WalletShellState extends State<WalletShell> {
       canPop: page == WalletPage.assets,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
-        if (_addressPoolOpen) {
+        if (_addressPoolOpen || _recoveryOpen) {
           _goToAssets();
         } else {
           _settingsHub.currentState?.back();
@@ -1454,6 +1504,8 @@ class _WalletShellState extends State<WalletShell> {
                         _goToAssets();
                       case WalletPage.addressPool:
                         _openOmniPools();
+                      case WalletPage.recovery:
+                        _openRecovery();
                       case WalletPage.settings:
                         _openSettings();
                     }
@@ -1478,6 +1530,18 @@ class _WalletShellState extends State<WalletShell> {
                       )
                     else
                       const SizedBox.shrink(),
+                    ExcludeFocus(
+                      excluding: page != WalletPage.recovery,
+                      child: TickerMode(
+                        enabled: page == WalletPage.recovery,
+                        child: AddressRecoveryPage(
+                          controller: addressRecovery,
+                          theme: theme,
+                          active: _recoveryOpen,
+                          onBack: layout.mobile ? _goToAssets : null,
+                        ),
+                      ),
+                    ),
                     if (settings != null)
                       _SettingsHub(
                         key: _settingsHub,
@@ -1525,6 +1589,7 @@ class _WalletShellState extends State<WalletShell> {
                     selectedNetwork?.name ??
                     tr(context, MessageCode.msgChooseNetwork),
                 onWalletTap: selectWallet,
+                onRecovery: layout.mobile ? _openRecovery : null,
                 onSettings: _openSettings,
               ),
             ),

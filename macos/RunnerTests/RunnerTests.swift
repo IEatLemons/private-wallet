@@ -143,6 +143,36 @@ final class RunnerTests: XCTestCase {
         XCTAssertEqual(page.first?["next_evm_path"] as? String, "m/44'/60'/0'/0/3")
     }
 
+    func testRecoveryTasksEncryptSecretsAndExportPrivateFiles() throws {
+        let token = UUID().uuidString
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("asterkeel-recovery-" + token)
+        let service = "com.example.stoneWallet.wallet-database.test." + token
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+            SecItemDelete([
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: service,
+                kSecAttrAccount as String: "wallet-database-v1",
+                kSecAttrSynchronizable as String: false,
+            ] as CFDictionary)
+        }
+        var database: MacWalletDatabase? = MacWalletDatabase(directory: directory, keychainService: service)
+        let phrase = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+        let data = try JSONSerialization.data(withJSONObject: ["mnemonic": phrase, "cursor": 125])
+        let payload = String(decoding: data, as: UTF8.self)
+        _ = try database!.call("recovery.save", ["id": "task", "payload": payload, "updated_at": 1])
+        database = nil
+        database = MacWalletDatabase(directory: directory, keychainService: service)
+        XCTAssertEqual(try database!.call("recovery.list", [:]) as? [String], [payload])
+        let file = directory.appendingPathComponent("result.json")
+        _ = try database!.call("recovery.export", ["path": file.path, "payload": "{\"matches\":[]}"])
+        let attributes = try FileManager.default.attributesOfItem(atPath: file.path)
+        XCTAssertEqual((attributes[.posixPermissions] as? NSNumber)?.intValue, 0o600)
+        database = nil
+        let bytes = try Data(contentsOf: directory.appendingPathComponent("wallet.db"))
+        XCTAssertNil(bytes.range(of: Data(phrase.utf8)))
+    }
+
     func testPlatformPoolsUseIndependentIndicesAndPersistentDeviceKey() throws {
         let token = UUID().uuidString
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("asterkeel-pools-" + token)

@@ -62,6 +62,11 @@ class WalletRail extends StatelessWidget {
                 WalletPage.addressPool,
               ),
             (
+              Icons.manage_search_outlined,
+              AppLocalizations.of(context).recoveryTitle,
+              WalletPage.recovery,
+            ),
+            (
               Icons.settings_outlined,
               tr(context, MessageCode.msgSettings),
               WalletPage.settings,
@@ -164,12 +169,13 @@ class WalletHeader extends StatelessWidget {
     this.linkedAddresses,
     this.onNetworkTap,
     this.onAddressPool,
+    this.onRecovery,
     super.key,
   });
   final WalletTheme theme;
   final String walletName, address, pageTitle, networkLabel;
   final VoidCallback onWalletTap, onSettings;
-  final VoidCallback? onNetworkTap, onAddressPool;
+  final VoidCallback? onNetworkTap, onAddressPool, onRecovery;
   final List<String>? linkedAddresses;
 
   @override
@@ -239,6 +245,13 @@ class WalletHeader extends StatelessWidget {
               Expanded(
                 child: Align(alignment: Alignment.centerLeft, child: wallet),
               ),
+              if (onRecovery != null)
+                IconButton(
+                  key: const ValueKey('open-recovery'),
+                  tooltip: AppLocalizations.of(context).recoveryTitle,
+                  onPressed: onRecovery,
+                  icon: Icon(Icons.manage_search_outlined, color: theme.muted),
+                ),
               if (onAddressPool != null)
                 IconButton(
                   key: const ValueKey('open-address-pool'),

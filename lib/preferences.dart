@@ -7,7 +7,7 @@ enum AppLanguage { system, zhHans, zhHant, en }
 
 enum AppAppearance { system, light, dark }
 
-enum WalletPage { assets, addressPool, settings }
+enum WalletPage { assets, addressPool, recovery, settings }
 
 enum AssetCategory { stablecoins, tokens, nft, rwa }
 
