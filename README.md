@@ -523,3 +523,18 @@ signing configuration; hot reload does not rebuild the native application.
 1. Move key derivation/signing into an audited native/Rust core with zeroization and hardware-backed key wrapping.
 2. Add chain allowlists, nonce/fee simulation, transaction history indexing, and phishing/contract-risk checks.
 3. Add token support, WalletConnect v2, multi-chain adapters, hardware wallets, recovery verification, and independent security audits before enabling mainnet.
+
+### 低负载持续恢复脚本
+
+`tool/recovery/recover_address.dart` 提供离线、可续跑的助记词派生地址搜索。
+默认单计算线程、约 25% 单核负载、256 MiB RSS 上限，5 秒原子保存进度，
+Ctrl+C 安全退出，同目录启动自动续跑，并限制日志大小。配置作为数据读取，
+助记词和私钥不进入日志；私钥结果保存到权限为 0600 的本地文件。
+标准地址匹配和旧版错误哈希匹配使用不同状态，后者不表示恢复资金控制权。
+私有输入及进度放在 Git 忽略的 `.recovery-local/` 目录。
+完整用法见 `tool/recovery/README.txt`。集成检查使用公开测试助记词：
+
+```sh
+dart compile exe tool/recovery/recover_address.dart -o /tmp/recover-address
+python3 tool/recovery/test_recovery.py /tmp/recover-address
+```
