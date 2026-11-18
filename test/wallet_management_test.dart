@@ -247,6 +247,13 @@ void main() {
           find.byKey(ValueKey('manage-wallet-${initial.groups.first.id}')),
         );
         await tap(tester, find.text('添加账户'));
+        expect(find.byType(DerivedAccountPanel), findsOneWidget);
+        expect(find.byKey(const ValueKey('derived-evm-path')), findsOneWidget);
+        expect(find.byKey(const ValueKey('derived-tron-path')), findsOneWidget);
+        await tap(
+          tester,
+          find.byKey(const ValueKey('confirm-derived-account')),
+        );
         var data = await vault.loadPortfolio();
         expect(data.accounts, hasLength(2));
         expect(find.text('账户 2'), findsOneWidget);

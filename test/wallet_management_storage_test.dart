@@ -51,8 +51,19 @@ void main() {
         isFalse,
       );
       final restart = WalletVault(store: store);
-      await restart.addDerivedAccount(group.id);
-      expect((await restart.loadPortfolio()).selected!.index, 3);
+      final resumedGroup = (await restart.loadPortfolio()).groups.single;
+      expect(resumedGroup.nextAccountIndex, 3);
+      expect(resumedGroup.nextEvmPath, "m/44'/60'/0'/0/3");
+      expect(resumedGroup.nextTronPath, "m/44'/195'/0'/0/3");
+      final derived = await restart.addDerivedAccount(
+        group.id,
+        nameForAccount: (index) => 'Derived $index',
+        evmPath: "m/49'/60'/0'/0/3",
+        tronPath: "m/44'/195'/0'/1/3",
+      );
+      expect(derived.selected!.index, 3);
+      expect(derived.selected!.name, 'Derived 3');
+      expect(derived.selected!.evmPath, "m/49'/60'/0'/0/3");
       await expectLater(
         restart.prepareRemoval(accountId: group.accounts.first.id),
         throwsA(isA<WalletInputException>()),

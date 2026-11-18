@@ -77,6 +77,9 @@ String tr(
     MessageCode.msgWalletSecurity => strings.msgWalletSecurity,
     MessageCode.msgAccountSource => strings.msgAccountSource,
     MessageCode.msgDerivationPath => strings.msgDerivationPath,
+    MessageCode.invalidDerivationPath => strings.invalidDerivationPath,
+    MessageCode.duplicateDerivationPath => strings.duplicateDerivationPath,
+    MessageCode.legacyAddressCannotSign => strings.legacyAddressCannotSign,
     MessageCode.msgPrivateKeyImport => strings.msgPrivateKeyImport,
     MessageCode.msgRecoveryPhrasesAndPrivateKeysRemainInSecure =>
       strings.msgRecoveryPhrasesAndPrivateKeysRemainInSecure,

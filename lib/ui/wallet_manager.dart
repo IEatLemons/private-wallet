@@ -152,6 +152,21 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
     );
   }
 
+  Future<void> _addAccount(WalletGroup group) async {
+    final result = await showWalletPanel<WalletPortfolio>(
+      context: context,
+      width: 560,
+      builder: (_) => DerivedAccountPanel(
+        theme: widget.theme,
+        vault: widget.vault,
+        group: group,
+        network: widget.network,
+      ),
+    );
+    if (!mounted || result == null) return;
+    await _change(() async => result);
+  }
+
   Widget _group(WalletGroup group, List<WalletEntry> accounts) {
     final theme = widget.theme;
     final network = !_paged
@@ -317,7 +332,7 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                   subtitle: Text(
                     localized(
                       context,
-                      '${shortAddress(entry.addressFor(network))}${entry.derivationPathFor(network) == null ? '' : '\n${entry.derivationPathFor(network)}'}',
+                      '${shortAddress(entry.addressFor(network))}${entry.derivationPathFor(network) == null ? '' : '\n${entry.derivationPathFor(network)}'}${entry.legacyAddressMode ? '\n${AppLocalizations.of(context).legacyAddressBadge}' : ''}',
                     ),
                     style: TextStyle(
                       color: theme.muted,
@@ -359,24 +374,7 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
               if (group.kind == WalletKind.mnemonic)
                 TextButton.icon(
                   key: ValueKey('derive-account-${group.id}'),
-                  onPressed: busy
-                      ? null
-                      : () => _change(
-                          () => widget.vault.addDerivedAccount(
-                            group.id,
-                            name: tr(context, MessageCode.msgAccountMore, [
-                              _paged
-                                  ? group.accounts.first.groupAccountCount + 1
-                                  : group.accounts
-                                            .map((a) => a.index)
-                                            .fold<int>(
-                                              0,
-                                              (a, b) => a > b ? a : b,
-                                            ) +
-                                        2,
-                            ]),
-                          ),
-                        ),
+                  onPressed: busy ? null : () => _addAccount(group),
                   icon: const Icon(Icons.add, size: 18),
                   label: Text(tr(context, MessageCode.msgAddAccount)),
                 ),
@@ -660,4 +658,246 @@ class _WalletNamePanelState extends State<WalletNamePanel> {
       ],
     ),
   );
+}
+
+class DerivedAccountPanel extends StatefulWidget {
+  const DerivedAccountPanel({
+    required this.theme,
+    required this.vault,
+    required this.group,
+    this.network = ethereumMainnetNetwork,
+    super.key,
+  });
+  final WalletTheme theme;
+  final WalletVault vault;
+  final WalletGroup group;
+  final EvmNetwork network;
+
+  @override
+  State<DerivedAccountPanel> createState() => _DerivedAccountPanelState();
+}
+
+class _DerivedAccountPanelState extends State<DerivedAccountPanel> {
+  final name = TextEditingController();
+  final oldAddress = TextEditingController();
+  bool legacyAddressMode = false;
+  late bool checkTron = widget.network.isTron;
+  LegacyMnemonicInspection? inspection;
+  bool checking = false;
+  late final evm = TextEditingController(text: widget.group.nextEvmPath);
+  late final tron = TextEditingController(text: widget.group.nextTronPath);
+  bool busy = false;
+  WalletMessage? error;
+
+  @override
+  void dispose() {
+    name.dispose();
+    oldAddress.dispose();
+    evm.dispose();
+    tron.dispose();
+    super.dispose();
+  }
+
+  Future<void> _add() async {
+    if (busy) return;
+    setState(() {
+      busy = true;
+      error = null;
+    });
+    try {
+      final result = await widget.vault.addDerivedAccount(
+        widget.group.id,
+        name: name.text.trim().isEmpty
+            ? tr(context, MessageCode.msgAccountMore, [
+                widget.group.nextAccountIndex + 1,
+              ])
+            : name.text,
+        evmPath: evm.text,
+        tronPath: tron.text,
+        legacyAddressMode: legacyAddressMode,
+      );
+      if (mounted) closeWalletPanel(context, result);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          busy = false;
+          error = walletMessage(e);
+        });
+      }
+    }
+  }
+
+  Future<void> _check() async {
+    if (checking || busy) return;
+    setState(() {
+      checking = true;
+      error = null;
+      inspection = null;
+    });
+    try {
+      final result = await widget.vault.inspectLegacyAccount(
+        groupId: widget.group.id,
+        path: checkTron ? tron.text : evm.text,
+        expectedAddress: oldAddress.text,
+        network: checkTron ? tronMainnetNetwork : ethereumMainnetNetwork,
+      );
+      if (mounted) setState(() => inspection = result);
+    } catch (e) {
+      if (mounted) setState(() => error = walletMessage(e));
+    } finally {
+      if (mounted) setState(() => checking = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    final fields = [
+      (evm, strings.evmDerivationPath, 'derived-evm-path'),
+      (tron, strings.tronDerivationPath, 'derived-tron-path'),
+    ];
+    return PopScope(
+      canPop: !busy,
+      child: WalletPanel(
+        theme: widget.theme,
+        title: tr(context, MessageCode.msgAddAccount),
+        subtitle: widget.group.name,
+        canClose: !busy && !checking,
+        footer: FilledButton(
+          key: const ValueKey('confirm-derived-account'),
+          onPressed: busy || checking ? null : _add,
+          child: Text(tr(context, MessageCode.msgAddAccount)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              strings.derivedAccountHint,
+              style: TextStyle(color: widget.theme.muted),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              key: const ValueKey('derived-account-name'),
+              controller: name,
+              enabled: !busy,
+              maxLength: 64,
+              decoration: InputDecoration(
+                labelText: tr(context, MessageCode.msgName),
+                hintText: tr(context, MessageCode.msgAccountMore, [
+                  widget.group.accounts.first.groupAccountCount + 1,
+                ]),
+              ),
+            ),
+            CheckboxListTile(
+              key: const ValueKey('legacy-address-mode'),
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              value: legacyAddressMode,
+              onChanged: busy || checking
+                  ? null
+                  : (value) =>
+                        setState(() => legacyAddressMode = value ?? false),
+              title: Text(strings.legacyAddressMode),
+            ),
+            if (legacyAddressMode)
+              Text(
+                strings.legacyAddressWarning,
+                style: TextStyle(color: widget.theme.danger),
+              ),
+            for (final field
+                in widget.network.isTron ? fields.reversed : fields) ...[
+              const SizedBox(height: 16),
+              TextField(
+                key: ValueKey(field.$3),
+                controller: field.$1,
+                enabled: !busy && !checking,
+                onChanged: (_) => setState(() => inspection = null),
+                smartQuotesType: SmartQuotesType.disabled,
+                smartDashesType: SmartDashesType.disabled,
+                autocorrect: false,
+                enableSuggestions: false,
+                keyboardType: TextInputType.visiblePassword,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
+                decoration: InputDecoration(labelText: field.$2),
+              ),
+            ],
+            if (legacyAddressMode || inspection != null) ...[
+              const SizedBox(height: 16),
+              DropdownButtonFormField<bool>(
+                key: const ValueKey('legacy-check-chain'),
+                initialValue: checkTron,
+                items: const [
+                  DropdownMenuItem(value: false, child: Text('EVM')),
+                  DropdownMenuItem(value: true, child: Text('TRON')),
+                ],
+                onChanged: busy || checking
+                    ? null
+                    : (value) => setState(() {
+                        checkTron = value ?? false;
+                        inspection = null;
+                      }),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                key: const ValueKey('legacy-check-address'),
+                controller: oldAddress,
+                enabled: !busy && !checking,
+                autocorrect: false,
+                enableSuggestions: false,
+                onChanged: (_) => setState(() => inspection = null),
+                decoration: InputDecoration(
+                  labelText: strings.legacyCheckAddress,
+                ),
+              ),
+              TextButton(
+                key: const ValueKey('legacy-check'),
+                onPressed: busy || checking ? null : _check,
+                child: Text(strings.legacyCheck),
+              ),
+              if (inspection case final result?) ...[
+                Text(
+                  switch (result.match) {
+                    LegacyMnemonicMatch.standard => strings.legacyMatchStandard,
+                    LegacyMnemonicMatch.legacyHash => strings.legacyMatchHash,
+                    LegacyMnemonicMatch.none => strings.legacyMatchNone,
+                  },
+                  style: TextStyle(
+                    color: result.match == LegacyMnemonicMatch.standard
+                        ? widget.theme.text
+                        : widget.theme.danger,
+                  ),
+                ),
+                if (result.matched case final matched?) ...[
+                  const SizedBox(height: 8),
+                  SelectableText(
+                    '${strings.legacyMatchedPath}\n${matched.path}',
+                  ),
+                  const SizedBox(height: 8),
+                  SelectableText(
+                    '${strings.legacyStandardAddresses}\n${matched.standardAddress}',
+                  ),
+                  TextButton(
+                    key: const ValueKey('legacy-use-path'),
+                    onPressed: () => setState(() {
+                      (checkTron ? tron : evm).text = matched.path;
+                      legacyAddressMode =
+                          result.match == LegacyMnemonicMatch.legacyHash;
+                    }),
+                    child: Text(strings.legacyUseMatchedPath),
+                  ),
+                ],
+              ],
+            ],
+            if (error != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                localized(context, error!),
+                style: TextStyle(color: widget.theme.danger),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 }

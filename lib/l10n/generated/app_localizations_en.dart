@@ -1853,4 +1853,395 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walletBalancesEmpty => 'No wallets to check.';
+
+  @override
+  String get omniPoolTitle => 'OmniVault address pools';
+
+  @override
+  String get omniPoolSetupHelp =>
+      'Register this device in OmniVault under Address pools → Inventory and devices, then grant access to its platforms. Check the server fingerprint through a separate trusted channel.';
+
+  @override
+  String get omniPoolDevice => 'Device ID';
+
+  @override
+  String get omniPoolFingerprint => 'SHA-256 fingerprint';
+
+  @override
+  String get omniPoolCopyPublicKey => 'Copy device public key';
+
+  @override
+  String get omniPoolServerKey => 'Server public key (PEM)';
+
+  @override
+  String get omniPoolConnect => 'Connect';
+
+  @override
+  String get omniPoolConnection => 'Connection settings';
+
+  @override
+  String get omniPoolNoPlatforms => 'This device has no platform grants.';
+
+  @override
+  String get omniPoolRefreshPlatforms => 'Refresh platforms';
+
+  @override
+  String get omniPoolCreate => 'Create platform recovery phrase';
+
+  @override
+  String get omniPoolWriteWords =>
+      'Keep these words offline and enter words 3 and 18 to continue.';
+
+  @override
+  String omniPoolWord(int index) {
+    return 'Word $index';
+  }
+
+  @override
+  String get omniPoolCount => 'Count (1–1,000)';
+
+  @override
+  String get omniPoolGenerate => 'Generate addresses';
+
+  @override
+  String get omniPoolUpload => 'Upload';
+
+  @override
+  String get omniPoolUploaded => 'Uploaded';
+
+  @override
+  String get omniPoolReady => 'Ready to upload';
+
+  @override
+  String get omniPoolBatches => 'Local batches';
+
+  @override
+  String get omniPoolNeedsBackup => 'Verified backup required';
+
+  @override
+  String get omniPoolBackup => 'Create encrypted backup';
+
+  @override
+  String get omniPoolRestore => 'Restore encrypted backup';
+
+  @override
+  String get omniPoolPassphrase => 'Backup passphrase (12+ characters)';
+
+  @override
+  String get omniPoolConfirmPassphrase => 'Confirm backup passphrase';
+
+  @override
+  String get omniPoolContinue => 'Continue';
+
+  @override
+  String get omniPoolSync => 'Sync inventory and addresses';
+
+  @override
+  String get omniPoolAvailable => 'Available';
+
+  @override
+  String get omniPoolAllocated => 'Allocated';
+
+  @override
+  String get omniPoolDisabled => 'Disabled';
+
+  @override
+  String get omniPoolThreshold => 'Alert threshold';
+
+  @override
+  String get omniPoolOrder => 'Order';
+
+  @override
+  String get omniPoolRetry => 'Retry';
+
+  @override
+  String get omniPoolConnectionError =>
+      'Check the HTTPS address, public key and verified fingerprint.';
+
+  @override
+  String get omniPoolAccessError =>
+      'Check the device registration and platform grant in OmniVault.';
+
+  @override
+  String get omniPoolNetworkError =>
+      'OmniVault could not be reached. Try again.';
+
+  @override
+  String get omniPoolVerificationError =>
+      'OmniVault data could not be verified. The saved records are intact.';
+
+  @override
+  String get omniPoolBackupError =>
+      'Backup verification failed. Check the file, passphrase and selected platform.';
+
+  @override
+  String get omniPoolInputError =>
+      'Check the recovery phrase or enter a count from 1 to 1,000.';
+
+  @override
+  String get omniPoolError =>
+      'The address pool operation failed. Check the connection or local storage and retry.';
+
+  @override
+  String get omniPoolPlatform => 'Platform';
+
+  @override
+  String get omniPoolChain => 'Chain';
+
+  @override
+  String get omniPoolAddresses => 'Addresses';
+
+  @override
+  String get omniPoolAllChains => 'All chains';
+
+  @override
+  String get omniPoolSearchAddress => 'Search address, UID or order';
+
+  @override
+  String get invalidDerivationPath =>
+      'Enter a full path such as m/44\'/60\'/0\'/0/1. Each index must be between 0 and 2147483647, with at most 255 levels.';
+
+  @override
+  String get duplicateDerivationPath =>
+      'An account in this wallet already uses one of these derivation paths. Choose unused paths for both chains.';
+
+  @override
+  String get derivedAccountHint =>
+      'Enter the full derivation path for each chain. EVM networks share the EVM path. The new account will use these paths to derive addresses and sign transactions.';
+
+  @override
+  String get evmDerivationPath => 'EVM derivation path';
+
+  @override
+  String get tronDerivationPath => 'TRON derivation path';
+
+  @override
+  String get legacyAddressMode => 'OmniVault legacy address mode (view only)';
+
+  @override
+  String get legacyAddressWarning =>
+      'Reproduces the old address hash that included 0x04. Matching an old address does not recover control of its funds. These accounts can only display balances; sending, receiving requests and key export are unavailable.';
+
+  @override
+  String get legacyAddressBadge => 'Legacy hash error · view only';
+
+  @override
+  String get legacyAddressCannotSign =>
+      'This address uses the old incorrect hash. The derived key controls a different standard address. Transfers and payment requests are unavailable.';
+
+  @override
+  String get legacyStandardAddresses =>
+      'Standard addresses controlled by the derived keys';
+
+  @override
+  String get legacyCheckAddress => 'Old address to check (optional)';
+
+  @override
+  String get legacyCheck => 'Check old address and paths';
+
+  @override
+  String get legacyMatchStandard =>
+      'A standard address matches. Use the matched path with legacy mode off to add the normal account.';
+
+  @override
+  String get legacyMatchHash =>
+      'The old hash matches. This confirms the address-generation bug, not control of this address.';
+
+  @override
+  String get legacyMatchNone =>
+      'No match in the supplied path or the three known historical branches. Verify the original phrase and xPub path.';
+
+  @override
+  String get legacyMatchedPath => 'Matched path';
+
+  @override
+  String get legacyUseMatchedPath => 'Use matched path';
+
+  @override
+  String get recoveryTitle => 'Address recovery';
+
+  @override
+  String get recoveryIntro =>
+      'Generate and match addresses sequentially on this device, with pause and resume.';
+
+  @override
+  String get recoveryMnemonic => 'Recovery phrase';
+
+  @override
+  String get recoveryXpub => 'CHAIN_XPUB (optional, for verification)';
+
+  @override
+  String get recoveryPassphrase => 'BIP39 passphrase (optional)';
+
+  @override
+  String get recoveryTarget => 'Target address (TRON / EVM)';
+
+  @override
+  String get recoveryMode => 'Sequential search mode';
+
+  @override
+  String get recoveryAccountMode => 'Increment account number';
+
+  @override
+  String get recoveryIndexMode => 'Increment address index';
+
+  @override
+  String get recoveryAccountHint =>
+      'Increment the account number from the start, checking common branches in order. The final index stays fixed.';
+
+  @override
+  String get recoveryIndexHint =>
+      'Keep the base path fixed and increment the final address index from the start.';
+
+  @override
+  String get recoveryBasePath => 'Base derivation path';
+
+  @override
+  String get recoveryFixedIndex => 'Fixed final index';
+
+  @override
+  String get recoveryStart => 'Start number';
+
+  @override
+  String get recoveryEnd => 'End number';
+
+  @override
+  String get recoveryCpu => 'Compute load on one core';
+
+  @override
+  String get recoveryResources =>
+      'One compute worker alternates work and rest. Unexpected memory growth pauses the search. Tasks and progress are encrypted on this device.';
+
+  @override
+  String get recoveryStandardOnly => 'Stop only on a standard address match';
+
+  @override
+  String get recoveryStartTask => 'Start new task';
+
+  @override
+  String get recoveryResume => 'Resume saved task';
+
+  @override
+  String get recoveryPause => 'Pause and save';
+
+  @override
+  String get recoveryNew => 'Clear form';
+
+  @override
+  String get recoveryHistory => 'Local task history';
+
+  @override
+  String get recoveryReady => 'Ready';
+
+  @override
+  String get recoveryRunning => 'Searching sequentially';
+
+  @override
+  String get recoveryPausing => 'Saving and pausing';
+
+  @override
+  String get recoveryPaused => 'Paused, ready to resume';
+
+  @override
+  String get recoveryStandardMatch => 'Standard address match';
+
+  @override
+  String get recoveryLegacyMatch => 'Legacy hash match only';
+
+  @override
+  String get recoveryExhausted => 'Configured range exhausted';
+
+  @override
+  String get recoveryError => 'Task stopped with an error';
+
+  @override
+  String get recoveryChecked => 'Candidates checked';
+
+  @override
+  String get recoveryNext => 'Next sequential number';
+
+  @override
+  String get recoveryCurrentPath => 'Last checked path';
+
+  @override
+  String get recoverySpeed => 'Candidates / second';
+
+  @override
+  String get recoveryStandardAddress => 'Standard address of the derived key';
+
+  @override
+  String get recoveryLegacyAddress => 'Legacy algorithm address';
+
+  @override
+  String get recoveryVerification => 'CHAIN_XPUB verification';
+
+  @override
+  String get recoveryXpubStandard =>
+      'The configured xPub matches the standard target address at the verification index.';
+
+  @override
+  String get recoveryXpubLegacy =>
+      'The configured xPub matches only the legacy incorrect hash at the verification index.';
+
+  @override
+  String get recoveryXpubNone =>
+      'The configured xPub does not match the target at the current verification index.';
+
+  @override
+  String get recoveryOriginMismatch =>
+      'The phrase does not match the xPub at the current base branch. This is not proof of a recovered key.';
+
+  @override
+  String get recoveryWarning =>
+      'A legacy hash match identifies the original derived key, not control of the target address. Continued searching does not guarantee a match.';
+
+  @override
+  String get recoveryMatchHint =>
+      'A standard match still requires checking on-chain permissions. This tool does not transfer funds automatically.';
+
+  @override
+  String get recoveryShow => 'Show sensitive information';
+
+  @override
+  String get recoveryHide => 'Hide sensitive information';
+
+  @override
+  String get recoveryPrivateKey => 'Matched derived private key';
+
+  @override
+  String get recoveryCopyKey => 'Copy derived private key';
+
+  @override
+  String get recoveryExport => 'Export matches and private keys';
+
+  @override
+  String get recoveryExported => 'Matches exported';
+
+  @override
+  String get recoveryStorageError =>
+      'Cannot read or save encrypted tasks. Check secure storage on this device.';
+
+  @override
+  String get recoveryWorkerError =>
+      'Search stopped. The most recently saved progress is retained.';
+
+  @override
+  String get recoveryInvalidXpub =>
+      'Enter a valid extended public key (xPub), not an xPrv.';
+
+  @override
+  String get recoveryInvalidTarget =>
+      'Invalid target address. Check the full address.';
+
+  @override
+  String get recoveryInvalidRange =>
+      'Invalid range or load setting. Indices must be between 0 and 2147483647.';
+
+  @override
+  String get recoveryInvalidPath =>
+      'Invalid base path. Use a full path such as m/44\'/60\'/0\'/0.';
+
+  @override
+  String get recoverySavedHint =>
+      'Select a paused task to resume. Start a new task when changing search inputs; previous tasks and matches are retained.';
 }

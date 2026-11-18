@@ -3106,6 +3106,714 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No wallets to check.'**
   String get walletBalancesEmpty;
+
+  /// No description provided for @omniPoolTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'OmniVault address pools'**
+  String get omniPoolTitle;
+
+  /// No description provided for @omniPoolSetupHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Register this device in OmniVault under Address pools → Inventory and devices, then grant access to its platforms. Check the server fingerprint through a separate trusted channel.'**
+  String get omniPoolSetupHelp;
+
+  /// No description provided for @omniPoolDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Device ID'**
+  String get omniPoolDevice;
+
+  /// No description provided for @omniPoolFingerprint.
+  ///
+  /// In en, this message translates to:
+  /// **'SHA-256 fingerprint'**
+  String get omniPoolFingerprint;
+
+  /// No description provided for @omniPoolCopyPublicKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy device public key'**
+  String get omniPoolCopyPublicKey;
+
+  /// No description provided for @omniPoolServerKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Server public key (PEM)'**
+  String get omniPoolServerKey;
+
+  /// No description provided for @omniPoolConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get omniPoolConnect;
+
+  /// No description provided for @omniPoolConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection settings'**
+  String get omniPoolConnection;
+
+  /// No description provided for @omniPoolNoPlatforms.
+  ///
+  /// In en, this message translates to:
+  /// **'This device has no platform grants.'**
+  String get omniPoolNoPlatforms;
+
+  /// No description provided for @omniPoolRefreshPlatforms.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh platforms'**
+  String get omniPoolRefreshPlatforms;
+
+  /// No description provided for @omniPoolCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create platform recovery phrase'**
+  String get omniPoolCreate;
+
+  /// No description provided for @omniPoolWriteWords.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep these words offline and enter words 3 and 18 to continue.'**
+  String get omniPoolWriteWords;
+
+  /// No description provided for @omniPoolWord.
+  ///
+  /// In en, this message translates to:
+  /// **'Word {index}'**
+  String omniPoolWord(int index);
+
+  /// No description provided for @omniPoolCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Count (1–1,000)'**
+  String get omniPoolCount;
+
+  /// No description provided for @omniPoolGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate addresses'**
+  String get omniPoolGenerate;
+
+  /// No description provided for @omniPoolUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload'**
+  String get omniPoolUpload;
+
+  /// No description provided for @omniPoolUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded'**
+  String get omniPoolUploaded;
+
+  /// No description provided for @omniPoolReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to upload'**
+  String get omniPoolReady;
+
+  /// No description provided for @omniPoolBatches.
+  ///
+  /// In en, this message translates to:
+  /// **'Local batches'**
+  String get omniPoolBatches;
+
+  /// No description provided for @omniPoolNeedsBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified backup required'**
+  String get omniPoolNeedsBackup;
+
+  /// No description provided for @omniPoolBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Create encrypted backup'**
+  String get omniPoolBackup;
+
+  /// No description provided for @omniPoolRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore encrypted backup'**
+  String get omniPoolRestore;
+
+  /// No description provided for @omniPoolPassphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup passphrase (12+ characters)'**
+  String get omniPoolPassphrase;
+
+  /// No description provided for @omniPoolConfirmPassphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm backup passphrase'**
+  String get omniPoolConfirmPassphrase;
+
+  /// No description provided for @omniPoolContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get omniPoolContinue;
+
+  /// No description provided for @omniPoolSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync inventory and addresses'**
+  String get omniPoolSync;
+
+  /// No description provided for @omniPoolAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get omniPoolAvailable;
+
+  /// No description provided for @omniPoolAllocated.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocated'**
+  String get omniPoolAllocated;
+
+  /// No description provided for @omniPoolDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get omniPoolDisabled;
+
+  /// No description provided for @omniPoolThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert threshold'**
+  String get omniPoolThreshold;
+
+  /// No description provided for @omniPoolOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Order'**
+  String get omniPoolOrder;
+
+  /// No description provided for @omniPoolRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get omniPoolRetry;
+
+  /// No description provided for @omniPoolConnectionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the HTTPS address, public key and verified fingerprint.'**
+  String get omniPoolConnectionError;
+
+  /// No description provided for @omniPoolAccessError.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the device registration and platform grant in OmniVault.'**
+  String get omniPoolAccessError;
+
+  /// No description provided for @omniPoolNetworkError.
+  ///
+  /// In en, this message translates to:
+  /// **'OmniVault could not be reached. Try again.'**
+  String get omniPoolNetworkError;
+
+  /// No description provided for @omniPoolVerificationError.
+  ///
+  /// In en, this message translates to:
+  /// **'OmniVault data could not be verified. The saved records are intact.'**
+  String get omniPoolVerificationError;
+
+  /// No description provided for @omniPoolBackupError.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup verification failed. Check the file, passphrase and selected platform.'**
+  String get omniPoolBackupError;
+
+  /// No description provided for @omniPoolInputError.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the recovery phrase or enter a count from 1 to 1,000.'**
+  String get omniPoolInputError;
+
+  /// No description provided for @omniPoolError.
+  ///
+  /// In en, this message translates to:
+  /// **'The address pool operation failed. Check the connection or local storage and retry.'**
+  String get omniPoolError;
+
+  /// No description provided for @omniPoolPlatform.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform'**
+  String get omniPoolPlatform;
+
+  /// No description provided for @omniPoolChain.
+  ///
+  /// In en, this message translates to:
+  /// **'Chain'**
+  String get omniPoolChain;
+
+  /// No description provided for @omniPoolAddresses.
+  ///
+  /// In en, this message translates to:
+  /// **'Addresses'**
+  String get omniPoolAddresses;
+
+  /// No description provided for @omniPoolAllChains.
+  ///
+  /// In en, this message translates to:
+  /// **'All chains'**
+  String get omniPoolAllChains;
+
+  /// No description provided for @omniPoolSearchAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Search address, UID or order'**
+  String get omniPoolSearchAddress;
+
+  /// No description provided for @invalidDerivationPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a full path such as m/44\'/60\'/0\'/0/1. Each index must be between 0 and 2147483647, with at most 255 levels.'**
+  String get invalidDerivationPath;
+
+  /// No description provided for @duplicateDerivationPath.
+  ///
+  /// In en, this message translates to:
+  /// **'An account in this wallet already uses one of these derivation paths. Choose unused paths for both chains.'**
+  String get duplicateDerivationPath;
+
+  /// No description provided for @derivedAccountHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the full derivation path for each chain. EVM networks share the EVM path. The new account will use these paths to derive addresses and sign transactions.'**
+  String get derivedAccountHint;
+
+  /// No description provided for @evmDerivationPath.
+  ///
+  /// In en, this message translates to:
+  /// **'EVM derivation path'**
+  String get evmDerivationPath;
+
+  /// No description provided for @tronDerivationPath.
+  ///
+  /// In en, this message translates to:
+  /// **'TRON derivation path'**
+  String get tronDerivationPath;
+
+  /// No description provided for @legacyAddressMode.
+  ///
+  /// In en, this message translates to:
+  /// **'OmniVault legacy address mode (view only)'**
+  String get legacyAddressMode;
+
+  /// No description provided for @legacyAddressWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Reproduces the old address hash that included 0x04. Matching an old address does not recover control of its funds. These accounts can only display balances; sending, receiving requests and key export are unavailable.'**
+  String get legacyAddressWarning;
+
+  /// No description provided for @legacyAddressBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Legacy hash error · view only'**
+  String get legacyAddressBadge;
+
+  /// No description provided for @legacyAddressCannotSign.
+  ///
+  /// In en, this message translates to:
+  /// **'This address uses the old incorrect hash. The derived key controls a different standard address. Transfers and payment requests are unavailable.'**
+  String get legacyAddressCannotSign;
+
+  /// No description provided for @legacyStandardAddresses.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard addresses controlled by the derived keys'**
+  String get legacyStandardAddresses;
+
+  /// No description provided for @legacyCheckAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Old address to check (optional)'**
+  String get legacyCheckAddress;
+
+  /// No description provided for @legacyCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check old address and paths'**
+  String get legacyCheck;
+
+  /// No description provided for @legacyMatchStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'A standard address matches. Use the matched path with legacy mode off to add the normal account.'**
+  String get legacyMatchStandard;
+
+  /// No description provided for @legacyMatchHash.
+  ///
+  /// In en, this message translates to:
+  /// **'The old hash matches. This confirms the address-generation bug, not control of this address.'**
+  String get legacyMatchHash;
+
+  /// No description provided for @legacyMatchNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No match in the supplied path or the three known historical branches. Verify the original phrase and xPub path.'**
+  String get legacyMatchNone;
+
+  /// No description provided for @legacyMatchedPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Matched path'**
+  String get legacyMatchedPath;
+
+  /// No description provided for @legacyUseMatchedPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Use matched path'**
+  String get legacyUseMatchedPath;
+
+  /// No description provided for @recoveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Address recovery'**
+  String get recoveryTitle;
+
+  /// No description provided for @recoveryIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate and match addresses sequentially on this device, with pause and resume.'**
+  String get recoveryIntro;
+
+  /// No description provided for @recoveryMnemonic.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery phrase'**
+  String get recoveryMnemonic;
+
+  /// No description provided for @recoveryXpub.
+  ///
+  /// In en, this message translates to:
+  /// **'CHAIN_XPUB (optional, for verification)'**
+  String get recoveryXpub;
+
+  /// No description provided for @recoveryPassphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'BIP39 passphrase (optional)'**
+  String get recoveryPassphrase;
+
+  /// No description provided for @recoveryTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target address (TRON / EVM)'**
+  String get recoveryTarget;
+
+  /// No description provided for @recoveryMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Sequential search mode'**
+  String get recoveryMode;
+
+  /// No description provided for @recoveryAccountMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Increment account number'**
+  String get recoveryAccountMode;
+
+  /// No description provided for @recoveryIndexMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Increment address index'**
+  String get recoveryIndexMode;
+
+  /// No description provided for @recoveryAccountHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Increment the account number from the start, checking common branches in order. The final index stays fixed.'**
+  String get recoveryAccountHint;
+
+  /// No description provided for @recoveryIndexHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the base path fixed and increment the final address index from the start.'**
+  String get recoveryIndexHint;
+
+  /// No description provided for @recoveryBasePath.
+  ///
+  /// In en, this message translates to:
+  /// **'Base derivation path'**
+  String get recoveryBasePath;
+
+  /// No description provided for @recoveryFixedIndex.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed final index'**
+  String get recoveryFixedIndex;
+
+  /// No description provided for @recoveryStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start number'**
+  String get recoveryStart;
+
+  /// No description provided for @recoveryEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'End number'**
+  String get recoveryEnd;
+
+  /// No description provided for @recoveryCpu.
+  ///
+  /// In en, this message translates to:
+  /// **'Compute load on one core'**
+  String get recoveryCpu;
+
+  /// No description provided for @recoveryResources.
+  ///
+  /// In en, this message translates to:
+  /// **'One compute worker alternates work and rest. Unexpected memory growth pauses the search. Tasks and progress are encrypted on this device.'**
+  String get recoveryResources;
+
+  /// No description provided for @recoveryStandardOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop only on a standard address match'**
+  String get recoveryStandardOnly;
+
+  /// No description provided for @recoveryStartTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Start new task'**
+  String get recoveryStartTask;
+
+  /// No description provided for @recoveryResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume saved task'**
+  String get recoveryResume;
+
+  /// No description provided for @recoveryPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause and save'**
+  String get recoveryPause;
+
+  /// No description provided for @recoveryNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear form'**
+  String get recoveryNew;
+
+  /// No description provided for @recoveryHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Local task history'**
+  String get recoveryHistory;
+
+  /// No description provided for @recoveryReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get recoveryReady;
+
+  /// No description provided for @recoveryRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching sequentially'**
+  String get recoveryRunning;
+
+  /// No description provided for @recoveryPausing.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving and pausing'**
+  String get recoveryPausing;
+
+  /// No description provided for @recoveryPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused, ready to resume'**
+  String get recoveryPaused;
+
+  /// No description provided for @recoveryStandardMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard address match'**
+  String get recoveryStandardMatch;
+
+  /// No description provided for @recoveryLegacyMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Legacy hash match only'**
+  String get recoveryLegacyMatch;
+
+  /// No description provided for @recoveryExhausted.
+  ///
+  /// In en, this message translates to:
+  /// **'Configured range exhausted'**
+  String get recoveryExhausted;
+
+  /// No description provided for @recoveryError.
+  ///
+  /// In en, this message translates to:
+  /// **'Task stopped with an error'**
+  String get recoveryError;
+
+  /// No description provided for @recoveryChecked.
+  ///
+  /// In en, this message translates to:
+  /// **'Candidates checked'**
+  String get recoveryChecked;
+
+  /// No description provided for @recoveryNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next sequential number'**
+  String get recoveryNext;
+
+  /// No description provided for @recoveryCurrentPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Last checked path'**
+  String get recoveryCurrentPath;
+
+  /// No description provided for @recoverySpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Candidates / second'**
+  String get recoverySpeed;
+
+  /// No description provided for @recoveryStandardAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard address of the derived key'**
+  String get recoveryStandardAddress;
+
+  /// No description provided for @recoveryLegacyAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Legacy algorithm address'**
+  String get recoveryLegacyAddress;
+
+  /// No description provided for @recoveryVerification.
+  ///
+  /// In en, this message translates to:
+  /// **'CHAIN_XPUB verification'**
+  String get recoveryVerification;
+
+  /// No description provided for @recoveryXpubStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'The configured xPub matches the standard target address at the verification index.'**
+  String get recoveryXpubStandard;
+
+  /// No description provided for @recoveryXpubLegacy.
+  ///
+  /// In en, this message translates to:
+  /// **'The configured xPub matches only the legacy incorrect hash at the verification index.'**
+  String get recoveryXpubLegacy;
+
+  /// No description provided for @recoveryXpubNone.
+  ///
+  /// In en, this message translates to:
+  /// **'The configured xPub does not match the target at the current verification index.'**
+  String get recoveryXpubNone;
+
+  /// No description provided for @recoveryOriginMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The phrase does not match the xPub at the current base branch. This is not proof of a recovered key.'**
+  String get recoveryOriginMismatch;
+
+  /// No description provided for @recoveryWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'A legacy hash match identifies the original derived key, not control of the target address. Continued searching does not guarantee a match.'**
+  String get recoveryWarning;
+
+  /// No description provided for @recoveryMatchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A standard match still requires checking on-chain permissions. This tool does not transfer funds automatically.'**
+  String get recoveryMatchHint;
+
+  /// No description provided for @recoveryShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show sensitive information'**
+  String get recoveryShow;
+
+  /// No description provided for @recoveryHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide sensitive information'**
+  String get recoveryHide;
+
+  /// No description provided for @recoveryPrivateKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Matched derived private key'**
+  String get recoveryPrivateKey;
+
+  /// No description provided for @recoveryCopyKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy derived private key'**
+  String get recoveryCopyKey;
+
+  /// No description provided for @recoveryExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export matches and private keys'**
+  String get recoveryExport;
+
+  /// No description provided for @recoveryExported.
+  ///
+  /// In en, this message translates to:
+  /// **'Matches exported'**
+  String get recoveryExported;
+
+  /// No description provided for @recoveryStorageError.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot read or save encrypted tasks. Check secure storage on this device.'**
+  String get recoveryStorageError;
+
+  /// No description provided for @recoveryWorkerError.
+  ///
+  /// In en, this message translates to:
+  /// **'Search stopped. The most recently saved progress is retained.'**
+  String get recoveryWorkerError;
+
+  /// No description provided for @recoveryInvalidXpub.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid extended public key (xPub), not an xPrv.'**
+  String get recoveryInvalidXpub;
+
+  /// No description provided for @recoveryInvalidTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid target address. Check the full address.'**
+  String get recoveryInvalidTarget;
+
+  /// No description provided for @recoveryInvalidRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid range or load setting. Indices must be between 0 and 2147483647.'**
+  String get recoveryInvalidRange;
+
+  /// No description provided for @recoveryInvalidPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid base path. Use a full path such as m/44\'/60\'/0\'/0.'**
+  String get recoveryInvalidPath;
+
+  /// No description provided for @recoverySavedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a paused task to resume. Start a new task when changing search inputs; previous tasks and matches are retained.'**
+  String get recoverySavedHint;
 }
 
 class _AppLocalizationsDelegate

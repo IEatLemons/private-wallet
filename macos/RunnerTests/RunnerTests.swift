@@ -222,6 +222,144 @@ final class RunnerTests: XCTestCase {
         print("management rows=\(count) query-p95-ms=\(timings[28]) removal-ms=\(Date().timeIntervalSince(previewStart) * 1000) total-seconds=\(Date().timeIntervalSince(start)) disk-bytes=\(size)")
     }
 
+    func testCustomDerivationPathsPersistAndDuplicateInsertionRollsBack() throws {
+        let token = UUID().uuidString
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("asterkeel-paths-" + token)
+        let service = "com.example.stoneWallet.wallet-database.test." + token
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+            SecItemDelete([
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: service,
+                kSecAttrAccount as String: "wallet-database-v1",
+                kSecAttrSynchronizable as String: false,
+            ] as CFDictionary)
+        }
+        var database: MacWalletDatabase? = MacWalletDatabase(directory: directory, keychainService: service)
+        let group: [String: Any] = [
+            "id": "root", "kind": "mnemonic", "name": "Root", "secret": "synthetic-test-phrase",
+            "identity": "synthetic-root",
+            "accounts": [["account_index": 0, "name": "First", "evm": address, "tron": tron]],
+        ]
+        _ = try database!.call("migrate", ["activeId": "root:0", "groups": [group]])
+        let entry: [String: Any] = [
+            "account_index": 1, "name": "Custom", "evm": "synthetic-evm", "tron": "synthetic-tron",
+            "legacy_address_mode": 1,
+            "evm_path": "m/44'/60'/0'/0/2", "tron_path": "m/44'/195'/0'/0/925183485",
+        ]
+        _ = try database!.call("addDerived", ["id": "root", "account": entry])
+        database = nil
+        database = MacWalletDatabase(directory: directory, keychainService: service)
+        let selected = try XCTUnwrap(try summary(database!)["selected"] as? [String: Any])
+        XCTAssertEqual(selected["legacy_address_mode"] as? Int, 1)
+        XCTAssertEqual(selected["evm_path"] as? String, entry["evm_path"] as? String)
+        XCTAssertEqual(selected["tron_path"] as? String, entry["tron_path"] as? String)
+        let defaults = try XCTUnwrap(database!.call("derive", ["id": "root"]) as? [String: Any])
+        XCTAssertEqual(defaults["next_index"] as? Int, 2)
+        XCTAssertEqual(defaults["next_evm_path"] as? String, "m/44'/60'/0'/0/3")
+        XCTAssertEqual(defaults["next_tron_path"] as? String, "m/44'/195'/0'/0/2")
+        var duplicate = entry
+        duplicate["account_index"] = 2
+        for (column, value) in [("evm", "another-evm"), ("tron", "another-tron")] {
+            var candidate = duplicate
+            candidate[column] = value
+            XCTAssertThrowsError(try database!.call("addDerived", ["id": "root", "account": candidate])) { error in
+                XCTAssertEqual((error as? WalletDatabaseError)?.code, "derive_duplicate")
+            }
+        }
+        XCTAssertEqual(try summary(database!)["accounts_count"] as? Int, 2)
+        XCTAssertEqual(try summary(database!)["active_id"] as? String, "root:1")
+        let page = try search(database!, "Custom")
+        let visible = try XCTUnwrap((page.first?["accounts"] as? [[String: Any]])?.first)
+        XCTAssertEqual(visible["tron_path"] as? String, entry["tron_path"] as? String)
+        XCTAssertEqual(page.first?["next_evm_path"] as? String, "m/44'/60'/0'/0/3")
+    }
+
+    func testRecoveryTasksEncryptSecretsAndExportPrivateFiles() throws {
+        let token = UUID().uuidString
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("asterkeel-recovery-" + token)
+        let service = "com.example.stoneWallet.wallet-database.test." + token
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+            SecItemDelete([
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: service,
+                kSecAttrAccount as String: "wallet-database-v1",
+                kSecAttrSynchronizable as String: false,
+            ] as CFDictionary)
+        }
+        var database: MacWalletDatabase? = MacWalletDatabase(directory: directory, keychainService: service)
+        let phrase = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+        let data = try JSONSerialization.data(withJSONObject: ["mnemonic": phrase, "cursor": 125])
+        let payload = String(decoding: data, as: UTF8.self)
+        _ = try database!.call("recovery.save", ["id": "task", "payload": payload, "updated_at": 1])
+        database = nil
+        database = MacWalletDatabase(directory: directory, keychainService: service)
+        XCTAssertEqual(try database!.call("recovery.list", [:]) as? [String], [payload])
+        let file = directory.appendingPathComponent("result.json")
+        _ = try database!.call("recovery.export", ["path": file.path, "payload": "{\"matches\":[]}"])
+        let attributes = try FileManager.default.attributesOfItem(atPath: file.path)
+        XCTAssertEqual((attributes[.posixPermissions] as? NSNumber)?.intValue, 0o600)
+        database = nil
+        let bytes = try Data(contentsOf: directory.appendingPathComponent("wallet.db"))
+        XCTAssertNil(bytes.range(of: Data(phrase.utf8)))
+    }
+
+    func testPlatformPoolsUseIndependentIndicesAndPersistentDeviceKey() throws {
+        let token = UUID().uuidString
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("asterkeel-pools-" + token)
+        let service = "com.example.stoneWallet.wallet-database.test." + token
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+            for account in ["wallet-database-v1", "omni-pool-device-rsa"] {
+                SecItemDelete([
+                    kSecClass as String: kSecClassGenericPassword,
+                    kSecAttrService as String: service,
+                    kSecAttrAccount as String: account,
+                    kSecAttrSynchronizable as String: false,
+                ] as CFDictionary)
+            }
+        }
+        let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+        let scope: [String: Any] = ["service": "https://example.test", "platform": "shop"]
+        let sibling: [String: Any] = ["service": "https://example.test", "platform": "other"]
+        var database: MacWalletDatabase? = MacWalletDatabase(directory: directory, keychainService: service)
+        let create: [String: Any] = [
+            "id": "seed", "mnemonic": mnemonic, "identity": "synthetic-identity",
+            "bsc_next": 0, "tron_next": 0,
+        ]
+        _ = try database!.call("pool.create", scope.merging(create) { _, b in b })
+        XCTAssertThrowsError(try database!.call("pool.create", sibling.merging(create) { _, b in b }))
+        XCTAssertEqual(try database!.call("pool.hasSeed", sibling) as? Bool, false)
+        let batch = scope.merging([
+            "id": "batch", "seed": "seed", "chain": "bsc", "first_index": 0,
+            "count": 2, "payload": "{\"addresses\":[]}",
+        ]) { _, b in b }
+        _ = try database!.call("pool.generate", batch)
+        XCTAssertThrowsError(try database!.call("pool.generate", batch))
+        let collision = batch.merging(["first_index": 2]) { _, b in b }
+        XCTAssertThrowsError(try database!.call("pool.generate", collision))
+        let active = try XCTUnwrap(database!.call("pool.active", scope) as? [String: Any])
+        XCTAssertEqual(active["bsc_next"] as? Int, 2)
+        XCTAssertEqual(active["tron_next"] as? Int, 0)
+        let publicKey = try XCTUnwrap(database!.call("pool.device", [:]) as? FlutterStandardTypedData)
+        let input = FlutterStandardTypedData(bytes: Data("synthetic request".utf8))
+        let proof = try XCTUnwrap(database!.call("pool.sign", ["message": input]) as? FlutterStandardTypedData)
+        XCTAssertEqual(try database!.call("pool.verify", [
+            "key": publicKey, "message": input, "signature": proof,
+        ]) as? Bool, true)
+        database = nil
+        database = MacWalletDatabase(directory: directory, keychainService: service)
+        let reopened = try XCTUnwrap(database!.call("pool.device", [:]) as? FlutterStandardTypedData)
+        XCTAssertEqual(reopened.data, publicKey.data)
+        let list = try XCTUnwrap(database!.call("pool.list", scope) as? [[String: Any]])
+        XCTAssertEqual(list.first?["backed_up"] as? Int, 0)
+        XCTAssertEqual(list.count, 1)
+        let bytes = try Data(contentsOf: directory.appendingPathComponent("wallet.db"))
+        XCTAssertNil(bytes.range(of: Data(mnemonic.utf8)))
+        XCTAssertFalse(bytes.starts(with: Data("SQLite format 3".utf8)))
+    }
+
     private func row(_ line: Int, _ platform: String, _ uid: String, network: Int = 56) -> [String: Any] {
         [
             "line": line, "status": "valid", "platform": platform, "uid": uid, "network": network,

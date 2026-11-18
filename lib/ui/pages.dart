@@ -9,11 +9,14 @@ class OnboardingPage extends StatelessWidget {
     required this.onImportPrivateKey,
     required this.onBatchImport,
     this.supportsOmniVault = false,
+    this.onAddressPool,
+    this.onRecovery,
     required this.onToggleStyle,
     super.key,
   });
   final WalletTheme theme;
   final bool supportsOmniVault;
+  final VoidCallback? onAddressPool, onRecovery;
   final WalletMessage? error;
   final VoidCallback onCreate,
       onImport,
@@ -137,6 +140,23 @@ class OnboardingPage extends StatelessWidget {
               : tr(context, MessageCode.msgCsvTsvColumnsChainPrivateKey),
           style: TextStyle(color: theme.muted, fontSize: 12, height: 1.5),
         ),
+        if (onRecovery != null) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            key: const ValueKey('onboarding-recovery'),
+            onPressed: onRecovery,
+            icon: const Icon(Icons.manage_search_outlined),
+            label: Text(AppLocalizations.of(context).recoveryTitle),
+          ),
+        ],
+        if (onAddressPool != null) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: onAddressPool,
+            icon: const Icon(Icons.inventory_2_outlined),
+            label: Text(AppLocalizations.of(context).omniPoolTitle),
+          ),
+        ],
         if (error != null) ...[
           const SizedBox(height: 12),
           Text(

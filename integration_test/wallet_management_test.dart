@@ -32,6 +32,14 @@ void main() {
       await tester.pumpAndSettle();
       await press(tester, find.text('主钱包'));
       await press(tester, find.text('添加账户'));
+      await tester.enterText(
+        find.byKey(const ValueKey('derived-tron-path')),
+        "m/44'/195'/0'/0/925183485",
+      );
+      await press(
+        tester,
+        find.byKey(const ValueKey('confirm-derived-account')),
+      );
       expect(find.text('账户 2'), findsOneWidget);
       final firstGroup = (await vault.loadPortfolio()).groups.first;
       final childId = firstGroup.accounts.last.id;
@@ -83,6 +91,10 @@ void main() {
       final data = await vault.loadPortfolio();
       expect(data.groups, hasLength(3));
       expect(data.accounts, hasLength(4));
+      expect(
+        data.selected!.derivationPathFor(tronMainnetNetwork),
+        "m/44'/195'/0'/0/925183485",
+      );
       expect(tester.takeException(), isNull);
     },
   );

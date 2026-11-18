@@ -315,9 +315,11 @@ Click the current wallet name at the top, or **设置 → 管理钱包与账户*
 [OKX's wallet management guide](https://web3.okx.com/zh-hans/help/how-do-i-manage-my-wallet-app):
 
 - A mnemonic wallet owns one recovery phrase and can derive **账户 1, 账户 2, …**
-  with **添加账户**. The first address keeps the original derivation path ending
-  in `/0`; additional addresses end in `/1`, `/2`, etc. A private-key wallet has
-  one account and does not expose account derivation.
+  with **添加账户**. The form allows editing the full EVM and TRON BIP32 paths
+  separately, including hardened components and large indices such as
+  `m/44'/195'/0'/0/925183485`. Defaults continue with unused standard paths.
+  Paths are validated and duplicate paths in the same wallet are rejected.
+  A private-key wallet has one account and does not expose account derivation.
 - **创建新钱包** generates a new recovery phrase, shows it and verifies the
   requested words before saving. Creating from an existing wallet can be
   cancelled without changing the current wallet.
@@ -330,8 +332,8 @@ Click the current wallet name at the top, or **设置 → 管理钱包与账户*
   assets, receive address and signing account follow the selection. Settings
   shows the selected account's actual derivation path. Selection survives restart.
 
-Wallet secrets, account indices, names and selection are saved together in one
-versioned platform-secure-storage record (`stone_wallet.v2.wallet_book`). Legacy
+Wallet secrets, account indices, per-chain derivation paths, names and selection
+are saved together in one versioned platform-secure-storage record (`stone_wallet.v2.wallet_book`). Legacy
 single-mnemonic and batch-private-key records are validated and migrated together;
 their original secure-storage keys are retained as a recovery copy. Invalid
 records or failed writes do not silently discard or replace existing wallets.
@@ -341,8 +343,10 @@ an index. The original address and network configuration are preserved.
 Recovery phrases restore the same deterministic addresses; account names and the
 number of locally added accounts are local metadata. After restoring a phrase on
 a fresh installation, use **添加账户** to recreate its additional addresses in
-order. Balance/history-based account discovery and secret export remain separate
-features.
+order, or enter the original full paths for custom accounts. Keep custom paths
+with your offline recovery records. On macOS, SQLCipher schema version 6 stores
+these paths with the addresses; older accounts retain their original standard
+paths after migration.
 
 ### 钱包管理与删除
 
@@ -359,7 +363,7 @@ features.
 密钥记录、别名、索引和余额缓存，既有迁移恢复来源保留。派生编号只递增，
 删除末尾账户后新增账户会使用新编号。全部钱包删空后显示欢迎页。
 
-`flutter test test/wallet_management_test.dart` checks migration, failed writes,
+`flutter test test/wallet_management_test.dart test/custom_derivation_test.dart` checks custom paths, address/signature recovery, migration, failed writes,
 duplicate imports, concurrent derivation, renaming, search, switching and restart.
 `flutter test integration_test/wallet_management_test.dart -d DEVICE_ID` checks
 the complete native flow with only synthetic in-memory wallet data.
@@ -371,6 +375,32 @@ the account and connects to the selected network for its balance. Invalid or
 duplicate imports stay in the form for correction. Existing mnemonic and imported
 accounts remain available in the wallet picker as **主钱包** and **私钥账户**.
 Single and batch imports share the same storage, including existing batch data.
+
+### OmniVault 旧版错误地址兼容
+
+在「钱包管理 → 添加账户」勾选「OmniVault 旧版地址模式（仅查看）」，
+按填写的 EVM/TRON 路径复现旧版 `Keccak256(0x04 || X || Y)` 地址算法。
+账户列表及资产页会标记「旧版哈希错误」，可查询旧地址余额，并显示派生密钥
+实际控制的标准地址。模式随账户保存，macOS SQLCipher schema 4 自动迁移旧库。
+
+这只能复现地址，不能通过修改钱包获得错误地址的资金控制权。应用禁止这类账户
+转账、请求收款及导出冒充该地址控制密钥的私钥。可选的「核对旧地址与路径」会在
+本机检查所填路径和 `195'/0'`、`60'/0'`、`60'/1'` 历史分支，分别标记标准地址匹配、
+错误哈希匹配和未匹配。标准地址匹配时，可使用真实路径并关闭旧版模式添加正常账户。
+助记词及私钥不会发送给服务端，核验结果只包含公开地址和路径。
+
+### macOS 上管理 OmniVault 平台地址库
+
+从 macOS 主导航的「OmniVault 地址库」进入，窄窗口可用资产页右上角的地址库图标。欢迎页也提供直接入口。在 OmniVault 的
+「地址库 → 库存与设备」登记设备公钥和指纹，选择「平台专属地址库」并授权平台。
+钱包填写 HTTPS 服务地址、服务器通信公钥和独立核对的 SHA‑256 指纹。
+
+选择平台后创建或导入 BIP‑39 助记词，按 BSC 或 TRON 生成 1–1,000 个地址。
+先保存并验证 `.akpool` 加密备份，再上传批次。同步可查看库存、阈值和已分配地址。
+新地址库使用 `m/44'/60'/2'/0/i`（BSC）和 `m/44'/195'/2'/0/i`（TRON）。
+助记词保存在本机 SQLCipher 钱包簿，线上只接收公开地址。导入助记词用于新建
+地址库；已有批次和索引用 `.akpool` 恢复。换机时重新登记设备，恢复后的历史
+地址仍使用原助记词，新增地址从新助记词派生。
 
 ### macOS 上导入 OmniVault 私钥
 
@@ -483,8 +513,7 @@ flutter test test/responsive_layout_test.dart \
 ```
 
 Previews are saved under `build/layout-previews/` using synthetic test wallet data.
-The macOS sandbox permits outbound RPC connections and read-only access to files
-explicitly selected by the user.
+The macOS sandbox permits outbound RPC connections and access to user-selected files for imports and encrypted backup export.
 
 macOS standalone builds use the local login Keychain through
 `MacOsOptions(usesDataProtectionKeychain: false)`. This supports local ad-hoc
@@ -508,3 +537,37 @@ signing configuration; hot reload does not rebuild the native application.
 1. Move key derivation/signing into an audited native/Rust core with zeroization and hardware-backed key wrapping.
 2. Add chain allowlists, nonce/fee simulation, transaction history indexing, and phishing/contract-risk checks.
 3. Add token support, WalletConnect v2, multi-chain adapters, hardware wallets, recovery verification, and independent security audits before enabling mainnet.
+
+### 低负载持续恢复脚本
+
+钱包侧栏和未创建钱包时的首页均可进入独立的「地址恢复」页面，手动填写助记词、
+可选的 BIP39 密码、CHAIN_XPUB 和目标 TRON/EVM 地址。搜索完全在本机运行：
+
+- 「账户编号递增」固定末尾地址索引，按账户编号 0、1、2……搜索固定的历史路径分支。
+- 「地址索引递增」固定填写的基础路径，按末尾索引 0、1、2……派生；两种模式均可设置起止范围。
+- 默认使用单计算线程、约 25% 单核负载，可调整至 5–50%；每 5 秒保存进度，暂停或退出时保存当前位置。
+  切换页面不会中断搜索，重新打开应用后需手动继续。新增内存超过 128 MiB 时自动暂停。
+- 输入、历史任务和匹配私钥保存在 macOS SQLCipher 加密数据库（schema 6），
+  私钥默认隐藏，可单独查看、复制或导出仅当前用户可读的 JSON 结果。导出结果不包含助记词。
+
+CHAIN_XPUB 仅用于核验公开地址及与助记词的对应关系，不会被当作私钥恢复成功。
+结果区分标准地址匹配和旧版错误哈希匹配；错误哈希匹配的派生私钥不控制该错误地址。
+设置「仅标准地址匹配时停止」后，错误哈希结果会保留并继续搜索，最多保留 32 条后暂停。
+顺序搜索不会随机尝试，也不保证在给定范围内找到目标。
+
+页面与下述命令行工具共用 `lib/recovery_engine.dart` 派生引擎。
+`flutter test test/address_recovery_test.dart test/address_recovery_ui_test.dart`
+使用公开测试助记词检查顺序、暂停续跑、结果、加密存储通道和页面操作。
+
+`tool/recovery/recover_address.dart` 提供离线、可续跑的助记词派生地址搜索。
+默认单计算线程、约 25% 单核负载、256 MiB RSS 上限，5 秒原子保存进度，
+Ctrl+C 安全退出，同目录启动自动续跑，并限制日志大小。配置作为数据读取，
+助记词和私钥不进入日志；私钥结果保存到权限为 0600 的本地文件。
+标准地址匹配和旧版错误哈希匹配使用不同状态，后者不表示恢复资金控制权。
+私有输入及进度放在 Git 忽略的 `.recovery-local/` 目录。
+完整用法见 `tool/recovery/README.txt`。集成检查使用公开测试助记词：
+
+```sh
+dart compile exe tool/recovery/recover_address.dart -o /tmp/recover-address
+python3 tool/recovery/test_recovery.py /tmp/recover-address
+```

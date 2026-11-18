@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
-import 'dart:math' show Random;
+import 'dart:math' show Random, max;
 import 'dart:typed_data';
 
 import 'message_codes.dart';
@@ -13,18 +13,29 @@ import 'package:bip32/bip32.dart';
 import 'package:bip39/bip39.dart' as bip39;
 import 'package:bs58check/bs58check.dart' as base58;
 import 'package:crypto/crypto.dart' as hashes;
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/services.dart' show MethodChannel, PlatformException;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:pointycastle/export.dart'
+    show
+        AEADParameters,
+        AESEngine,
+        Argon2BytesGenerator,
+        Argon2Parameters,
+        GCMBlockCipher,
+        KeyParameter;
 import 'package:web3dart/web3dart.dart';
 import 'package:web3dart/crypto.dart' show bytesToHex, keccak256;
 import 'package:web3dart/crypto.dart' as ec;
 import 'package:web3dart/json_rpc.dart' show RPCError;
 
 part 'wallet_book.dart';
+part 'legacy_mnemonic.dart';
 part 'mac_wallet_book.dart';
 part 'wallet_management.dart';
 part 'omnivault_import.dart';
+part 'platform_address_pool.dart';
 part 'tron.dart';
 part 'tokens.dart';
 part 'transfers.dart';
@@ -577,10 +588,20 @@ class ImportedWallet {
 }
 
 class WalletAccount {
-  WalletAccount._({required this.credentials, EthPrivateKey? tronCredentials})
-    : _tronCredentials = tronCredentials ?? credentials;
+  WalletAccount._({
+    required EthPrivateKey credentials,
+    EthPrivateKey? tronCredentials,
+    this.legacyAddressMode = false,
+  }) : _credentials = credentials,
+       _tronCredentials = tronCredentials ?? credentials;
 
-  factory WalletAccount.fromMnemonic(String mnemonic, {int accountIndex = 0}) {
+  factory WalletAccount.fromMnemonic(
+    String mnemonic, {
+    int accountIndex = 0,
+    String? evmPath,
+    String? tronPath,
+    bool legacyAddressMode = false,
+  }) {
     if (accountIndex < 0 || accountIndex >= 0x80000000) {
       throw const WalletInputException(MessageCode.msgAccountIndexIsOutOfRange);
     }
@@ -592,7 +613,11 @@ class WalletAccount {
     final seed = bip39.mnemonicToSeed(mnemonic);
     final node = BIP32
         .fromSeed(seed)
-        .derivePath(evmAccountDerivationPath(accountIndex));
+        .derivePath(
+          normalizeDerivationPath(
+            evmPath ?? evmAccountDerivationPath(accountIndex),
+          ),
+        );
     final privateKey = node.privateKey;
     if (privateKey == null) {
       throw const WalletInputException(
@@ -602,11 +627,16 @@ class WalletAccount {
 
     final tronKey = BIP32
         .fromSeed(seed)
-        .derivePath(tronAccountDerivationPath(accountIndex))
+        .derivePath(
+          normalizeDerivationPath(
+            tronPath ?? tronAccountDerivationPath(accountIndex),
+          ),
+        )
         .privateKey!;
     return WalletAccount._(
       credentials: EthPrivateKey(_copyBytes(privateKey)),
       tronCredentials: EthPrivateKey(_copyBytes(tronKey)),
+      legacyAddressMode: legacyAddressMode,
     );
   }
 
@@ -639,19 +669,45 @@ class WalletAccount {
     }
   }
 
-  final EthPrivateKey credentials;
+  final EthPrivateKey _credentials;
   final EthPrivateKey _tronCredentials;
+  final bool legacyAddressMode;
+
+  void _requireSigningAccount() {
+    if (legacyAddressMode) {
+      throw const WalletInputException(MessageCode.legacyAddressCannotSign);
+    }
+  }
+
+  EthPrivateKey get credentials {
+    _requireSigningAccount();
+    return _credentials;
+  }
+
+  Uint8List _addressBytes(EthPrivateKey key) => legacyAddressMode
+      ? keccak256(
+          Uint8List.fromList([
+            0x04,
+            ...ec.privateKeyBytesToPublic(key.privateKey),
+          ]),
+        ).sublist(12)
+      : key.address.addressBytes;
 
   String get tronAddress => base58.encode(
-    Uint8List.fromList([0x41, ..._tronCredentials.address.addressBytes]),
+    Uint8List.fromList([0x41, ..._addressBytes(_tronCredentials)]),
   );
   String addressFor(EvmNetwork? network) =>
       network?.isTron == true ? tronAddress : checksumAddress;
 
-  EthereumAddress get address => credentials.address;
+  /// The standard address controlled by the derived key, for comparison only.
+  String standardAddressFor(EvmNetwork? network) => network?.isTron == true
+      ? base58.encode(
+          Uint8List.fromList([0x41, ..._tronCredentials.address.addressBytes]),
+        )
+      : _credentials.address.hexEip55;
 
+  EthereumAddress get address => EthereumAddress(_addressBytes(_credentials));
   String get addressHex => address.hex;
-
   String get checksumAddress => address.hexEip55;
 
   String get privateKeyHex => credentials.privateKey
@@ -862,6 +918,7 @@ class EvmNetworkService {
     required String recipient,
     required BigInt amountWei,
   }) async {
+    account._requireSigningAccount();
     final to = EthereumAddress.fromHex(recipient, enforceEip55: false);
     if (amountWei <= BigInt.zero) {
       throw const WalletInputException(
@@ -886,6 +943,7 @@ class EvmNetworkService {
     required BigInt amount,
     TokenDefinition? token,
   }) async {
+    account._requireSigningAccount();
     final to = _evmRecipient(recipient);
     _validateTransfer(network, token, amount);
     final owner = account.address;

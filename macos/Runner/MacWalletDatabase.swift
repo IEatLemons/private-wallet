@@ -107,30 +107,37 @@ final class MacWalletDatabase {
             _ = try query("PRAGMA synchronous = FULL")
             _ = try query("PRAGMA temp_store = MEMORY")
             _ = try query("PRAGMA secure_delete = ON")
-            let version = try query("PRAGMA user_version").first?["user_version"] as? Int
-            switch version {
-            case 0:
-                try transaction {
+            let version = try query("PRAGMA user_version").first?["user_version"] as? Int ?? 0
+            guard (0...6).contains(version) else { throw WalletDatabaseError() }
+            try transaction {
+                if version == 0 {
                     for sql in Self.schema { try execute(sql) }
-                    try execute("PRAGMA user_version = 1")
                 }
-            case 1:
-                // The exclusive process lock ensures any previous preview is abandoned.
-                try transaction { try clearPreview() }
-            case 2:
-                try transaction { try clearPreview() }
-            default:
-                throw WalletDatabaseError()
-            }
-            if version != 2 {
-                try transaction {
+                // Both released branches used schema 2 for different features.
+                // Inspect the actual schema so either installation can migrate safely.
+                if try query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'pool_seeds'").isEmpty {
+                    for sql in Self.poolSchema { try execute(sql) }
+                }
+                let accountColumns = try query("PRAGMA table_info(accounts)").compactMap { $0["name"] as? String }
+                if !accountColumns.contains("evm_path") {
+                    for sql in Self.derivationSchema { try execute(sql) }
+                }
+                if !accountColumns.contains("legacy_address_mode") {
+                    for sql in Self.legacyAddressSchema { try execute(sql) }
+                }
+                if try query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'recovery_tasks'").isEmpty {
+                    for sql in Self.recoverySchema { try execute(sql) }
+                }
+                let groupColumns = try query("PRAGMA table_info(wallet_groups)").compactMap { $0["name"] as? String }
+                if !groupColumns.contains("next_account_index") {
                     for sql in Self.managementSchema { try execute(sql) }
                     try execute("UPDATE wallet_groups SET next_account_index = (SELECT coalesce(max(account_index), 0) + 1 FROM accounts WHERE group_id = wallet_groups.id)")
-                    try execute("PRAGMA user_version = 2")
                 }
+                try execute("PRAGMA user_version = 6")
+                try clearPreview()
+                try execute("DELETE FROM removal_targets")
+                try execute("DELETE FROM removal_state")
             }
-            try execute("DELETE FROM removal_targets")
-            try execute("DELETE FROM removal_state")
         } catch {
             close()
             throw error
@@ -266,9 +273,224 @@ final class MacWalletDatabase {
         "CREATE INDEX preview_row_status ON preview_rows(status, source_line)",
     ]
 
+    private static let recoverySchema = [
+        "CREATE TABLE recovery_tasks (id TEXT PRIMARY KEY, payload TEXT NOT NULL, updated_at INTEGER NOT NULL)",
+    ]
+
+    private static let legacyAddressSchema = [
+        "ALTER TABLE accounts ADD COLUMN legacy_address_mode INTEGER NOT NULL DEFAULT 0 CHECK(legacy_address_mode IN (0,1))",
+    ]
+
+    private static let derivationSchema = [
+        "ALTER TABLE accounts ADD COLUMN evm_path TEXT",
+        "ALTER TABLE accounts ADD COLUMN tron_path TEXT",
+    ]
+
+    private static let poolSchema = [
+        """
+        CREATE TABLE pool_seeds (
+            id TEXT PRIMARY KEY, service TEXT NOT NULL, platform TEXT NOT NULL,
+            mnemonic TEXT NOT NULL, identity TEXT NOT NULL UNIQUE, active INTEGER NOT NULL,
+            bsc_next INTEGER NOT NULL, tron_next INTEGER NOT NULL
+        )
+        """,
+        "CREATE UNIQUE INDEX pool_active_seed ON pool_seeds(service,platform) WHERE active = 1",
+        """
+        CREATE TABLE pool_batches (
+            id TEXT PRIMARY KEY, seed TEXT NOT NULL REFERENCES pool_seeds(id),
+            chain TEXT NOT NULL, first_index INTEGER NOT NULL, payload TEXT NOT NULL,
+            backed_up INTEGER NOT NULL DEFAULT 0, uploaded INTEGER NOT NULL DEFAULT 0
+        )
+        """,
+        "CREATE INDEX pool_batches_seed ON pool_batches(seed)",
+        """
+        CREATE TABLE pool_snapshots (
+            service TEXT NOT NULL, platform TEXT NOT NULL, payload TEXT NOT NULL,
+            PRIMARY KEY(service,platform)
+        )
+        """,
+    ]
+
+    private func poolDeviceKey() throws -> SecKey {
+        let attrs: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: "omni-pool-device-rsa",
+            kSecAttrSynchronizable as String: false,
+        ]
+        var lookup = attrs
+        lookup[kSecReturnData as String] = true
+        lookup[kSecMatchLimit as String] = kSecMatchLimitOne
+        var item: CFTypeRef?
+        let status = SecItemCopyMatching(lookup as CFDictionary, &item)
+        let keyAttrs: [String: Any] = [
+            kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
+            kSecAttrKeyClass as String: kSecAttrKeyClassPrivate,
+            kSecAttrKeySizeInBits as String: 3072,
+        ]
+        if status == errSecSuccess, let data = item as? Data,
+           let key = SecKeyCreateWithData(data as CFData, keyAttrs as CFDictionary, nil) {
+            return key
+        }
+        guard status == errSecItemNotFound,
+              let key = SecKeyCreateRandomKey(keyAttrs as CFDictionary, nil),
+              let data = SecKeyCopyExternalRepresentation(key, nil) else {
+            throw WalletDatabaseError("wallet_keychain")
+        }
+        var record = attrs
+        record[kSecValueData as String] = data
+        guard SecItemAdd(record as CFDictionary, nil) == errSecSuccess else {
+            throw WalletDatabaseError("wallet_keychain")
+        }
+        return key
+    }
+
+    private func insertPoolSeed(_ seed: [String: Any], _ service: String, _ platform: String, active: Bool) throws {
+        try execute("""
+            INSERT INTO pool_seeds(id,service,platform,mnemonic,identity,active,bsc_next,tron_next)
+            VALUES (?,?,?,?,?,?,?,?)
+            """, [try seed.string("id"), service, platform, try seed.string("mnemonic"),
+                  try seed.string("identity"), active ? 1 : 0, try seed.int("bsc_next"), try seed.int("tron_next")])
+    }
+
+    private func insertPoolBatch(_ batch: [String: Any], backedUp: Bool) throws {
+        try execute("""
+            INSERT INTO pool_batches(id,seed,chain,first_index,payload,backed_up) VALUES (?,?,?,?,?,?)
+            """, [try batch.string("id"), try batch.string("seed"), try batch.string("chain"),
+                  try batch.int("first_index"), try batch.string("payload"), backedUp ? 1 : 0])
+    }
+
+    private func poolCall(_ method: String, _ args: [String: Any]) throws -> Any? {
+        switch method {
+        case "pool.device":
+            let key = try poolDeviceKey()
+            guard let publicKey = SecKeyCopyPublicKey(key),
+                  let data = SecKeyCopyExternalRepresentation(publicKey, nil) as Data? else {
+                throw WalletDatabaseError("wallet_keychain")
+            }
+            return FlutterStandardTypedData(bytes: data)
+        case "pool.sign":
+            let key = try poolDeviceKey()
+            guard let message = args["message"] as? FlutterStandardTypedData,
+                  let signature = SecKeyCreateSignature(key, .rsaSignatureMessagePSSSHA256, message.data as CFData, nil) as Data? else {
+                throw WalletDatabaseError("wallet_keychain")
+            }
+            return FlutterStandardTypedData(bytes: signature)
+        case "pool.verify":
+            guard let key = args["key"] as? FlutterStandardTypedData,
+                  let message = args["message"] as? FlutterStandardTypedData,
+                  let signature = args["signature"] as? FlutterStandardTypedData else { throw WalletDatabaseError() }
+            let attrs: [String: Any] = [
+                kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
+                kSecAttrKeyClass as String: kSecAttrKeyClassPublic,
+            ]
+            guard let publicKey = SecKeyCreateWithData(key.data as CFData, attrs as CFDictionary, nil),
+                  SecKeyGetBlockSize(publicKey) >= 384 else { return false }
+            return SecKeyVerifySignature(publicKey, .rsaSignatureMessagePSSSHA256, message.data as CFData, signature.data as CFData, nil)
+        default:
+            break
+        }
+
+        let service = try args.string("service")
+        let platform = try args.string("platform")
+        let scope = [service, platform]
+        switch method {
+        case "pool.active":
+            return try query("SELECT id,mnemonic,bsc_next,tron_next FROM pool_seeds WHERE service=? AND platform=? AND active=1", scope).first
+        case "pool.hasSeed":
+            return try !query("SELECT 1 FROM pool_seeds WHERE service=? AND platform=? AND active=1", scope).isEmpty
+        case "pool.create":
+            try insertPoolSeed(args, service, platform, active: true)
+        case "pool.generate":
+            let column: String
+            switch try args.string("chain") {
+            case "bsc": column = "bsc_next"
+            case "tron": column = "tron_next"
+            default: throw WalletDatabaseError()
+            }
+            let first = try args.int("first_index")
+            let count = try args.int("count")
+            let seed = try args.string("seed")
+            guard (1...1000).contains(count), first >= 0, first <= 0x80000000 - count else { throw WalletDatabaseError() }
+            try transaction {
+                let bind: [Any?] = [first + count, seed, service, platform, first]
+                try execute("UPDATE pool_seeds SET \(column)=? WHERE id=? AND service=? AND platform=? AND active=1 AND \(column)=?", bind)
+                guard try integer("SELECT changes() AS value") == 1 else { throw WalletDatabaseError("wallet_changed") }
+                try insertPoolBatch(args, backedUp: false)
+            }
+        case "pool.list":
+            return try query("""
+                SELECT b.id,b.chain,b.backed_up,b.uploaded FROM pool_batches b JOIN pool_seeds s ON s.id=b.seed
+                WHERE s.service=? AND s.platform=? ORDER BY b.rowid DESC
+                """, scope)
+        case "pool.batch":
+            return try query("""
+                SELECT b.*,s.service,s.platform FROM pool_batches b JOIN pool_seeds s ON s.id=b.seed
+                WHERE s.service=? AND s.platform=? AND b.id=?
+                """, scope + [try args.string("id")]).first
+        case "pool.backup":
+            return [
+                "seeds": try query("SELECT id,mnemonic,identity,bsc_next,tron_next FROM pool_seeds WHERE service=? AND platform=? ORDER BY id", scope),
+                "batches": try query("""
+                    SELECT b.id,b.seed,b.chain,b.first_index,b.payload FROM pool_batches b JOIN pool_seeds s ON s.id=b.seed
+                    WHERE s.service=? AND s.platform=? ORDER BY b.rowid
+                    """, scope),
+            ]
+        case "pool.markBackedUp", "pool.markUploaded":
+            let column = method == "pool.markBackedUp" ? "backed_up" : "uploaded"
+            let ids = try args.records("ids")
+            try transaction {
+                for item in ids {
+                    try execute("""
+                        UPDATE pool_batches SET \(column)=1 WHERE id=? AND seed IN
+                        (SELECT id FROM pool_seeds WHERE service=? AND platform=?)
+                        """, [try item.string("id"), service, platform])
+                }
+            }
+        case "pool.restore":
+            try transaction {
+                guard try query("SELECT id FROM pool_seeds WHERE service=? AND platform=?", scope).isEmpty else {
+                    throw WalletDatabaseError("wallet_changed")
+                }
+                for seed in try args.records("seeds") { try insertPoolSeed(seed, service, platform, active: false) }
+                for batch in try args.records("batches") { try insertPoolBatch(batch, backedUp: true) }
+                guard let active = args["active"] as? [String: Any] else { throw WalletDatabaseError() }
+                try insertPoolSeed(active, service, platform, active: true)
+            }
+        case "pool.snapshot":
+            return try query("SELECT payload FROM pool_snapshots WHERE service=? AND platform=?", scope).first?["payload"]
+        case "pool.saveSnapshot":
+            try execute("""
+                INSERT INTO pool_snapshots(service,platform,payload) VALUES (?,?,?)
+                ON CONFLICT(service,platform) DO UPDATE SET payload=excluded.payload
+                """, scope + [try args.string("payload")])
+        default:
+            throw WalletDatabaseError()
+        }
+        return nil
+    }
+
     func call(_ method: String, _ arguments: [String: Any]) throws -> Any? {
         try open()
+        if method.hasPrefix("pool.") { return try poolCall(method, arguments) }
         switch method {
+        case "recovery.export":
+            let data = Data(try arguments.string("payload").utf8)
+            guard data.count <= 65536 else { throw WalletDatabaseError() }
+            let url = URL(fileURLWithPath: try arguments.string("path"))
+            try data.write(to: url, options: .atomic)
+            try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+            return nil
+        case "recovery.list":
+            return try query("SELECT payload FROM recovery_tasks ORDER BY updated_at DESC, id DESC LIMIT 50").map { try $0.string("payload") }
+        case "recovery.save":
+            let payload = try arguments.string("payload")
+            guard payload.utf8.count <= 65536 else { throw WalletDatabaseError() }
+            try execute("""
+                INSERT INTO recovery_tasks(id,payload,updated_at) VALUES (?,?,?)
+                ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at
+                """, [try arguments.string("id"), payload, try arguments.int("updated_at")])
+            return nil
         case "needsMigration":
             return try integer("SELECT migrated AS value FROM state") == 0
         case "migrate":
@@ -419,12 +641,16 @@ final class MacWalletDatabase {
     private func group(_ id: String, includeSecret: Bool = false) throws -> [String: Any] {
         let columns = includeSecret ? ", secret" : ""
         guard var row = try query("""
-            SELECT id, name, kind, network_id, sequence \(columns),
+            SELECT id, name, kind, network_id, sequence, next_account_index \(columns),
               (SELECT count(*) FROM accounts WHERE group_id = wallet_groups.id) AS account_count,
               EXISTS(SELECT 1 FROM aliases WHERE group_id = wallet_groups.id) AS has_aliases
             FROM wallet_groups WHERE id = ?
             """, [id]).first else { throw WalletDatabaseError() }
-        row["accounts"] = try query("SELECT * FROM accounts WHERE group_id = ? ORDER BY account_index", [id])
+        let entries = try query("SELECT * FROM accounts WHERE group_id = ? ORDER BY account_index", [id])
+        row["accounts"] = entries
+        if row["kind"] as? String == "mnemonic", let defaults = try? derivationDefaults(entries, nextIndex: row["next_account_index"] as? Int) {
+            row.merge(defaults) { _, value in value }
+        }
         return row
     }
 
@@ -457,8 +683,9 @@ final class MacWalletDatabase {
         let evm = try entry.string("evm")
         let tron = try entry.string("tron")
         try execute("""
-            INSERT INTO accounts (id, group_id, account_index, name, evm, tron) VALUES (?, ?, ?, ?, ?, ?)
-            """, ["\(id):\(index)", id, index, name, evm, tron])
+            INSERT INTO accounts (id, group_id, account_index, name, evm, tron, evm_path, tron_path, legacy_address_mode)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, ["\(id):\(index)", id, index, name, evm, tron, entry["evm_path"] as? String, entry["tron_path"] as? String, entry["legacy_address_mode"] as? Int ?? 0])
         try term(name, group: id, index: index)
         try term(evm, group: id, index: index)
         try term(tron, group: id, index: index)
@@ -518,13 +745,33 @@ final class MacWalletDatabase {
         }
     }
 
+    private func derivationDefaults(_ entries: [[String: Any]], nextIndex: Int? = nil) throws -> [String: Any] {
+        let next = max(nextIndex ?? 0, try entries.map { try $0.int("account_index") }.max().map { $0 + 1 } ?? 0)
+        guard next < 0x80000000 else { throw WalletDatabaseError("derive_index") }
+        var result: [String: Any] = ["next_index": next]
+        for (column, coin) in [("evm_path", 60), ("tron_path", 195)] {
+            let used = try Set(entries.map { entry in
+                if let path = entry[column] as? String { return path }
+                let index = try entry.int("account_index")
+                return "m/44'/\(coin)'/0'/0/\(index)"
+            })
+            var index = next
+            while used.contains("m/44'/\(coin)'/0'/0/\(index)") {
+                index += 1
+                guard index < 0x80000000 else { throw WalletDatabaseError("derive_index") }
+            }
+            result["next_" + column] = "m/44'/\(coin)'/0'/0/\(index)"
+        }
+        return result
+    }
+
     private func derive(_ args: [String: Any]) throws -> [String: Any] {
         let id = try args.string("id")
-        guard let row = try query("""
-            SELECT secret, next_account_index AS next_index
-            FROM wallet_groups
-            WHERE kind = 'mnemonic' AND id = ?
-            """, [id]).first else { throw WalletDatabaseError("derive_kind") }
+        guard var row = try query("SELECT secret, next_account_index AS next_index FROM wallet_groups WHERE kind = 'mnemonic' AND id = ?", [id]).first else {
+            throw WalletDatabaseError("derive_kind")
+        }
+        let entries = try query("SELECT account_index, evm_path, tron_path FROM accounts WHERE group_id = ?", [id])
+        row.merge(try derivationDefaults(entries, nextIndex: row["next_index"] as? Int)) { _, value in value }
         return row
     }
 
@@ -534,6 +781,11 @@ final class MacWalletDatabase {
             guard let entry = args["account"] as? [String: Any],
                   try derive(args).int("next_index") == entry.int("account_index") else {
                 throw WalletDatabaseError("wallet_changed")
+            }
+            let evm = try entry.string("evm")
+            let tron = try entry.string("tron")
+            guard try query("SELECT 1 FROM accounts WHERE group_id = ? AND (evm = ? COLLATE NOCASE OR tron = ?) LIMIT 1", [id, evm, tron]).isEmpty else {
+                throw WalletDatabaseError("derive_duplicate")
             }
             try insertAccount(entry, group: id)
             try execute("UPDATE wallet_groups SET next_account_index = ? WHERE id = ?", [try entry.int("account_index") + 1, id])
@@ -811,6 +1063,9 @@ final class MacWalletDatabase {
             FROM wallet_groups g WHERE g.id = ?
             """, [id]).first else { throw WalletDatabaseError("wallet_missing") }
         row["accounts"] = try query("SELECT * FROM accounts WHERE group_id = ? ORDER BY account_index LIMIT 1", [id])
+        if row["kind"] as? String == "mnemonic" {
+            row.merge(try derive(["id": id]).filter { $0.key != "secret" }) { _, value in value }
+        }
         return row
     }
 

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' show AppExitResponse;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'wallet_core.dart';
+import 'address_recovery.dart';
 import 'preferences.dart';
 import 'quotes.dart';
 import 'portfolio_assets.dart';
@@ -30,6 +32,8 @@ part 'ui/wallet_balances.dart';
 part 'ui/wallet_manager.dart';
 part 'ui/wallet_management.dart';
 part 'ui/omnivault_import.dart';
+part 'ui/platform_address_pool.dart';
+part 'ui/address_recovery.dart';
 part 'ui/transfers.dart';
 part 'ui/stablecoins.dart';
 part 'ui/app_settings.dart';
@@ -306,6 +310,10 @@ class _WalletShellState extends State<WalletShell> {
   SettingsDestination? _settingsDestination;
   bool _walletManagementOpen = false;
   bool _walletManagementVisited = false;
+  bool _addressPoolOpen = false;
+  bool _recoveryOpen = false;
+  late final AddressRecoveryController addressRecovery;
+  late final AppLifecycleListener _recoveryLifecycle;
   void _updateView(VoidCallback fn) {
     setState(fn);
     viewRevision.value++;
@@ -414,6 +422,13 @@ class _WalletShellState extends State<WalletShell> {
   void initState() {
     super.initState();
     vault = widget.vault ?? WalletVault();
+    addressRecovery = AddressRecoveryController(vault);
+    _recoveryLifecycle = AppLifecycleListener(
+      onExitRequested: () async {
+        await addressRecovery.pause();
+        return AppExitResponse.exit;
+      },
+    );
     quoteService = widget.quoteService ?? BinanceQuoteService();
     indexerSettings = IndexerSettings(
       read: vault.readAssetIndexerConfigs,
@@ -424,6 +439,8 @@ class _WalletShellState extends State<WalletShell> {
 
   @override
   void dispose() {
+    _recoveryLifecycle.dispose();
+    addressRecovery.dispose();
     _walletBalanceScan?.dispose();
     clearDiscovery();
     indexerSettings.removeListener(onIndexerSettingsChanged);
@@ -1056,23 +1073,59 @@ class _WalletShellState extends State<WalletShell> {
   }
 
   void _goToAssets() {
-    if (_settingsDestination == null && !_walletManagementOpen) return;
+    if (_settingsDestination == null &&
+        !_walletManagementOpen &&
+        !_addressPoolOpen &&
+        !_recoveryOpen) {
+      return;
+    }
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       _settingsDestination = null;
       _walletManagementOpen = false;
+      _addressPoolOpen = false;
+      _recoveryOpen = false;
     });
     unawaited(refreshQuotes());
+  }
+
+  void _openOmniPools() {
+    if (!vault.supportsOmniVaultImport || _addressPoolOpen) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _settingsDestination = null;
+      _walletManagementOpen = false;
+      _recoveryOpen = false;
+      _addressPoolOpen = true;
+    });
+  }
+
+  void _openRecovery() {
+    if (_recoveryOpen) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _settingsDestination = null;
+      _walletManagementOpen = false;
+      _addressPoolOpen = false;
+      _recoveryOpen = true;
+    });
   }
 
   void _openSettings({
     SettingsDestination initial = SettingsDestination.directory,
   }) {
-    if (_settingsDestination != null && !_walletManagementOpen) return;
+    if (_settingsDestination != null &&
+        !_walletManagementOpen &&
+        !_addressPoolOpen &&
+        !_recoveryOpen) {
+      return;
+    }
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       _settingsDestination = initial;
       _walletManagementOpen = false;
+      _addressPoolOpen = false;
+      _recoveryOpen = false;
     });
   }
 
@@ -1080,6 +1133,8 @@ class _WalletShellState extends State<WalletShell> {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       _settingsDestination = null;
+      _addressPoolOpen = false;
+      _recoveryOpen = false;
       _walletManagementOpen = true;
       _walletManagementVisited = true;
     });
@@ -1130,6 +1185,10 @@ class _WalletShellState extends State<WalletShell> {
   }
 
   void showAction(WalletAction action, {EvmNetwork? network}) {
+    if (account?.legacyAddressMode == true) {
+      _showMessage(const WalletMessage(MessageCode.legacyAddressCannotSign));
+      return;
+    }
     final chain = network ?? selectedNetwork;
     if (action == WalletAction.send) {
       unawaited(_showSendSheet(network: chain));
@@ -1163,6 +1222,10 @@ class _WalletShellState extends State<WalletShell> {
   }
 
   Future<void> _chooseSendAsset() async {
+    if (account?.legacyAddressMode == true) {
+      _showMessage(const WalletMessage(MessageCode.legacyAddressCannotSign));
+      return;
+    }
     if (enabledNetworks.isEmpty) {
       await _showNetworkSelector();
       if (!mounted || enabledNetworks.isEmpty) return;
@@ -1194,6 +1257,10 @@ class _WalletShellState extends State<WalletShell> {
     required EvmNetwork? network,
     TokenDefinition? token,
   }) async {
+    if (account?.legacyAddressMode == true) {
+      _showMessage(const WalletMessage(MessageCode.legacyAddressCannotSign));
+      return;
+    }
     final currentAccount = account;
     if (currentAccount == null) return;
     final service = networkServices[network?.id];
@@ -1385,6 +1452,36 @@ class _WalletShellState extends State<WalletShell> {
         body: Center(child: CircularProgressIndicator(color: theme.primary)),
       );
     }
+    if (account == null && _recoveryOpen) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _goToAssets();
+        },
+        child: Scaffold(
+          body: SafeArea(
+            child: AddressRecoveryPage(
+              controller: addressRecovery,
+              theme: theme,
+              onBack: _goToAssets,
+            ),
+          ),
+        ),
+      );
+    }
+    if (account == null && _addressPoolOpen) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _goToAssets();
+        },
+        child: Scaffold(
+          body: SafeArea(
+            child: _OmniPoolPage(vault: vault, onBack: _goToAssets),
+          ),
+        ),
+      );
+    }
     if (account == null) {
       return Scaffold(
         body: SafeArea(
@@ -1396,6 +1493,10 @@ class _WalletShellState extends State<WalletShell> {
             onImportPrivateKey: _importPrivateKey,
             onBatchImport: _importBatchWallets,
             supportsOmniVault: vault.supportsOmniVaultImport,
+            onAddressPool: vault.supportsOmniVaultImport
+                ? _openOmniPools
+                : null,
+            onRecovery: _openRecovery,
             onToggleStyle: widget.onToggleStyle,
           ),
         ),
@@ -1405,18 +1506,21 @@ class _WalletShellState extends State<WalletShell> {
     final settings = _settingsDestination;
     final page = _walletManagementOpen
         ? WalletPage.wallets
+        : _recoveryOpen
+        ? WalletPage.recovery
+        : _addressPoolOpen
+        ? WalletPage.addressPool
         : settings == null
         ? WalletPage.assets
         : WalletPage.settings;
     return PopScope(
-      canPop: settings == null && !_walletManagementOpen,
+      canPop: page == WalletPage.assets,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) {
-          if (_walletManagementOpen) {
-            _goToAssets();
-          } else {
-            _settingsHub.currentState?.back();
-          }
+        if (didPop) return;
+        if (_walletManagementOpen || _addressPoolOpen || _recoveryOpen) {
+          _goToAssets();
+        } else {
+          _settingsHub.currentState?.back();
         }
       },
       child: Scaffold(
@@ -1428,13 +1532,19 @@ class _WalletShellState extends State<WalletShell> {
                 WalletRail(
                   theme: theme,
                   selected: page,
+                  supportsAddressPool: vault.supportsOmniVaultImport,
                   onSelect: (page) {
-                    if (page == WalletPage.settings) {
-                      _openSettings();
-                    } else if (page == WalletPage.wallets) {
-                      _openWalletManagement();
-                    } else {
-                      _goToAssets();
+                    switch (page) {
+                      case WalletPage.assets:
+                        _goToAssets();
+                      case WalletPage.addressPool:
+                        _openOmniPools();
+                      case WalletPage.recovery:
+                        _openRecovery();
+                      case WalletPage.wallets:
+                        _openWalletManagement();
+                      case WalletPage.settings:
+                        _openSettings();
                     }
                   },
                 )
@@ -1442,16 +1552,32 @@ class _WalletShellState extends State<WalletShell> {
                 const SizedBox.shrink(),
               Expanded(
                 child: IndexedStack(
-                  index: _walletManagementOpen
-                      ? 2
-                      : settings == null
-                      ? 0
-                      : 1,
+                  index: page.index,
                   sizing: StackFit.expand,
                   children: [
                     ExcludeFocus(
-                      excluding: settings != null || _walletManagementOpen,
+                      excluding: page != WalletPage.assets,
                       child: _buildAssets(layout),
+                    ),
+                    if (vault.supportsOmniVaultImport)
+                      _OmniPoolPage(
+                        vault: vault,
+                        active: _addressPoolOpen,
+                        onBack: layout.mobile ? _goToAssets : null,
+                      )
+                    else
+                      const SizedBox.shrink(),
+                    ExcludeFocus(
+                      excluding: page != WalletPage.recovery,
+                      child: TickerMode(
+                        enabled: page == WalletPage.recovery,
+                        child: AddressRecoveryPage(
+                          controller: addressRecovery,
+                          theme: theme,
+                          active: _recoveryOpen,
+                          onBack: layout.mobile ? _goToAssets : null,
+                        ),
+                      ),
                     ),
                     if (settings != null)
                       _SettingsHub(
@@ -1500,6 +1626,9 @@ class _WalletShellState extends State<WalletShell> {
                 theme: theme,
                 walletName: walletName,
                 address: account!.addressFor(selectedNetwork),
+                onAddressPool: layout.mobile && vault.supportsOmniVaultImport
+                    ? _openOmniPools
+                    : null,
                 linkedAddresses: [
                   account!.checksumAddress,
                   account!.tronAddress,
@@ -1509,6 +1638,7 @@ class _WalletShellState extends State<WalletShell> {
                     selectedNetwork?.name ??
                     tr(context, MessageCode.msgChooseNetwork),
                 onWalletTap: selectWallet,
+                onRecovery: layout.mobile ? _openRecovery : null,
                 onSettings: _openSettings,
               ),
             ),
@@ -1525,6 +1655,39 @@ class _WalletShellState extends State<WalletShell> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (account!.legacyAddressMode)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: WalletCard(
+                        theme: theme,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppLocalizations.of(context).legacyAddressBadge,
+                              style: TextStyle(
+                                color: theme.danger,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              AppLocalizations.of(context).legacyAddressWarning,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              AppLocalizations.of(
+                                context,
+                              ).legacyStandardAddresses,
+                            ),
+                            const SizedBox(height: 4),
+                            SelectableText(
+                              'EVM · ${account!.standardAddressFor(ethereumMainnetNetwork)}\nTRON · ${account!.standardAddressFor(tronMainnetNetwork)}',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   if (AppSettingsScope.of(context).saveFailed)
                     Padding(
                       padding: EdgeInsets.only(bottom: 12),

@@ -22,6 +22,7 @@ enum SettingsDestination {
 }
 
 enum SettingsAction {
+  omniPool,
   manageWallets,
   createWallet,
   importMnemonic,
@@ -105,6 +106,15 @@ final settingsEntries = <SettingsEntry>[
     category: SettingsDestination.wallets,
     action: SettingsAction.manageWallets,
     aliases: 'account 帳戶 账户 钱包 錢包',
+  ),
+  SettingsEntry(
+    'omni-pool',
+    SettingsDestination.wallets,
+    (s) => s.omniPoolTitle,
+    Icons.inventory_2_outlined,
+    category: SettingsDestination.wallets,
+    action: SettingsAction.omniPool,
+    aliases: 'inventory address pool 地址库 地址庫',
   ),
   SettingsEntry(
     'create-wallet',
@@ -454,6 +464,9 @@ class _SettingsHubState extends State<_SettingsHub> {
       return;
     }
     switch (entry.action!) {
+      case SettingsAction.omniPool:
+        if (shell.vault.supportsOmniVaultImport) shell._openOmniPools();
+        return;
       case SettingsAction.manageWallets:
         shell._openWalletManagement();
       case SettingsAction.createWallet:
@@ -886,7 +899,13 @@ class _SettingsScreenState extends State<_SettingsScreen> {
             entry(e.id),
         ];
       case SettingsDestination.search:
-        final results = searchSettings(query.text);
+        final results = searchSettings(query.text)
+            .where(
+              (item) =>
+                  item.action != SettingsAction.omniPool ||
+                  shell.vault.supportsOmniVaultImport,
+            )
+            .toList();
         return [
           TextField(
             key: const ValueKey('settings-search-field'),
@@ -932,6 +951,7 @@ class _SettingsScreenState extends State<_SettingsScreen> {
           const SizedBox(height: 12),
           for (final id in ['manage-wallets', 'create-wallet', 'import-wallet'])
             entry(id),
+          if (shell.vault.supportsOmniVaultImport) entry('omni-pool'),
         ];
       case SettingsDestination.importWallet:
         return [

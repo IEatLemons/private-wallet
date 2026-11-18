@@ -1671,6 +1671,367 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get walletBalancesEmpty => '没有可查询的钱包。';
+
+  @override
+  String get omniPoolTitle => 'OmniVault 地址库';
+
+  @override
+  String get omniPoolSetupHelp =>
+      '在 OmniVault「地址库 → 库存与设备」登记此设备并授权平台。通过独立可信渠道核对服务端指纹。';
+
+  @override
+  String get omniPoolDevice => '设备 ID';
+
+  @override
+  String get omniPoolFingerprint => 'SHA-256 指纹';
+
+  @override
+  String get omniPoolCopyPublicKey => '复制设备公钥';
+
+  @override
+  String get omniPoolServerKey => '服务端公钥（PEM）';
+
+  @override
+  String get omniPoolConnect => '连接';
+
+  @override
+  String get omniPoolConnection => '连接设置';
+
+  @override
+  String get omniPoolNoPlatforms => '此设备尚未获得平台授权。';
+
+  @override
+  String get omniPoolRefreshPlatforms => '刷新平台';
+
+  @override
+  String get omniPoolCreate => '创建平台助记词';
+
+  @override
+  String get omniPoolWriteWords => '请离线保存这些助记词，并填写第 3 和第 18 个词。';
+
+  @override
+  String omniPoolWord(int index) {
+    return '第 $index 个词';
+  }
+
+  @override
+  String get omniPoolCount => '数量（1–1,000）';
+
+  @override
+  String get omniPoolGenerate => '生成地址';
+
+  @override
+  String get omniPoolUpload => '上传';
+
+  @override
+  String get omniPoolUploaded => '已上传';
+
+  @override
+  String get omniPoolReady => '待上传';
+
+  @override
+  String get omniPoolBatches => '本地批次';
+
+  @override
+  String get omniPoolNeedsBackup => '需要已验证的备份';
+
+  @override
+  String get omniPoolBackup => '创建加密备份';
+
+  @override
+  String get omniPoolRestore => '恢复加密备份';
+
+  @override
+  String get omniPoolPassphrase => '备份口令（至少 12 个字符）';
+
+  @override
+  String get omniPoolConfirmPassphrase => '确认备份口令';
+
+  @override
+  String get omniPoolContinue => '继续';
+
+  @override
+  String get omniPoolSync => '同步库存和地址';
+
+  @override
+  String get omniPoolAvailable => '可用';
+
+  @override
+  String get omniPoolAllocated => '已分配';
+
+  @override
+  String get omniPoolDisabled => '已停用';
+
+  @override
+  String get omniPoolThreshold => '告警阈值';
+
+  @override
+  String get omniPoolOrder => '订单';
+
+  @override
+  String get omniPoolRetry => '重试';
+
+  @override
+  String get omniPoolConnectionError => '请检查 HTTPS 地址、公钥和核对后的指纹。';
+
+  @override
+  String get omniPoolAccessError => '请在 OmniVault 检查设备登记和平台授权。';
+
+  @override
+  String get omniPoolNetworkError => '无法连接 OmniVault，请重试。';
+
+  @override
+  String get omniPoolVerificationError => 'OmniVault 数据校验失败，已保存的记录仍保留。';
+
+  @override
+  String get omniPoolBackupError => '备份校验失败，请检查文件、口令和所选平台。';
+
+  @override
+  String get omniPoolInputError => '请检查助记词，或输入 1 至 1,000 的生成数量。';
+
+  @override
+  String get omniPoolError => '地址库操作失败。请检查连接或本地存储后重试。';
+
+  @override
+  String get omniPoolPlatform => '平台';
+
+  @override
+  String get omniPoolChain => '链';
+
+  @override
+  String get omniPoolAddresses => '地址';
+
+  @override
+  String get omniPoolAllChains => '全部链';
+
+  @override
+  String get omniPoolSearchAddress => '搜索地址、UID 或订单';
+
+  @override
+  String get invalidDerivationPath =>
+      '请输入完整路径，如 m/44\'/60\'/0\'/0/1。每级索引范围为 0–2147483647，最多 255 级。';
+
+  @override
+  String get duplicateDerivationPath => '此钱包已有账户使用其中的派生路径，请为两条链选择尚未使用的路径。';
+
+  @override
+  String get derivedAccountHint =>
+      '可直接修改两条链的完整派生路径，EVM 网络共用 EVM 路径。新增账户将按这些路径生成地址并签名。';
+
+  @override
+  String get evmDerivationPath => 'EVM 派生路径';
+
+  @override
+  String get tronDerivationPath => 'TRON 派生路径';
+
+  @override
+  String get legacyAddressMode => 'OmniVault 旧版地址模式（仅查看）';
+
+  @override
+  String get legacyAddressWarning =>
+      '复现将 0x04 前缀一起哈希的旧算法。生成相同地址不代表恢复了资金控制权。此类账户仅支持查看余额，不能转账、请求收款或导出该地址私钥。';
+
+  @override
+  String get legacyAddressBadge => '旧版哈希错误 · 仅查看';
+
+  @override
+  String get legacyAddressCannotSign =>
+      '此地址由旧版错误哈希生成，派生密钥控制的是另一个标准地址，无法用于此地址的转账或收款请求。';
+
+  @override
+  String get legacyStandardAddresses => '派生密钥实际控制的标准地址';
+
+  @override
+  String get legacyCheckAddress => '待核对的旧地址（选填）';
+
+  @override
+  String get legacyCheck => '核对旧地址与路径';
+
+  @override
+  String get legacyMatchStandard => '匹配到标准地址。使用匹配路径并关闭旧版模式，可添加正常账户。';
+
+  @override
+  String get legacyMatchHash => '匹配到旧版错误哈希地址，确认了地址生成错误，但不代表拥有该地址的控制权。';
+
+  @override
+  String get legacyMatchNone => '所填路径及三个已知历史分支均未匹配，请核对原助记词与 xPub 的真实路径。';
+
+  @override
+  String get legacyMatchedPath => '匹配路径';
+
+  @override
+  String get legacyUseMatchedPath => '使用匹配路径';
+
+  @override
+  String get recoveryTitle => '地址恢复';
+
+  @override
+  String get recoveryIntro => '在本机按顺序生成地址并匹配目标，支持暂停和断点续跑。';
+
+  @override
+  String get recoveryMnemonic => '助记词';
+
+  @override
+  String get recoveryXpub => 'CHAIN_XPUB（选填，用于核验）';
+
+  @override
+  String get recoveryPassphrase => 'BIP39 附加口令（选填）';
+
+  @override
+  String get recoveryTarget => '目标地址（TRON / EVM）';
+
+  @override
+  String get recoveryMode => '顺序搜索方式';
+
+  @override
+  String get recoveryAccountMode => '账户序号递增';
+
+  @override
+  String get recoveryIndexMode => '地址索引递增';
+
+  @override
+  String get recoveryAccountHint => '账户序号从起点依次递增，轮流检查常见派生分支；末级索引固定。';
+
+  @override
+  String get recoveryIndexHint => '基础路径固定，末级地址索引从起点依次递增。';
+
+  @override
+  String get recoveryBasePath => '基础派生路径';
+
+  @override
+  String get recoveryFixedIndex => '固定末级索引';
+
+  @override
+  String get recoveryStart => '起始序号';
+
+  @override
+  String get recoveryEnd => '结束序号';
+
+  @override
+  String get recoveryCpu => '单核计算负载';
+
+  @override
+  String get recoveryResources => '单计算线程，计算与休息交替进行。内存异常增加时自动暂停；任务及进度加密保存在本机。';
+
+  @override
+  String get recoveryStandardOnly => '只在标准地址匹配时停止';
+
+  @override
+  String get recoveryStartTask => '开始新任务';
+
+  @override
+  String get recoveryResume => '继续已保存任务';
+
+  @override
+  String get recoveryPause => '暂停并保存';
+
+  @override
+  String get recoveryNew => '清空表单';
+
+  @override
+  String get recoveryHistory => '本地任务记录';
+
+  @override
+  String get recoveryReady => '等待开始';
+
+  @override
+  String get recoveryRunning => '顺序搜索中';
+
+  @override
+  String get recoveryPausing => '正在保存暂停';
+
+  @override
+  String get recoveryPaused => '已暂停，可续跑';
+
+  @override
+  String get recoveryStandardMatch => '标准地址匹配';
+
+  @override
+  String get recoveryLegacyMatch => '仅旧版错误哈希匹配';
+
+  @override
+  String get recoveryExhausted => '设定范围已遍历';
+
+  @override
+  String get recoveryError => '任务异常，已停止';
+
+  @override
+  String get recoveryChecked => '已核验候选';
+
+  @override
+  String get recoveryNext => '下一顺序号';
+
+  @override
+  String get recoveryCurrentPath => '最近核验路径';
+
+  @override
+  String get recoverySpeed => '候选 / 秒';
+
+  @override
+  String get recoveryStandardAddress => '派生密钥的标准地址';
+
+  @override
+  String get recoveryLegacyAddress => '旧版算法地址';
+
+  @override
+  String get recoveryVerification => 'CHAIN_XPUB 核验';
+
+  @override
+  String get recoveryXpubStandard => '配置的 xPub 在所选索引下匹配标准目标地址。';
+
+  @override
+  String get recoveryXpubLegacy => '配置的 xPub 在所选索引下仅匹配旧版错误哈希。';
+
+  @override
+  String get recoveryXpubNone => '配置的 xPub 在当前核验索引下未匹配目标。';
+
+  @override
+  String get recoveryOriginMismatch => '助记词在当前基础分支下与 xPub 不一致；这不是已找回密钥的证明。';
+
+  @override
+  String get recoveryWarning => '旧版错误哈希匹配只表示找到原派生密钥，不代表恢复目标地址的资金控制权。持续搜索不保证命中。';
+
+  @override
+  String get recoveryMatchHint => '标准地址匹配后仍需核对链上权限。本工具不会自动转账。';
+
+  @override
+  String get recoveryShow => '显示敏感信息';
+
+  @override
+  String get recoveryHide => '隐藏敏感信息';
+
+  @override
+  String get recoveryPrivateKey => '匹配的派生私钥';
+
+  @override
+  String get recoveryCopyKey => '复制派生私钥';
+
+  @override
+  String get recoveryExport => '导出匹配结果与私钥';
+
+  @override
+  String get recoveryExported => '匹配结果已导出';
+
+  @override
+  String get recoveryStorageError => '无法读取或保存加密任务，请检查本机安全存储。';
+
+  @override
+  String get recoveryWorkerError => '搜索已停止，已保留最近保存的进度。';
+
+  @override
+  String get recoveryInvalidXpub => '请输入有效的扩展公钥 xPub，不能填写 xPrv。';
+
+  @override
+  String get recoveryInvalidTarget => '目标地址无效，请检查完整地址。';
+
+  @override
+  String get recoveryInvalidRange => '序号范围或负载设置无效，索引范围为 0–2147483647。';
+
+  @override
+  String get recoveryInvalidPath => '基础派生路径无效，请填写如 m/44\'/60\'/0\'/0。';
+
+  @override
+  String get recoverySavedHint => '暂停后可选择任务继续；修改搜索条件时请开始新任务，原任务和匹配结果会保留。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -3340,4 +3701,365 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get walletBalancesEmpty => '沒有可查詢的錢包。';
+
+  @override
+  String get omniPoolTitle => 'OmniVault 地址庫';
+
+  @override
+  String get omniPoolSetupHelp =>
+      '在 OmniVault「地址庫 → 庫存與裝置」登記此裝置並授權平台。透過獨立可信管道核對伺服器指紋。';
+
+  @override
+  String get omniPoolDevice => '裝置 ID';
+
+  @override
+  String get omniPoolFingerprint => 'SHA-256 指紋';
+
+  @override
+  String get omniPoolCopyPublicKey => '複製裝置公鑰';
+
+  @override
+  String get omniPoolServerKey => '伺服器公鑰（PEM）';
+
+  @override
+  String get omniPoolConnect => '連線';
+
+  @override
+  String get omniPoolConnection => '連線設定';
+
+  @override
+  String get omniPoolNoPlatforms => '此裝置尚未取得平台授權。';
+
+  @override
+  String get omniPoolRefreshPlatforms => '重新整理平台';
+
+  @override
+  String get omniPoolCreate => '建立平台助記詞';
+
+  @override
+  String get omniPoolWriteWords => '請離線保存這些助記詞，並填寫第 3 和第 18 個詞。';
+
+  @override
+  String omniPoolWord(int index) {
+    return '第 $index 個詞';
+  }
+
+  @override
+  String get omniPoolCount => '數量（1–1,000）';
+
+  @override
+  String get omniPoolGenerate => '產生地址';
+
+  @override
+  String get omniPoolUpload => '上傳';
+
+  @override
+  String get omniPoolUploaded => '已上傳';
+
+  @override
+  String get omniPoolReady => '待上傳';
+
+  @override
+  String get omniPoolBatches => '本機批次';
+
+  @override
+  String get omniPoolNeedsBackup => '需要已驗證的備份';
+
+  @override
+  String get omniPoolBackup => '建立加密備份';
+
+  @override
+  String get omniPoolRestore => '還原加密備份';
+
+  @override
+  String get omniPoolPassphrase => '備份密碼（至少 12 個字元）';
+
+  @override
+  String get omniPoolConfirmPassphrase => '確認備份密碼';
+
+  @override
+  String get omniPoolContinue => '繼續';
+
+  @override
+  String get omniPoolSync => '同步庫存與地址';
+
+  @override
+  String get omniPoolAvailable => '可用';
+
+  @override
+  String get omniPoolAllocated => '已分配';
+
+  @override
+  String get omniPoolDisabled => '已停用';
+
+  @override
+  String get omniPoolThreshold => '警示門檻';
+
+  @override
+  String get omniPoolOrder => '訂單';
+
+  @override
+  String get omniPoolRetry => '重試';
+
+  @override
+  String get omniPoolConnectionError => '請檢查 HTTPS 位址、公鑰與核對後的指紋。';
+
+  @override
+  String get omniPoolAccessError => '請在 OmniVault 檢查裝置登記與平台授權。';
+
+  @override
+  String get omniPoolNetworkError => '無法連線至 OmniVault，請重試。';
+
+  @override
+  String get omniPoolVerificationError => 'OmniVault 資料驗證失敗，已儲存的紀錄仍保留。';
+
+  @override
+  String get omniPoolBackupError => '備份驗證失敗，請檢查檔案、密碼與選定的平台。';
+
+  @override
+  String get omniPoolInputError => '請檢查助記詞，或輸入 1 至 1,000 的產生數量。';
+
+  @override
+  String get omniPoolError => '地址庫操作失敗。請檢查連線或本機儲存後重試。';
+
+  @override
+  String get omniPoolPlatform => '平台';
+
+  @override
+  String get omniPoolChain => '鏈';
+
+  @override
+  String get omniPoolAddresses => '地址';
+
+  @override
+  String get omniPoolAllChains => '全部鏈';
+
+  @override
+  String get omniPoolSearchAddress => '搜尋地址、UID 或訂單';
+
+  @override
+  String get invalidDerivationPath =>
+      '請輸入完整路徑，如 m/44\'/60\'/0\'/0/1。每級索引範圍為 0–2147483647，最多 255 級。';
+
+  @override
+  String get duplicateDerivationPath => '此錢包已有帳戶使用其中的派生路徑，請為兩條鏈選擇尚未使用的路徑。';
+
+  @override
+  String get derivedAccountHint =>
+      '可直接修改兩條鏈的完整派生路徑，EVM 網路共用 EVM 路徑。新增帳戶將按這些路徑產生地址並簽名。';
+
+  @override
+  String get evmDerivationPath => 'EVM 派生路徑';
+
+  @override
+  String get tronDerivationPath => 'TRON 派生路徑';
+
+  @override
+  String get legacyAddressMode => 'OmniVault 舊版地址模式（僅檢視）';
+
+  @override
+  String get legacyAddressWarning =>
+      '重現將 0x04 前綴一起雜湊的舊演算法。產生相同地址不代表恢復了資金控制權。此類帳戶僅支援查看餘額，無法轉帳、請求收款或匯出該地址私鑰。';
+
+  @override
+  String get legacyAddressBadge => '舊版雜湊錯誤 · 僅檢視';
+
+  @override
+  String get legacyAddressCannotSign =>
+      '此地址由舊版錯誤雜湊產生，派生金鑰控制的是另一個標準地址，無法用於此地址的轉帳或收款請求。';
+
+  @override
+  String get legacyStandardAddresses => '派生金鑰實際控制的標準地址';
+
+  @override
+  String get legacyCheckAddress => '待核對的舊地址（選填）';
+
+  @override
+  String get legacyCheck => '核對舊地址與路徑';
+
+  @override
+  String get legacyMatchStandard => '符合標準地址。使用符合的路徑並關閉舊版模式，可新增正常帳戶。';
+
+  @override
+  String get legacyMatchHash => '符合舊版錯誤雜湊地址，確認了地址產生錯誤，但不代表擁有該地址的控制權。';
+
+  @override
+  String get legacyMatchNone => '所填路徑及三個已知歷史分支均不符合，請核對原助記詞與 xPub 的真實路徑。';
+
+  @override
+  String get legacyMatchedPath => '符合的路徑';
+
+  @override
+  String get legacyUseMatchedPath => '使用符合的路徑';
+
+  @override
+  String get recoveryTitle => '地址恢復';
+
+  @override
+  String get recoveryIntro => '在本機按順序產生地址并符合目標，支援暫停和斷點續跑。';
+
+  @override
+  String get recoveryMnemonic => '助記詞';
+
+  @override
+  String get recoveryXpub => 'CHAIN_XPUB（選填，用於核驗）';
+
+  @override
+  String get recoveryPassphrase => 'BIP39 附加密語（選填）';
+
+  @override
+  String get recoveryTarget => '目標地址（TRON / EVM）';
+
+  @override
+  String get recoveryMode => '順序搜尋方式';
+
+  @override
+  String get recoveryAccountMode => '帳戶序號遞增';
+
+  @override
+  String get recoveryIndexMode => '地址索引遞增';
+
+  @override
+  String get recoveryAccountHint => '帳戶序號從起點依次遞增，輪流檢查常見派生分支；末級索引固定。';
+
+  @override
+  String get recoveryIndexHint => '基礎路徑固定，末級地址索引從起點依次遞增。';
+
+  @override
+  String get recoveryBasePath => '基礎派生路徑';
+
+  @override
+  String get recoveryFixedIndex => '固定末級索引';
+
+  @override
+  String get recoveryStart => '起始序號';
+
+  @override
+  String get recoveryEnd => '结束序號';
+
+  @override
+  String get recoveryCpu => '單核計算負載';
+
+  @override
+  String get recoveryResources => '單計算執行緒，計算與休息交替進行。記憶體異常增加時自動暫停；任務及進度加密儲存在本機。';
+
+  @override
+  String get recoveryStandardOnly => '只在標準地址符合時停止';
+
+  @override
+  String get recoveryStartTask => '開始新任務';
+
+  @override
+  String get recoveryResume => '繼續已儲存任務';
+
+  @override
+  String get recoveryPause => '暫停并儲存';
+
+  @override
+  String get recoveryNew => '清空表單';
+
+  @override
+  String get recoveryHistory => '本機任務記錄';
+
+  @override
+  String get recoveryReady => '等待開始';
+
+  @override
+  String get recoveryRunning => '順序搜尋中';
+
+  @override
+  String get recoveryPausing => '正在儲存暫停';
+
+  @override
+  String get recoveryPaused => '已暫停，可續跑';
+
+  @override
+  String get recoveryStandardMatch => '標準地址符合';
+
+  @override
+  String get recoveryLegacyMatch => '僅旧版錯誤雜湊符合';
+
+  @override
+  String get recoveryExhausted => '設定範圍已遍歷';
+
+  @override
+  String get recoveryError => '任務異常，已停止';
+
+  @override
+  String get recoveryChecked => '已核驗候选';
+
+  @override
+  String get recoveryNext => '下一順序號';
+
+  @override
+  String get recoveryCurrentPath => '最近核驗路徑';
+
+  @override
+  String get recoverySpeed => '候选 / 秒';
+
+  @override
+  String get recoveryStandardAddress => '派生金鑰的標準地址';
+
+  @override
+  String get recoveryLegacyAddress => '旧版算法地址';
+
+  @override
+  String get recoveryVerification => 'CHAIN_XPUB 核驗';
+
+  @override
+  String get recoveryXpubStandard => '設定的 xPub 在所選索引下符合標準目標地址。';
+
+  @override
+  String get recoveryXpubLegacy => '設定的 xPub 在所選索引下僅符合旧版錯誤雜湊。';
+
+  @override
+  String get recoveryXpubNone => '設定的 xPub 在目前核驗索引下未符合目標。';
+
+  @override
+  String get recoveryOriginMismatch => '助記詞在目前基礎分支下與 xPub 不一致；这不是已找回金鑰的證明。';
+
+  @override
+  String get recoveryWarning => '旧版錯誤雜湊符合只表示找到原派生金鑰，不代表恢復目標地址的資金控制權。持續搜尋不保證命中。';
+
+  @override
+  String get recoveryMatchHint => '標準地址符合後仍需核對链上權限。本工具不會自動轉帳。';
+
+  @override
+  String get recoveryShow => '顯示敏感資訊';
+
+  @override
+  String get recoveryHide => '隱藏敏感資訊';
+
+  @override
+  String get recoveryPrivateKey => '符合的派生私鑰';
+
+  @override
+  String get recoveryCopyKey => '複製派生私鑰';
+
+  @override
+  String get recoveryExport => '匯出符合结果與私鑰';
+
+  @override
+  String get recoveryExported => '符合结果已匯出';
+
+  @override
+  String get recoveryStorageError => '无法讀取或儲存加密任務，請檢查本机安全存储。';
+
+  @override
+  String get recoveryWorkerError => '搜尋已停止，已保留最近儲存的進度。';
+
+  @override
+  String get recoveryInvalidXpub => '請輸入有效的擴展公鑰 xPub，不能填寫 xPrv。';
+
+  @override
+  String get recoveryInvalidTarget => '目標地址無效，請檢查完整地址。';
+
+  @override
+  String get recoveryInvalidRange => '序號範圍或負載設定無效，索引範圍為 0–2147483647。';
+
+  @override
+  String get recoveryInvalidPath => '基礎派生路徑無效，請填寫如 m/44\'/60\'/0\'/0。';
+
+  @override
+  String get recoverySavedHint => '暫停後可選擇任務繼續；修改搜尋條件時請開始新任務，原任務和符合结果會保留。';
 }

@@ -697,14 +697,23 @@ class _WalletManagementViewState extends State<_WalletManagementView> {
     remove: (entry) => _remove(wallet: group, account: entry),
     use: (entry) =>
         _change(() => shell.vault.selectAccount(entry.id), use: true),
-    derive: () => _change(
-      () => shell.vault.addDerivedAccount(
-        group.id,
-        nameForAccount: (index) =>
-            AppLocalizations.of(context).msgAccountMore('${index + 1}'),
-      ),
-    ),
+    derive: () => _derive(group),
   );
+
+  Future<void> _derive(WalletGroup group) async {
+    final result = await showWalletPanel<WalletPortfolio>(
+      context: context,
+      width: 560,
+      builder: (_) => DerivedAccountPanel(
+        theme: shell.theme,
+        vault: shell.vault,
+        group: group,
+        network: shell.selectedNetwork ?? bnbSmartChainNetwork,
+      ),
+    );
+    if (!mounted || result == null) return;
+    await _change(() async => result);
+  }
 }
 
 ExactDecimal? _managementDisplayAmount(Object? amount) =>
@@ -1038,6 +1047,11 @@ class _ManagedWalletDetailState extends State<_ManagedWalletDetail> {
                           ),
                         ],
                       ),
+                      if (a.legacyAddressMode)
+                        Text(
+                          s.legacyAddressBadge,
+                          style: TextStyle(color: shell.theme.danger),
+                        ),
                       if (group.kind == WalletKind.mnemonic)
                         Text(
                           a.derivationPathFor(network)!,
