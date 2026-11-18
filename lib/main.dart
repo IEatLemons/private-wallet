@@ -1129,6 +1129,10 @@ class _WalletShellState extends State<WalletShell> {
   }
 
   void showAction(WalletAction action, {EvmNetwork? network}) {
+    if (account?.legacyAddressMode == true) {
+      _showMessage(const WalletMessage(MessageCode.legacyAddressCannotSign));
+      return;
+    }
     final chain = network ?? selectedNetwork;
     if (action == WalletAction.send) {
       unawaited(_showSendSheet(network: chain));
@@ -1162,6 +1166,10 @@ class _WalletShellState extends State<WalletShell> {
   }
 
   Future<void> _chooseSendAsset() async {
+    if (account?.legacyAddressMode == true) {
+      _showMessage(const WalletMessage(MessageCode.legacyAddressCannotSign));
+      return;
+    }
     if (enabledNetworks.isEmpty) {
       await _showNetworkSelector();
       if (!mounted || enabledNetworks.isEmpty) return;
@@ -1193,6 +1201,10 @@ class _WalletShellState extends State<WalletShell> {
     required EvmNetwork? network,
     TokenDefinition? token,
   }) async {
+    if (account?.legacyAddressMode == true) {
+      _showMessage(const WalletMessage(MessageCode.legacyAddressCannotSign));
+      return;
+    }
     final currentAccount = account;
     if (currentAccount == null) return;
     final service = networkServices[network?.id];
@@ -1529,6 +1541,39 @@ class _WalletShellState extends State<WalletShell> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (account!.legacyAddressMode)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: WalletCard(
+                        theme: theme,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppLocalizations.of(context).legacyAddressBadge,
+                              style: TextStyle(
+                                color: theme.danger,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              AppLocalizations.of(context).legacyAddressWarning,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              AppLocalizations.of(
+                                context,
+                              ).legacyStandardAddresses,
+                            ),
+                            const SizedBox(height: 4),
+                            SelectableText(
+                              'EVM · ${account!.standardAddressFor(ethereumMainnetNetwork)}\nTRON · ${account!.standardAddressFor(tronMainnetNetwork)}',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   if (AppSettingsScope.of(context).saveFailed)
                     Padding(
                       padding: EdgeInsets.only(bottom: 12),

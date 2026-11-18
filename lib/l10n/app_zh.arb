@@ -881,5 +881,17 @@
   "duplicateDerivationPath": "此钱包已有账户使用其中的派生路径，请为两条链选择尚未使用的路径。",
   "derivedAccountHint": "可直接修改两条链的完整派生路径，EVM 网络共用 EVM 路径。新增账户将按这些路径生成地址并签名。",
   "evmDerivationPath": "EVM 派生路径",
-  "tronDerivationPath": "TRON 派生路径"
+  "tronDerivationPath": "TRON 派生路径",
+  "legacyAddressMode": "OmniVault 旧版地址模式（仅查看）",
+  "legacyAddressWarning": "复现将 0x04 前缀一起哈希的旧算法。生成相同地址不代表恢复了资金控制权。此类账户仅支持查看余额，不能转账、请求收款或导出该地址私钥。",
+  "legacyAddressBadge": "旧版哈希错误 · 仅查看",
+  "legacyAddressCannotSign": "此地址由旧版错误哈希生成，派生密钥控制的是另一个标准地址，无法用于此地址的转账或收款请求。",
+  "legacyStandardAddresses": "派生密钥实际控制的标准地址",
+  "legacyCheckAddress": "待核对的旧地址（选填）",
+  "legacyCheck": "核对旧地址与路径",
+  "legacyMatchStandard": "匹配到标准地址。使用匹配路径并关闭旧版模式，可添加正常账户。",
+  "legacyMatchHash": "匹配到旧版错误哈希地址，确认了地址生成错误，但不代表拥有该地址的控制权。",
+  "legacyMatchNone": "所填路径及三个已知历史分支均未匹配，请核对原助记词与 xPub 的真实路径。",
+  "legacyMatchedPath": "匹配路径",
+  "legacyUseMatchedPath": "使用匹配路径"
 }

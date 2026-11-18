@@ -30,6 +30,7 @@ import 'package:web3dart/crypto.dart' as ec;
 import 'package:web3dart/json_rpc.dart' show RPCError;
 
 part 'wallet_book.dart';
+part 'legacy_mnemonic.dart';
 part 'mac_wallet_book.dart';
 part 'omnivault_import.dart';
 part 'platform_address_pool.dart';
@@ -584,14 +585,19 @@ class ImportedWallet {
 }
 
 class WalletAccount {
-  WalletAccount._({required this.credentials, EthPrivateKey? tronCredentials})
-    : _tronCredentials = tronCredentials ?? credentials;
+  WalletAccount._({
+    required EthPrivateKey credentials,
+    EthPrivateKey? tronCredentials,
+    this.legacyAddressMode = false,
+  }) : _credentials = credentials,
+       _tronCredentials = tronCredentials ?? credentials;
 
   factory WalletAccount.fromMnemonic(
     String mnemonic, {
     int accountIndex = 0,
     String? evmPath,
     String? tronPath,
+    bool legacyAddressMode = false,
   }) {
     if (accountIndex < 0 || accountIndex >= 0x80000000) {
       throw const WalletInputException(MessageCode.msgAccountIndexIsOutOfRange);
@@ -627,6 +633,7 @@ class WalletAccount {
     return WalletAccount._(
       credentials: EthPrivateKey(_copyBytes(privateKey)),
       tronCredentials: EthPrivateKey(_copyBytes(tronKey)),
+      legacyAddressMode: legacyAddressMode,
     );
   }
 
@@ -659,19 +666,45 @@ class WalletAccount {
     }
   }
 
-  final EthPrivateKey credentials;
+  final EthPrivateKey _credentials;
   final EthPrivateKey _tronCredentials;
+  final bool legacyAddressMode;
+
+  void _requireSigningAccount() {
+    if (legacyAddressMode) {
+      throw const WalletInputException(MessageCode.legacyAddressCannotSign);
+    }
+  }
+
+  EthPrivateKey get credentials {
+    _requireSigningAccount();
+    return _credentials;
+  }
+
+  Uint8List _addressBytes(EthPrivateKey key) => legacyAddressMode
+      ? keccak256(
+          Uint8List.fromList([
+            0x04,
+            ...ec.privateKeyBytesToPublic(key.privateKey),
+          ]),
+        ).sublist(12)
+      : key.address.addressBytes;
 
   String get tronAddress => base58.encode(
-    Uint8List.fromList([0x41, ..._tronCredentials.address.addressBytes]),
+    Uint8List.fromList([0x41, ..._addressBytes(_tronCredentials)]),
   );
   String addressFor(EvmNetwork? network) =>
       network?.isTron == true ? tronAddress : checksumAddress;
 
-  EthereumAddress get address => credentials.address;
+  /// The standard address controlled by the derived key, for comparison only.
+  String standardAddressFor(EvmNetwork? network) => network?.isTron == true
+      ? base58.encode(
+          Uint8List.fromList([0x41, ..._tronCredentials.address.addressBytes]),
+        )
+      : _credentials.address.hexEip55;
 
+  EthereumAddress get address => EthereumAddress(_addressBytes(_credentials));
   String get addressHex => address.hex;
-
   String get checksumAddress => address.hexEip55;
 
   String get privateKeyHex => credentials.privateKey
@@ -882,6 +915,7 @@ class EvmNetworkService {
     required String recipient,
     required BigInt amountWei,
   }) async {
+    account._requireSigningAccount();
     final to = EthereumAddress.fromHex(recipient, enforceEip55: false);
     if (amountWei <= BigInt.zero) {
       throw const WalletInputException(
@@ -906,6 +940,7 @@ class EvmNetworkService {
     required BigInt amount,
     TokenDefinition? token,
   }) async {
+    account._requireSigningAccount();
     final to = _evmRecipient(recipient);
     _validateTransfer(network, token, amount);
     final owner = account.address;

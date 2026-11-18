@@ -1715,6 +1715,44 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tronDerivationPath => 'TRON 派生路径';
+
+  @override
+  String get legacyAddressMode => 'OmniVault 旧版地址模式（仅查看）';
+
+  @override
+  String get legacyAddressWarning =>
+      '复现将 0x04 前缀一起哈希的旧算法。生成相同地址不代表恢复了资金控制权。此类账户仅支持查看余额，不能转账、请求收款或导出该地址私钥。';
+
+  @override
+  String get legacyAddressBadge => '旧版哈希错误 · 仅查看';
+
+  @override
+  String get legacyAddressCannotSign =>
+      '此地址由旧版错误哈希生成，派生密钥控制的是另一个标准地址，无法用于此地址的转账或收款请求。';
+
+  @override
+  String get legacyStandardAddresses => '派生密钥实际控制的标准地址';
+
+  @override
+  String get legacyCheckAddress => '待核对的旧地址（选填）';
+
+  @override
+  String get legacyCheck => '核对旧地址与路径';
+
+  @override
+  String get legacyMatchStandard => '匹配到标准地址。使用匹配路径并关闭旧版模式，可添加正常账户。';
+
+  @override
+  String get legacyMatchHash => '匹配到旧版错误哈希地址，确认了地址生成错误，但不代表拥有该地址的控制权。';
+
+  @override
+  String get legacyMatchNone => '所填路径及三个已知历史分支均未匹配，请核对原助记词与 xPub 的真实路径。';
+
+  @override
+  String get legacyMatchedPath => '匹配路径';
+
+  @override
+  String get legacyUseMatchedPath => '使用匹配路径';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -3428,4 +3466,42 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get tronDerivationPath => 'TRON 派生路徑';
+
+  @override
+  String get legacyAddressMode => 'OmniVault 舊版地址模式（僅檢視）';
+
+  @override
+  String get legacyAddressWarning =>
+      '重現將 0x04 前綴一起雜湊的舊演算法。產生相同地址不代表恢復了資金控制權。此類帳戶僅支援查看餘額，無法轉帳、請求收款或匯出該地址私鑰。';
+
+  @override
+  String get legacyAddressBadge => '舊版雜湊錯誤 · 僅檢視';
+
+  @override
+  String get legacyAddressCannotSign =>
+      '此地址由舊版錯誤雜湊產生，派生金鑰控制的是另一個標準地址，無法用於此地址的轉帳或收款請求。';
+
+  @override
+  String get legacyStandardAddresses => '派生金鑰實際控制的標準地址';
+
+  @override
+  String get legacyCheckAddress => '待核對的舊地址（選填）';
+
+  @override
+  String get legacyCheck => '核對舊地址與路徑';
+
+  @override
+  String get legacyMatchStandard => '符合標準地址。使用符合的路徑並關閉舊版模式，可新增正常帳戶。';
+
+  @override
+  String get legacyMatchHash => '符合舊版錯誤雜湊地址，確認了地址產生錯誤，但不代表擁有該地址的控制權。';
+
+  @override
+  String get legacyMatchNone => '所填路徑及三個已知歷史分支均不符合，請核對原助記詞與 xPub 的真實路徑。';
+
+  @override
+  String get legacyMatchedPath => '符合的路徑';
+
+  @override
+  String get legacyUseMatchedPath => '使用符合的路徑';
 }

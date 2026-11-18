@@ -277,7 +277,10 @@ extension _WalletAssetData on _WalletShellState {
         theme: theme,
         holding: asToken(h),
         address: h.address,
-        onSend: h.spam || !networkServices.containsKey(h.network.id)
+        onSend:
+            owner?.legacyAddressMode == true ||
+                h.spam ||
+                !networkServices.containsKey(h.network.id)
             ? null
             : () => closeWalletPanel(context, true),
         onRefresh: () async {

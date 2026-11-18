@@ -291,7 +291,7 @@ class _WalletManagerPanelState extends State<WalletManagerPanel> {
                   subtitle: Text(
                     localized(
                       context,
-                      '${shortAddress(entry.addressFor(network))}${entry.derivationPathFor(network) == null ? '' : '\n${entry.derivationPathFor(network)}'}',
+                      '${shortAddress(entry.addressFor(network))}${entry.derivationPathFor(network) == null ? '' : '\n${entry.derivationPathFor(network)}'}${entry.legacyAddressMode ? '\n${AppLocalizations.of(context).legacyAddressBadge}' : ''}',
                     ),
                     style: TextStyle(
                       color: theme.muted,
@@ -623,6 +623,11 @@ class DerivedAccountPanel extends StatefulWidget {
 
 class _DerivedAccountPanelState extends State<DerivedAccountPanel> {
   final name = TextEditingController();
+  final oldAddress = TextEditingController();
+  bool legacyAddressMode = false;
+  late bool checkTron = widget.network.isTron;
+  LegacyMnemonicInspection? inspection;
+  bool checking = false;
   late final evm = TextEditingController(text: widget.group.nextEvmPath);
   late final tron = TextEditingController(text: widget.group.nextTronPath);
   bool busy = false;
@@ -631,6 +636,7 @@ class _DerivedAccountPanelState extends State<DerivedAccountPanel> {
   @override
   void dispose() {
     name.dispose();
+    oldAddress.dispose();
     evm.dispose();
     tron.dispose();
     super.dispose();
@@ -652,6 +658,7 @@ class _DerivedAccountPanelState extends State<DerivedAccountPanel> {
             : name.text,
         evmPath: evm.text,
         tronPath: tron.text,
+        legacyAddressMode: legacyAddressMode,
       );
       if (mounted) closeWalletPanel(context, result);
     } catch (e) {
@@ -661,6 +668,28 @@ class _DerivedAccountPanelState extends State<DerivedAccountPanel> {
           error = walletMessage(e);
         });
       }
+    }
+  }
+
+  Future<void> _check() async {
+    if (checking || busy) return;
+    setState(() {
+      checking = true;
+      error = null;
+      inspection = null;
+    });
+    try {
+      final result = await widget.vault.inspectLegacyAccount(
+        groupId: widget.group.id,
+        path: checkTron ? tron.text : evm.text,
+        expectedAddress: oldAddress.text,
+        network: checkTron ? tronMainnetNetwork : ethereumMainnetNetwork,
+      );
+      if (mounted) setState(() => inspection = result);
+    } catch (e) {
+      if (mounted) setState(() => error = walletMessage(e));
+    } finally {
+      if (mounted) setState(() => checking = false);
     }
   }
 
@@ -677,10 +706,10 @@ class _DerivedAccountPanelState extends State<DerivedAccountPanel> {
         theme: widget.theme,
         title: tr(context, MessageCode.msgAddAccount),
         subtitle: widget.group.name,
-        canClose: !busy,
+        canClose: !busy && !checking,
         footer: FilledButton(
           key: const ValueKey('confirm-derived-account'),
-          onPressed: busy ? null : _add,
+          onPressed: busy || checking ? null : _add,
           child: Text(tr(context, MessageCode.msgAddAccount)),
         ),
         child: Column(
@@ -703,19 +732,105 @@ class _DerivedAccountPanelState extends State<DerivedAccountPanel> {
                 ]),
               ),
             ),
+            CheckboxListTile(
+              key: const ValueKey('legacy-address-mode'),
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              value: legacyAddressMode,
+              onChanged: busy || checking
+                  ? null
+                  : (value) =>
+                        setState(() => legacyAddressMode = value ?? false),
+              title: Text(strings.legacyAddressMode),
+            ),
+            if (legacyAddressMode)
+              Text(
+                strings.legacyAddressWarning,
+                style: TextStyle(color: widget.theme.danger),
+              ),
             for (final field
                 in widget.network.isTron ? fields.reversed : fields) ...[
               const SizedBox(height: 16),
               TextField(
                 key: ValueKey(field.$3),
                 controller: field.$1,
-                enabled: !busy,
+                enabled: !busy && !checking,
+                onChanged: (_) => setState(() => inspection = null),
+                smartQuotesType: SmartQuotesType.disabled,
+                smartDashesType: SmartDashesType.disabled,
                 autocorrect: false,
                 enableSuggestions: false,
                 keyboardType: TextInputType.visiblePassword,
                 style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
                 decoration: InputDecoration(labelText: field.$2),
               ),
+            ],
+            if (legacyAddressMode || inspection != null) ...[
+              const SizedBox(height: 16),
+              DropdownButtonFormField<bool>(
+                key: const ValueKey('legacy-check-chain'),
+                initialValue: checkTron,
+                items: const [
+                  DropdownMenuItem(value: false, child: Text('EVM')),
+                  DropdownMenuItem(value: true, child: Text('TRON')),
+                ],
+                onChanged: busy || checking
+                    ? null
+                    : (value) => setState(() {
+                        checkTron = value ?? false;
+                        inspection = null;
+                      }),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                key: const ValueKey('legacy-check-address'),
+                controller: oldAddress,
+                enabled: !busy && !checking,
+                autocorrect: false,
+                enableSuggestions: false,
+                onChanged: (_) => setState(() => inspection = null),
+                decoration: InputDecoration(
+                  labelText: strings.legacyCheckAddress,
+                ),
+              ),
+              TextButton(
+                key: const ValueKey('legacy-check'),
+                onPressed: busy || checking ? null : _check,
+                child: Text(strings.legacyCheck),
+              ),
+              if (inspection case final result?) ...[
+                Text(
+                  switch (result.match) {
+                    LegacyMnemonicMatch.standard => strings.legacyMatchStandard,
+                    LegacyMnemonicMatch.legacyHash => strings.legacyMatchHash,
+                    LegacyMnemonicMatch.none => strings.legacyMatchNone,
+                  },
+                  style: TextStyle(
+                    color: result.match == LegacyMnemonicMatch.standard
+                        ? widget.theme.text
+                        : widget.theme.danger,
+                  ),
+                ),
+                if (result.matched case final matched?) ...[
+                  const SizedBox(height: 8),
+                  SelectableText(
+                    '${strings.legacyMatchedPath}\n${matched.path}',
+                  ),
+                  const SizedBox(height: 8),
+                  SelectableText(
+                    '${strings.legacyStandardAddresses}\n${matched.standardAddress}',
+                  ),
+                  TextButton(
+                    key: const ValueKey('legacy-use-path'),
+                    onPressed: () => setState(() {
+                      (checkTron ? tron : evm).text = matched.path;
+                      legacyAddressMode =
+                          result.match == LegacyMnemonicMatch.legacyHash;
+                    }),
+                    child: Text(strings.legacyUseMatchedPath),
+                  ),
+                ],
+              ],
             ],
             if (error != null) ...[
               const SizedBox(height: 12),

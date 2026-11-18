@@ -189,6 +189,7 @@ extension MacWalletBook on WalletVault {
     String? name, {
     String? evmPath,
     String? tronPath,
+    bool legacyAddressMode = false,
   }) => _serialize(() async {
     final source = await _macRow('derive', {'id': id});
     final index = source['next_index'] as int;
@@ -203,6 +204,7 @@ extension MacWalletBook on WalletVault {
       accountIndex: index,
       evmPath: evm,
       tronPath: tron,
+      legacyAddressMode: legacyAddressMode,
     );
     return _macSummary('addDerived', {
       'id': id,
@@ -212,6 +214,7 @@ extension MacWalletBook on WalletVault {
         account,
         evmPath: evm,
         tronPath: tron,
+        legacyAddressMode: legacyAddressMode,
       ),
     });
   });
@@ -373,6 +376,7 @@ WalletEntry _macEntry(
     index: index,
     evmPath: row['evm_path'] as String?,
     tronPath: row['tron_path'] as String?,
+    legacyAddressMode: row['legacy_address_mode'] == 1,
     groupAccountCount: count,
     preferredNetworkId: networkId,
     evmAddress: row['evm'] as String,
@@ -385,6 +389,7 @@ WalletEntry _macEntry(
             accountIndex: index,
             evmPath: row['evm_path'] as String?,
             tronPath: row['tron_path'] as String?,
+            legacyAddressMode: row['legacy_address_mode'] == 1,
           )
         : WalletAccount.fromPrivateKey(secret),
   );
@@ -402,6 +407,7 @@ Map<String, Object?> _migrationRecord(_StoredGroup group) {
         group.account(entry.index),
         evmPath: entry.evmPath,
         tronPath: entry.tronPath,
+        legacyAddressMode: entry.legacyAddressMode,
       ),
   ];
   final first = accounts.firstWhere((row) => row['account_index'] == 0);
@@ -442,6 +448,7 @@ Map<String, Object?> _macAccountRecord(
   WalletAccount account, {
   String? evmPath,
   String? tronPath,
+  bool legacyAddressMode = false,
 }) => {
   'account_index': index,
   'name': name,
@@ -449,4 +456,5 @@ Map<String, Object?> _macAccountRecord(
   'tron': account.tronAddress,
   'evm_path': evmPath,
   'tron_path': tronPath,
+  'legacy_address_mode': legacyAddressMode ? 1 : 0,
 };

@@ -3202,6 +3202,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'TRON derivation path'**
   String get tronDerivationPath;
+
+  /// No description provided for @legacyAddressMode.
+  ///
+  /// In en, this message translates to:
+  /// **'OmniVault legacy address mode (view only)'**
+  String get legacyAddressMode;
+
+  /// No description provided for @legacyAddressWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Reproduces the old address hash that included 0x04. Matching an old address does not recover control of its funds. These accounts can only display balances; sending, receiving requests and key export are unavailable.'**
+  String get legacyAddressWarning;
+
+  /// No description provided for @legacyAddressBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Legacy hash error · view only'**
+  String get legacyAddressBadge;
+
+  /// No description provided for @legacyAddressCannotSign.
+  ///
+  /// In en, this message translates to:
+  /// **'This address uses the old incorrect hash. The derived key controls a different standard address. Transfers and payment requests are unavailable.'**
+  String get legacyAddressCannotSign;
+
+  /// No description provided for @legacyStandardAddresses.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard addresses controlled by the derived keys'**
+  String get legacyStandardAddresses;
+
+  /// No description provided for @legacyCheckAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Old address to check (optional)'**
+  String get legacyCheckAddress;
+
+  /// No description provided for @legacyCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check old address and paths'**
+  String get legacyCheck;
+
+  /// No description provided for @legacyMatchStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'A standard address matches. Use the matched path with legacy mode off to add the normal account.'**
+  String get legacyMatchStandard;
+
+  /// No description provided for @legacyMatchHash.
+  ///
+  /// In en, this message translates to:
+  /// **'The old hash matches. This confirms the address-generation bug, not control of this address.'**
+  String get legacyMatchHash;
+
+  /// No description provided for @legacyMatchNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No match in the supplied path or the three known historical branches. Verify the original phrase and xPub path.'**
+  String get legacyMatchNone;
+
+  /// No description provided for @legacyMatchedPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Matched path'**
+  String get legacyMatchedPath;
+
+  /// No description provided for @legacyUseMatchedPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Use matched path'**
+  String get legacyUseMatchedPath;
 }
 
 class _AppLocalizationsDelegate

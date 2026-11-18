@@ -55,6 +55,7 @@ class WalletEntry {
     this.preferredNetworkId,
     this.evmPath,
     this.tronPath,
+    this.legacyAddressMode = false,
     required this.groupAccountCount,
   }) : _account = account,
        _evmAddress = evmAddress,
@@ -66,6 +67,7 @@ class WalletEntry {
   final WalletAccount? _account;
   final String? _evmAddress, _tronAddress;
   final String? evmPath, tronPath;
+  final bool legacyAddressMode;
   WalletAccount get account =>
       _account ??
       (throw StateError('Signing material is not loaded for this account'));
@@ -152,15 +154,23 @@ class WalletPortfolio {
 }
 
 class _StoredAccount {
-  _StoredAccount(this.index, this.name, {this.evmPath, this.tronPath});
+  _StoredAccount(
+    this.index,
+    this.name, {
+    this.evmPath,
+    this.tronPath,
+    this.legacyAddressMode = false,
+  });
   final int index;
   String name;
   final String? evmPath, tronPath;
+  final bool legacyAddressMode;
   Map<String, Object> toJson() => {
     'index': index,
     'name': name,
     'evmPath': ?evmPath,
     'tronPath': ?tronPath,
+    if (legacyAddressMode) 'legacyAddressMode': true,
   };
 }
 
@@ -187,6 +197,7 @@ class _StoredGroup {
             accountIndex: index,
             evmPath: entry?.evmPath,
             tronPath: entry?.tronPath,
+            legacyAddressMode: entry?.legacyAddressMode ?? false,
           )
         : WalletAccount.fromPrivateKey(secret);
   }
@@ -208,6 +219,7 @@ class _StoredGroup {
           account: account(a.index),
           evmPath: a.evmPath,
           tronPath: a.tronPath,
+          legacyAddressMode: a.legacyAddressMode,
           preferredNetworkId: networkId,
           groupAccountCount: accounts.length,
         ),
@@ -275,10 +287,15 @@ extension WalletManagement on WalletVault {
             if (index < 0 || index >= 0x80000000 || !indices.add(index)) {
               throw const FormatException();
             }
+            if (a['legacyAddressMode'] != null &&
+                a['legacyAddressMode'] is! bool) {
+              throw const FormatException();
+            }
             accounts.add(
               _StoredAccount(
                 index,
                 _checkedName(a['name'] as String),
+                legacyAddressMode: a['legacyAddressMode'] == true,
                 evmPath: a['evmPath'] == null
                     ? null
                     : normalizeDerivationPath(a['evmPath'] as String),
@@ -311,10 +328,10 @@ extension WalletManagement on WalletVault {
           for (final entry in accounts) {
             if (kind == WalletKind.mnemonic &&
                 (!evmPaths.add(
-                      entry.evmPath ?? evmAccountDerivationPath(entry.index),
+                      '${entry.legacyAddressMode}:${entry.evmPath ?? evmAccountDerivationPath(entry.index)}',
                     ) ||
                     !tronPaths.add(
-                      entry.tronPath ?? tronAccountDerivationPath(entry.index),
+                      '${entry.legacyAddressMode}:${entry.tronPath ?? tronAccountDerivationPath(entry.index)}',
                     ))) {
               throw const FormatException();
             }
@@ -443,6 +460,7 @@ extension WalletManagement on WalletVault {
           index: account.index,
           evmPath: account.evmPath,
           tronPath: account.tronPath,
+          legacyAddressMode: account.legacyAddressMode,
           evmAddress: owner.checksumAddress,
           tronAddress: owner.tronAddress,
           preferredNetworkId: group.networkId,
@@ -572,8 +590,15 @@ extension WalletManagement on WalletVault {
     String? name,
     String? evmPath,
     String? tronPath,
+    bool legacyAddressMode = false,
   }) => _database != null
-      ? _macAddDerived(groupId, name, evmPath: evmPath, tronPath: tronPath)
+      ? _macAddDerived(
+          groupId,
+          name,
+          evmPath: evmPath,
+          tronPath: tronPath,
+          legacyAddressMode: legacyAddressMode,
+        )
       : _changeBook((book) {
           final group = book.groups.where((g) => g.id == groupId).firstOrNull;
           if (group == null || group.kind != WalletKind.mnemonic) {
@@ -595,7 +620,12 @@ extension WalletManagement on WalletVault {
           final tron = normalizeDerivationPath(
             tronPath ?? _unusedDerivationPath(next, tronPaths, tron: true),
           );
-          if (evmPaths.contains(evm) || tronPaths.contains(tron)) {
+          if (group.accounts.any(
+            (a) =>
+                a.legacyAddressMode == legacyAddressMode &&
+                ((a.evmPath ?? evmAccountDerivationPath(a.index)) == evm ||
+                    (a.tronPath ?? tronAccountDerivationPath(a.index)) == tron),
+          )) {
             throw const WalletInputException(
               MessageCode.duplicateDerivationPath,
             );
@@ -605,6 +635,7 @@ extension WalletManagement on WalletVault {
             accountIndex: next,
             evmPath: evm,
             tronPath: tron,
+            legacyAddressMode: legacyAddressMode,
           );
           group.accounts.add(
             _StoredAccount(
@@ -612,6 +643,7 @@ extension WalletManagement on WalletVault {
               _checkedName(name ?? '账户 ${next + 1}'),
               evmPath: evm,
               tronPath: tron,
+              legacyAddressMode: legacyAddressMode,
             ),
           );
           book.activeAccountId = group.entryId(next);

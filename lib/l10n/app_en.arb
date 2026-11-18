@@ -927,5 +927,17 @@
   "duplicateDerivationPath": "An account in this wallet already uses one of these derivation paths. Choose unused paths for both chains.",
   "derivedAccountHint": "Enter the full derivation path for each chain. EVM networks share the EVM path. The new account will use these paths to derive addresses and sign transactions.",
   "evmDerivationPath": "EVM derivation path",
-  "tronDerivationPath": "TRON derivation path"
+  "tronDerivationPath": "TRON derivation path",
+  "legacyAddressMode": "OmniVault legacy address mode (view only)",
+  "legacyAddressWarning": "Reproduces the old address hash that included 0x04. Matching an old address does not recover control of its funds. These accounts can only display balances; sending, receiving requests and key export are unavailable.",
+  "legacyAddressBadge": "Legacy hash error · view only",
+  "legacyAddressCannotSign": "This address uses the old incorrect hash. The derived key controls a different standard address. Transfers and payment requests are unavailable.",
+  "legacyStandardAddresses": "Standard addresses controlled by the derived keys",
+  "legacyCheckAddress": "Old address to check (optional)",
+  "legacyCheck": "Check old address and paths",
+  "legacyMatchStandard": "A standard address matches. Use the matched path with legacy mode off to add the normal account.",
+  "legacyMatchHash": "The old hash matches. This confirms the address-generation bug, not control of this address.",
+  "legacyMatchNone": "No match in the supplied path or the three known historical branches. Verify the original phrase and xPub path.",
+  "legacyMatchedPath": "Matched path",
+  "legacyUseMatchedPath": "Use matched path"
 }

@@ -175,6 +175,7 @@ class TronNetworkService extends EvmNetworkService {
     required String recipient,
     required BigInt amountWei,
   }) async {
+    account._requireSigningAccount();
     final owner = decodeTronAddress(account.tronAddress);
     final to = decodeTronAddress(recipient);
     if (amountWei <= BigInt.zero ||
@@ -191,6 +192,7 @@ class TronNetworkService extends EvmNetworkService {
     required BigInt amount,
     TokenDefinition? token,
   }) async {
+    account._requireSigningAccount();
     final address = account.tronAddress;
     final owner = decodeTronAddress(address);
     final to = decodeTronAddress(recipient);
@@ -349,6 +351,7 @@ class TronNetworkService extends EvmNetworkService {
     BigInt? feeLimit,
     BigInt? reviewedCost,
   }) async {
+    account._requireSigningAccount();
     final (blockId, timestamp) = await _withTronFailover((index) async {
       if (reviewedCost != null) {
         final balance = (await _tronBalance(

@@ -59,6 +59,7 @@ enum MessageCode {
   msgDerivationPath,
   invalidDerivationPath,
   duplicateDerivationPath,
+  legacyAddressCannotSign,
   msgPrivateKeyImport,
   msgRecoveryPhrasesAndPrivateKeysRemainInSecure,
   msgWalletManagement,

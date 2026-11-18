@@ -113,22 +113,31 @@ final class MacWalletDatabase {
                     for sql in Self.schema { try execute(sql) }
                     for sql in Self.poolSchema { try execute(sql) }
                     for sql in Self.derivationSchema { try execute(sql) }
-                    try execute("PRAGMA user_version = 3")
+                    for sql in Self.legacyAddressSchema { try execute(sql) }
+                    try execute("PRAGMA user_version = 4")
                 }
             case 1:
                 try transaction {
                     for sql in Self.poolSchema { try execute(sql) }
                     for sql in Self.derivationSchema { try execute(sql) }
-                    try execute("PRAGMA user_version = 3")
+                    for sql in Self.legacyAddressSchema { try execute(sql) }
+                    try execute("PRAGMA user_version = 4")
                     try clearPreview()
                 }
             case 2:
                 try transaction {
                     for sql in Self.derivationSchema { try execute(sql) }
-                    try execute("PRAGMA user_version = 3")
+                    for sql in Self.legacyAddressSchema { try execute(sql) }
+                    try execute("PRAGMA user_version = 4")
                     try clearPreview()
                 }
             case 3:
+                try transaction {
+                    for sql in Self.legacyAddressSchema { try execute(sql) }
+                    try execute("PRAGMA user_version = 4")
+                    try clearPreview()
+                }
+            case 4:
                 // The exclusive process lock ensures any previous preview is abandoned.
                 try transaction { try clearPreview() }
             default:
@@ -267,6 +276,10 @@ final class MacWalletDatabase {
         )
         """,
         "CREATE INDEX preview_row_status ON preview_rows(status, source_line)",
+    ]
+
+    private static let legacyAddressSchema = [
+        "ALTER TABLE accounts ADD COLUMN legacy_address_mode INTEGER NOT NULL DEFAULT 0 CHECK(legacy_address_mode IN (0,1))",
     ]
 
     private static let derivationSchema = [
@@ -629,9 +642,9 @@ final class MacWalletDatabase {
         let evm = try entry.string("evm")
         let tron = try entry.string("tron")
         try execute("""
-            INSERT INTO accounts (id, group_id, account_index, name, evm, tron, evm_path, tron_path)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, ["\(id):\(index)", id, index, name, evm, tron, entry["evm_path"] as? String, entry["tron_path"] as? String])
+            INSERT INTO accounts (id, group_id, account_index, name, evm, tron, evm_path, tron_path, legacy_address_mode)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, ["\(id):\(index)", id, index, name, evm, tron, entry["evm_path"] as? String, entry["tron_path"] as? String, entry["legacy_address_mode"] as? Int ?? 0])
         try term(name, group: id, index: index)
         try term(evm, group: id, index: index)
         try term(tron, group: id, index: index)

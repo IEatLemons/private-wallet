@@ -344,7 +344,7 @@ Recovery phrases restore the same deterministic addresses; account names and the
 number of locally added accounts are local metadata. After restoring a phrase on
 a fresh installation, use **添加账户** to recreate its additional addresses in
 order, or enter the original full paths for custom accounts. Keep custom paths
-with your offline recovery records. On macOS, SQLCipher schema version 3 stores
+with your offline recovery records. On macOS, SQLCipher schema version 4 stores
 these paths with the addresses; older accounts retain their original standard
 paths after migration. Balance/history-based account discovery, wallet removal and secret export
 are not part of this change.
@@ -361,6 +361,19 @@ the account and connects to the selected network for its balance. Invalid or
 duplicate imports stay in the form for correction. Existing mnemonic and imported
 accounts remain available in the wallet picker as **主钱包** and **私钥账户**.
 Single and batch imports share the same storage, including existing batch data.
+
+### OmniVault 旧版错误地址兼容
+
+在「钱包管理 → 添加账户」勾选「OmniVault 旧版地址模式（仅查看）」，
+按填写的 EVM/TRON 路径复现旧版 `Keccak256(0x04 || X || Y)` 地址算法。
+账户列表及资产页会标记「旧版哈希错误」，可查询旧地址余额，并显示派生密钥
+实际控制的标准地址。模式随账户保存，macOS SQLCipher schema 4 自动迁移旧库。
+
+这只能复现地址，不能通过修改钱包获得错误地址的资金控制权。应用禁止这类账户
+转账、请求收款及导出冒充该地址控制密钥的私钥。可选的「核对旧地址与路径」会在
+本机检查所填路径和 `195'/0'`、`60'/0'`、`60'/1'` 历史分支，分别标记标准地址匹配、
+错误哈希匹配和未匹配。标准地址匹配时，可使用真实路径并关闭旧版模式添加正常账户。
+助记词及私钥不会发送给服务端，核验结果只包含公开地址和路径。
 
 ### macOS 上管理 OmniVault 平台地址库
 

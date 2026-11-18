@@ -1903,4 +1903,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tronDerivationPath => 'TRON derivation path';
+
+  @override
+  String get legacyAddressMode => 'OmniVault legacy address mode (view only)';
+
+  @override
+  String get legacyAddressWarning =>
+      'Reproduces the old address hash that included 0x04. Matching an old address does not recover control of its funds. These accounts can only display balances; sending, receiving requests and key export are unavailable.';
+
+  @override
+  String get legacyAddressBadge => 'Legacy hash error · view only';
+
+  @override
+  String get legacyAddressCannotSign =>
+      'This address uses the old incorrect hash. The derived key controls a different standard address. Transfers and payment requests are unavailable.';
+
+  @override
+  String get legacyStandardAddresses =>
+      'Standard addresses controlled by the derived keys';
+
+  @override
+  String get legacyCheckAddress => 'Old address to check (optional)';
+
+  @override
+  String get legacyCheck => 'Check old address and paths';
+
+  @override
+  String get legacyMatchStandard =>
+      'A standard address matches. Use the matched path with legacy mode off to add the normal account.';
+
+  @override
+  String get legacyMatchHash =>
+      'The old hash matches. This confirms the address-generation bug, not control of this address.';
+
+  @override
+  String get legacyMatchNone =>
+      'No match in the supplied path or the three known historical branches. Verify the original phrase and xPub path.';
+
+  @override
+  String get legacyMatchedPath => 'Matched path';
+
+  @override
+  String get legacyUseMatchedPath => 'Use matched path';
 }

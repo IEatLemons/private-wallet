@@ -112,12 +112,14 @@ final class RunnerTests: XCTestCase {
         _ = try database!.call("migrate", ["activeId": "root:0", "groups": [group]])
         let entry: [String: Any] = [
             "account_index": 1, "name": "Custom", "evm": "synthetic-evm", "tron": "synthetic-tron",
+            "legacy_address_mode": 1,
             "evm_path": "m/44'/60'/0'/0/2", "tron_path": "m/44'/195'/0'/0/925183485",
         ]
         _ = try database!.call("addDerived", ["id": "root", "account": entry])
         database = nil
         database = MacWalletDatabase(directory: directory, keychainService: service)
         let selected = try XCTUnwrap(try summary(database!)["selected"] as? [String: Any])
+        XCTAssertEqual(selected["legacy_address_mode"] as? Int, 1)
         XCTAssertEqual(selected["evm_path"] as? String, entry["evm_path"] as? String)
         XCTAssertEqual(selected["tron_path"] as? String, entry["tron_path"] as? String)
         let defaults = try XCTUnwrap(database!.call("derive", ["id": "root"]) as? [String: Any])
